@@ -1,97 +1,158 @@
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { ArrowRight, BarChart3, Users, TrendingUp } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useSearchParams } from 'react-router-dom';
+import { useInsightsData, useSurveySubmission } from '@/hooks/useInsightsData';
+import PageHeader from '@/components/PageHeader';
+import BrandInsightCard from '@/components/BrandInsightCard';
+import SurveySection from '@/components/SurveySection';
+import CallToAction from '@/components/CallToAction';
+import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const Index = () => {
+  const [searchParams] = useSearchParams();
+  const creatorId = searchParams.get('creator_id') || 'creator_123'; // Default for demo
+  
+  const { insights, loading, error, getInsightsByTheme, hasData } = useInsightsData(creatorId);
+  const { submitSurvey } = useSurveySubmission();
+
+  const themes = [
+    {
+      id: 'top_trending' as const,
+      title: 'Top Trending Brands',
+      icon: '🏆',
+      tagline: 'Ride the trend wave!',
+    },
+    {
+      id: 'best_reach' as const,
+      title: 'Best Reach Brands',
+      icon: '📈',
+      tagline: 'Maximize your reach!',
+    },
+    {
+      id: 'fastest_selling' as const,
+      title: 'Fastest Selling Brands',
+      icon: '⚡',
+      tagline: 'Turn views into sales!',
+    },
+    {
+      id: 'highest_commission' as const,
+      title: 'Highest Commission Brands',
+      icon: '💰',
+      tagline: 'Earn more per post!',
+    },
+  ];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <PageHeader />
+        <main className="max-w-7xl mx-auto px-6 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
+            {[1, 2, 3, 4].map((i) => (
+              <Card key={i} className="p-6">
+                <div className="space-y-4">
+                  <Skeleton className="h-8 w-48" />
+                  <Skeleton className="h-4 w-32" />
+                  <div className="space-y-3">
+                    {[1, 2, 3].map((j) => (
+                      <div key={j} className="space-y-2">
+                        <div className="flex items-center gap-3">
+                          <Skeleton className="w-10 h-10 rounded-full" />
+                          <div className="space-y-1">
+                            <Skeleton className="h-4 w-24" />
+                            <Skeleton className="h-3 w-16" />
+                          </div>
+                        </div>
+                        <Skeleton className="h-3 w-full" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <PageHeader />
+        <main className="max-w-7xl mx-auto px-6 py-8">
+          <Card className="p-8 text-center">
+            <div className="text-6xl mb-4">⚠️</div>
+            <h2 className="text-xl font-semibold mb-2">Something went wrong</h2>
+            <p className="text-muted-foreground">{error}</p>
+          </Card>
+        </main>
+      </div>
+    );
+  }
+
+  if (!hasData) {
+    return (
+      <div className="min-h-screen bg-background">
+        <PageHeader />
+        <main className="max-w-7xl mx-auto px-6 py-8">
+          <Card className="p-8 text-center">
+            <div className="text-6xl mb-4">📊</div>
+            <h2 className="text-xl font-semibold mb-2">We're preparing your insights</h2>
+            <p className="text-muted-foreground mb-8">Please check back soon.</p>
+            
+            {/* Still show survey even with no data */}
+            <div className="max-w-2xl mx-auto">
+              <SurveySection 
+                creatorId={creatorId} 
+                onSubmit={submitSurvey}
+              />
+            </div>
+          </Card>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section */}
-      <div className="bg-primary text-primary-foreground py-16 px-6">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-foreground/20 rounded-full mb-6">
-            <span className="text-2xl font-bold">W</span>
-          </div>
-          <h1 className="text-4xl md:text-6xl font-bold mb-6">
-            Wishlink Creator
-            <br />
-            Brand Insights
-          </h1>
-          <p className="text-xl md:text-2xl text-primary-foreground/90 mb-8 max-w-2xl mx-auto">
-            Data-driven brand recommendations to maximize your earnings and reach on Wishlink
-          </p>
-          <Button asChild size="lg" className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 rounded-full px-8 py-4 text-lg font-semibold">
-            <Link to="/insights?creator_id=creator_123" className="inline-flex items-center gap-2">
-              View Your Insights
-              <ArrowRight className="w-5 h-5" />
-            </Link>
-          </Button>
+      <PageHeader lastUpdated={new Date().toLocaleDateString()} />
+      
+      <main className="max-w-7xl mx-auto px-6 py-8">
+        {/* Brand Insight Cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
+          {themes.map((theme, index) => {
+            const themeBrands = getInsightsByTheme(theme.id);
+            
+            return (
+              <BrandInsightCard
+                key={theme.id}
+                icon={theme.icon}
+                title={theme.title}
+                tagline={theme.tagline}
+                brands={themeBrands.map(insight => ({
+                  brand_name: insight.brand_name,
+                  logo_url: insight.logo_url,
+                  metric: insight.metric,
+                  value: insight.value,
+                  color: insight.color,
+                }))}
+                delay={index * 100}
+              />
+            );
+          })}
         </div>
-      </div>
 
-      {/* Features Section */}
-      <div className="py-16 px-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Unlock Your Creator Potential
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Get personalized brand recommendations based on trending data, reach metrics, and commission rates
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Card className="p-6 text-center hover:shadow-lg transition-shadow">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-primary/10 rounded-full mb-4">
-                <TrendingUp className="w-6 h-6 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Trending Brands</h3>
-              <p className="text-muted-foreground">
-                Discover the hottest brands your audience wants to see right now
-              </p>
-            </Card>
-
-            <Card className="p-6 text-center hover:shadow-lg transition-shadow">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-accent/10 rounded-full mb-4">
-                <Users className="w-6 h-6 text-accent" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Maximum Reach</h3>
-              <p className="text-muted-foreground">
-                Find brands that help you reach the largest possible audience
-              </p>
-            </Card>
-
-            <Card className="p-6 text-center hover:shadow-lg transition-shadow">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-primary/10 rounded-full mb-4">
-                <BarChart3 className="w-6 h-6 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">High Commissions</h3>
-              <p className="text-muted-foreground">
-                Maximize your earnings with brands offering the best commission rates
-              </p>
-            </Card>
-          </div>
+        {/* Survey Section */}
+        <div className="max-w-2xl mx-auto mb-12">
+          <SurveySection 
+            creatorId={creatorId} 
+            onSubmit={submitSurvey}
+          />
         </div>
-      </div>
 
-      {/* CTA Section */}
-      <div className="bg-secondary/50 py-16 px-6">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Ready to boost your creator earnings?
-          </h2>
-          <p className="text-xl text-muted-foreground mb-8">
-            See which brands are perfect for your audience and start creating content that converts
-          </p>
-          <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-8 py-4 text-lg font-semibold">
-            <Link to="/insights?creator_id=creator_123" className="inline-flex items-center gap-2">
-              Get Your Insights Now
-              <ArrowRight className="w-5 h-5" />
-            </Link>
-          </Button>
-        </div>
-      </div>
+        {/* Call to Action */}
+        <CallToAction />
+      </main>
     </div>
   );
 };
