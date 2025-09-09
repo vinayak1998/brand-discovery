@@ -75,6 +75,16 @@ const BrandInsightCard = ({ icon, title, tagline, brands, delay = 0 }: BrandInsi
         </p>
       </div>
 
+      {/* Metric Header */}
+      <div className="flex justify-end mb-3">
+        <p className="text-xs text-muted-foreground font-medium">
+          {title === "Top Trending Brands" && "% of Posts by other creators"}
+          {title === "Best Reach Brands" && "Views per post"}
+          {title === "Fastest Selling Brands" && "Orders per post"}
+          {title === "Highest Commission Brands" && "Commission rates"}
+        </p>
+      </div>
+
       {/* Brand List */}
       <div className="space-y-4">
         {brands.length === 0 ? (
@@ -93,7 +103,6 @@ const BrandInsightCard = ({ icon, title, tagline, brands, delay = 0 }: BrandInsi
                     <BrandAvatar logoUrl={brand.logo_url} brandName={brand.brand_name} />
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-foreground truncate">{brand.brand_name}</p>
-                      <p className="text-sm text-muted-foreground">{brand.metric}</p>
                     </div>
                   </div>
                   <div className="text-right">
