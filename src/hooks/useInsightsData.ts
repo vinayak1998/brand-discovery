@@ -25,24 +25,24 @@ export interface SurveyResponse {
 // Mock data for demonstration
 const mockInsightsData: InsightRow[] = [
   // Top Trending
-  { creator_id: "creator_123", theme_id: "top_trending", theme_title: "Top Trending Brands", icon: "🏆", tagline: "Ride the trend wave!", brand_name: "TechGear Pro", logo_url: "", metric: "Trend Score", value: 95, color: "#FF6F3D" },
-  { creator_id: "creator_123", theme_id: "top_trending", theme_title: "Top Trending Brands", icon: "🏆", tagline: "Ride the trend wave!", brand_name: "Urban Style Co", logo_url: "", metric: "Trend Score", value: 87, color: "#FF6F3D" },
-  { creator_id: "creator_123", theme_id: "top_trending", theme_title: "Top Trending Brands", icon: "🏆", tagline: "Ride the trend wave!", brand_name: "Fitness Elite", logo_url: "", metric: "Trend Score", value: 82, color: "#FF6F3D" },
+  { creator_id: "creator_123", theme_id: "top_trending", theme_title: "Top Trending Brands", icon: "🏆", tagline: "Ride the trend wave!", brand_name: "NewMe", logo_url: "https://newme.ae/uploads/logo/20240130103559537.png", metric: "Trend Score", value: 65, color: "#FF6F3D" },
+  { creator_id: "creator_123", theme_id: "top_trending", theme_title: "Top Trending Brands", icon: "🏆", tagline: "Ride the trend wave!", brand_name: "Savana", logo_url: "", metric: "Trend Score", value: 20, color: "#FF6F3D" },
+  { creator_id: "creator_123", theme_id: "top_trending", theme_title: "Top Trending Brands", icon: "🏆", tagline: "Ride the trend wave!", brand_name: "H&M", logo_url: "/src/assets/logos/hm-logo.png", metric: "Trend Score", value: 15, color: "#FF6F3D" },
   
   // Best Reach
-  { creator_id: "creator_123", theme_id: "best_reach", theme_title: "Best Reach Brands", icon: "📈", tagline: "Maximize your reach!", brand_name: "Global Beauty", logo_url: "", metric: "Avg. Reach", value: 150000, color: "#FF3E6C" },
-  { creator_id: "creator_123", theme_id: "best_reach", theme_title: "Best Reach Brands", icon: "📈", tagline: "Maximize your reach!", brand_name: "Travel Essentials", logo_url: "", metric: "Avg. Reach", value: 128000, color: "#FF3E6C" },
-  { creator_id: "creator_123", theme_id: "best_reach", theme_title: "Best Reach Brands", icon: "📈", tagline: "Maximize your reach!", brand_name: "Home Comfort", logo_url: "", metric: "Avg. Reach", value: 95000, color: "#FF3E6C" },
+  { creator_id: "creator_123", theme_id: "best_reach", theme_title: "Best Reach Brands", icon: "📈", tagline: "Maximize your reach!", brand_name: "Freakins", logo_url: "/src/assets/logos/freakins-logo.png", metric: "Avg. Reach", value: 100000, color: "#FF3E6C" },
+  { creator_id: "creator_123", theme_id: "best_reach", theme_title: "Best Reach Brands", icon: "📈", tagline: "Maximize your reach!", brand_name: "Fugazee", logo_url: "https://www.fugazee.com/cdn/shop/files/Fugazee_Logo_Black.png", metric: "Avg. Reach", value: 85000, color: "#FF3E6C" },
+  { creator_id: "creator_123", theme_id: "best_reach", theme_title: "Best Reach Brands", icon: "📈", tagline: "Maximize your reach!", brand_name: "Littlebox India", logo_url: "", metric: "Avg. Reach", value: 80000, color: "#FF3E6C" },
   
   // Fastest Selling
-  { creator_id: "creator_123", theme_id: "fastest_selling", theme_title: "Fastest Selling Brands", icon: "⚡", tagline: "Turn views into sales!", brand_name: "Quick Kitchen", logo_url: "", metric: "Orders/Post", value: 45, color: "#FFB84D" },
-  { creator_id: "creator_123", theme_id: "fastest_selling", theme_title: "Fastest Selling Brands", icon: "⚡", tagline: "Turn views into sales!", brand_name: "Smart Gadgets", logo_url: "", metric: "Orders/Post", value: 38, color: "#FFB84D" },
-  { creator_id: "creator_123", theme_id: "fastest_selling", theme_title: "Fastest Selling Brands", icon: "⚡", tagline: "Turn views into sales!", brand_name: "Pet Paradise", logo_url: "", metric: "Orders/Post", value: 29, color: "#FFB84D" },
+  { creator_id: "creator_123", theme_id: "fastest_selling", theme_title: "Fastest Selling Brands", icon: "⚡", tagline: "Turn views into sales!", brand_name: "Highlander", logo_url: "https://highlander-outdoor.com/skin/frontend/rwd/default/css/images/logo.png", metric: "Orders/Post", value: 2000, color: "#FFB84D" },
+  { creator_id: "creator_123", theme_id: "fastest_selling", theme_title: "Fastest Selling Brands", icon: "⚡", tagline: "Turn views into sales!", brand_name: "Off Duty", logo_url: "https://www.theoffdutybrand.com/uploads/1/3/1/0/131098366/theoffdutybrand-logo-light-7_orig.png", metric: "Orders/Post", value: 1500, color: "#FFB84D" },
+  { creator_id: "creator_123", theme_id: "fastest_selling", theme_title: "Fastest Selling Brands", icon: "⚡", tagline: "Turn views into sales!", brand_name: "Blissclub", logo_url: "/src/assets/logos/blissclub-logo.png", metric: "Orders/Post", value: 1000, color: "#FFB84D" },
   
   // Highest Commission
-  { creator_id: "creator_123", theme_id: "highest_commission", theme_title: "Highest Commission Brands", icon: "💰", tagline: "Earn more per post!", brand_name: "Luxury Watches", logo_url: "", metric: "Commission %", value: 25, color: "#FF6F3D" },
-  { creator_id: "creator_123", theme_id: "highest_commission", theme_title: "Highest Commission Brands", icon: "💰", tagline: "Earn more per post!", brand_name: "Premium Skincare", logo_url: "", metric: "Commission %", value: 18, color: "#FF6F3D" },
-  { creator_id: "creator_123", theme_id: "highest_commission", theme_title: "Highest Commission Brands", icon: "💰", tagline: "Earn more per post!", brand_name: "Designer Bags", logo_url: "", metric: "Commission %", value: 15, color: "#FF6F3D" },
+  { creator_id: "creator_123", theme_id: "highest_commission", theme_title: "Highest Commission Brands", icon: "💰", tagline: "Earn more per post!", brand_name: "Highlander", logo_url: "https://highlander-outdoor.com/skin/frontend/rwd/default/css/images/logo.png", metric: "Commission %", value: 25, color: "#FF6F3D" },
+  { creator_id: "creator_123", theme_id: "highest_commission", theme_title: "Highest Commission Brands", icon: "💰", tagline: "Earn more per post!", brand_name: "Off Duty", logo_url: "https://www.theoffdutybrand.com/uploads/1/3/1/0/131098366/theoffdutybrand-logo-light-7_orig.png", metric: "Commission %", value: 20, color: "#FF6F3D" },
+  { creator_id: "creator_123", theme_id: "highest_commission", theme_title: "Highest Commission Brands", icon: "💰", tagline: "Earn more per post!", brand_name: "Blissclub", logo_url: "/src/assets/logos/blissclub-logo.png", metric: "Commission %", value: 19, color: "#FF6F3D" },
 ];
 
 export const useInsightsData = (creatorId: string) => {
