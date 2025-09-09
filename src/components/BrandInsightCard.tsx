@@ -67,7 +67,12 @@ const BrandInsightCard = ({ icon, title, tagline, brands, delay = 0 }: BrandInsi
           <span className="text-2xl">{icon}</span>
           <h3 className="text-lg font-semibold text-foreground">{title}</h3>
         </div>
-        <p className="text-sm text-muted-foreground">What other creators similar to you are talking about most</p>
+        <p className="text-sm text-muted-foreground">
+          {title === "Top Trending Brands" 
+            ? "What other creators similar to you are talking about most"
+            : tagline
+          }
+        </p>
       </div>
 
       {/* Brand List */}
