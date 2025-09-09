@@ -8,35 +8,42 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Wishlink Brand Colors */
+    --wishlink-primary: 16 100% 61%; /* #FF6F3D Orange */
+    --wishlink-accent-1: 345 100% 63%; /* #FF3E6C Pink */
+    --wishlink-accent-2: 35 100% 65%; /* #FFB84D Warm Yellow */
+    --wishlink-text-primary: 215 24% 20%; /* #1F2937 Very dark gray */
+    
+    /* Design System */
+    --background: 215 20% 98%; /* #F8FAFC */
+    --foreground: 215 24% 20%; /* #1F2937 */
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%; /* #FFFFFF */
+    --card-foreground: 215 24% 20%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 215 24% 20%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 16 100% 61%; /* Wishlink Orange */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 220 14% 96%; /* Light neutral */
+    --secondary-foreground: 215 24% 20%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 210 40% 92%;
+    --muted-foreground: 215 16% 47%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 345 100% 63%; /* Wishlink Pink */
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 220 13% 91%; /* #E5E7EB */
+    --input: 220 13% 91%;
+    --ring: 16 100% 61%;
 
-    --radius: 0.5rem;
+    --radius: 16px;
 
     --sidebar-background: 0 0% 98%;
 
@@ -101,5 +108,52 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  /* Bar Chart Animation */
+  .bar-fill {
+    transition: width 600ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  /* Card Animations */
+  .insight-card {
+    transition: transform 200ms ease-out, box-shadow 200ms ease-out;
+  }
+  
+  .insight-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 10px 10px -5px rgb(0 0 0 / 0.04);
+  }
+  
+  /* Fade in animation */
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .animate-fade-in {
+    animation: fade-in 400ms ease-out;
+  }
+  
+  /* Brand Avatar */
+  .brand-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: hsl(var(--secondary));
+    color: hsl(var(--secondary-foreground));
+    font-weight: 600;
+    font-size: 14px;
   }
 }
