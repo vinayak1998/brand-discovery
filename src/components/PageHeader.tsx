@@ -1,3 +1,5 @@
+import wishLinkLogo from "@/assets/wishlink-logo.png";
+
 interface PageHeaderProps {
   lastUpdated?: string;
 }
@@ -7,11 +9,12 @@ const PageHeader = ({ lastUpdated }: PageHeaderProps) => {
     <header className="bg-primary text-primary-foreground py-8 px-6">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-start gap-4">
-          {/* Logo placeholder - can be replaced with actual Wishlink logo */}
           <div className="flex-shrink-0">
-            <div className="w-12 h-12 bg-primary-foreground/20 rounded-lg flex items-center justify-center">
-              <span className="text-xl font-bold">W</span>
-            </div>
+            <img 
+              src={wishLinkLogo} 
+              alt="Wishlink" 
+              className="h-12 w-auto object-contain"
+            />
           </div>
           
           <div className="flex-1">
