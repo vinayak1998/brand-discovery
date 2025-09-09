@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useCSVData } from '@/contexts/CSVDataContext';
+import { InsightRow as CSVInsightRow } from '@/utils/csvParser';
 
-// Types for our data structure
+// Types for our data structure - extending CSV types for backward compatibility
 export interface InsightRow {
   creator_id: string;
-  theme_id: 'top_trending' | 'best_reach' | 'fastest_selling' | 'highest_commission';
+  theme_id: 'top_trending' | 'best_reach' | 'fastest_selling' | 'highest_commission' | 'high_engagement' | 'top_spending';
   theme_title: string;
   icon: string;
   tagline: string;
@@ -49,6 +51,7 @@ export const useInsightsData = (creatorId: string) => {
   const [insights, setInsights] = useState<InsightRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { insights: csvInsights, hasInsightsData } = useCSVData();
 
   useEffect(() => {
     const fetchInsights = async () => {
@@ -59,10 +62,17 @@ export const useInsightsData = (creatorId: string) => {
         // Simulate API delay
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        // Filter mock data by creator_id
-        const filteredData = mockInsightsData.filter(row => row.creator_id === creatorId);
-        console.log('Filtered data for creator:', creatorId, filteredData);
-        setInsights(filteredData);
+        if (hasInsightsData) {
+          // Use CSV data if available
+          const filteredData = csvInsights.filter(row => row.creator_id === creatorId);
+          console.log('Filtered CSV data for creator:', creatorId, filteredData);
+          setInsights(filteredData);
+        } else {
+          // Fallback to mock data
+          const filteredData = mockInsightsData.filter(row => row.creator_id === creatorId);
+          console.log('Filtered mock data for creator:', creatorId, filteredData);
+          setInsights(filteredData);
+        }
       } catch (err) {
         setError('Failed to load insights data');
         console.error('Error fetching insights:', err);
@@ -74,7 +84,7 @@ export const useInsightsData = (creatorId: string) => {
     if (creatorId) {
       fetchInsights();
     }
-  }, [creatorId]);
+  }, [creatorId, csvInsights, hasInsightsData]);
 
   // Group insights by theme and sort by value (descending)
   const getInsightsByTheme = (themeId: InsightRow['theme_id']) => {
@@ -95,12 +105,16 @@ export const useInsightsData = (creatorId: string) => {
 
 export const useSurveySubmission = () => {
   const [submitting, setSubmitting] = useState(false);
+  const { addSurveyResponse } = useCSVData();
   
   const submitSurvey = async (data: SurveyResponse) => {
     setSubmitting(true);
     try {
       // In a real implementation, this would post to Google Sheets API
       console.log('Survey submission:', data);
+      
+      // Add to CSV data context
+      addSurveyResponse(data);
       
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
