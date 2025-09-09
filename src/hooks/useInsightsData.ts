@@ -61,6 +61,7 @@ export const useInsightsData = (creatorId: string) => {
         
         // Filter mock data by creator_id
         const filteredData = mockInsightsData.filter(row => row.creator_id === creatorId);
+        console.log('Filtered data for creator:', creatorId, filteredData);
         setInsights(filteredData);
       } catch (err) {
         setError('Failed to load insights data');
