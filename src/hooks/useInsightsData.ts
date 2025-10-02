@@ -26,6 +26,7 @@ export interface SurveyResponse {
 
 // Mock data for demonstration
 const mockInsightsData: InsightRow[] = [
+  // Creator: creator_123
   // Top Trending
   { creator_id: "creator_123", theme_id: "top_trending", theme_title: "Top Trending Brands", icon: "🏆", tagline: "Ride the trend wave!", brand_name: "NewMe", logo_url: "https://newme.ae/uploads/logo/20240130103559537.png", metric: "Trend Score", value: 65, color: "#FF6F3D" },
   { creator_id: "creator_123", theme_id: "top_trending", theme_title: "Top Trending Brands", icon: "🏆", tagline: "Ride the trend wave!", brand_name: "Savana", logo_url: "", metric: "Trend Score", value: 20, color: "#FF6F3D" },
@@ -45,6 +46,27 @@ const mockInsightsData: InsightRow[] = [
   { creator_id: "creator_123", theme_id: "highest_commission", theme_title: "Highest Commission Brands", icon: "💰", tagline: "Earn more per post!", brand_name: "Highlander", logo_url: "https://highlander-outdoor.com/skin/frontend/rwd/default/css/images/logo.png", metric: "Commission %", value: 25, color: "#FF6F3D" },
   { creator_id: "creator_123", theme_id: "highest_commission", theme_title: "Highest Commission Brands", icon: "💰", tagline: "Earn more per post!", brand_name: "Off Duty", logo_url: "https://www.theoffdutybrand.com/uploads/1/3/1/0/131098366/theoffdutybrand-logo-light-7_orig.png", metric: "Commission %", value: 20, color: "#FF6F3D" },
   { creator_id: "creator_123", theme_id: "highest_commission", theme_title: "Highest Commission Brands", icon: "💰", tagline: "Earn more per post!", brand_name: "Blissclub", logo_url: "/src/assets/logos/blissclub-logo.png", metric: "Commission %", value: 19, color: "#FF6F3D" },
+
+  // Creator: 1111111111
+  // Top Trending
+  { creator_id: "1111111111", theme_id: "top_trending", theme_title: "Top Trending Brands", icon: "🏆", tagline: "Ride the trend wave!", brand_name: "Nike", logo_url: "https://logo.clearbit.com/nike.com", metric: "Trend Score", value: 92, color: "#FF6F3D" },
+  { creator_id: "1111111111", theme_id: "top_trending", theme_title: "Top Trending Brands", icon: "🏆", tagline: "Ride the trend wave!", brand_name: "Adidas", logo_url: "https://logo.clearbit.com/adidas.com", metric: "Trend Score", value: 88, color: "#FF6F3D" },
+  { creator_id: "1111111111", theme_id: "top_trending", theme_title: "Top Trending Brands", icon: "🏆", tagline: "Ride the trend wave!", brand_name: "Puma", logo_url: "https://logo.clearbit.com/puma.com", metric: "Trend Score", value: 75, color: "#FF6F3D" },
+  
+  // Best Reach
+  { creator_id: "1111111111", theme_id: "best_reach", theme_title: "Best Reach Brands", icon: "📈", tagline: "Maximize your reach!", brand_name: "Apple", logo_url: "https://logo.clearbit.com/apple.com", metric: "Avg. Reach", value: 250000, color: "#FF3E6C" },
+  { creator_id: "1111111111", theme_id: "best_reach", theme_title: "Best Reach Brands", icon: "📈", tagline: "Maximize your reach!", brand_name: "Samsung", logo_url: "https://logo.clearbit.com/samsung.com", metric: "Avg. Reach", value: 220000, color: "#FF3E6C" },
+  { creator_id: "1111111111", theme_id: "best_reach", theme_title: "Best Reach Brands", icon: "📈", tagline: "Maximize your reach!", brand_name: "Sony", logo_url: "https://logo.clearbit.com/sony.com", metric: "Avg. Reach", value: 180000, color: "#FF3E6C" },
+  
+  // Fastest Selling
+  { creator_id: "1111111111", theme_id: "fastest_selling", theme_title: "Fastest Selling Brands", icon: "⚡", tagline: "Turn views into sales!", brand_name: "Amazon Basics", logo_url: "https://logo.clearbit.com/amazon.com", metric: "Orders/Post", value: 5000, color: "#FFB84D" },
+  { creator_id: "1111111111", theme_id: "fastest_selling", theme_title: "Fastest Selling Brands", icon: "⚡", tagline: "Turn views into sales!", brand_name: "Xiaomi", logo_url: "https://logo.clearbit.com/mi.com", metric: "Orders/Post", value: 4200, color: "#FFB84D" },
+  { creator_id: "1111111111", theme_id: "fastest_selling", theme_title: "Fastest Selling Brands", icon: "⚡", tagline: "Turn views into sales!", brand_name: "OnePlus", logo_url: "https://logo.clearbit.com/oneplus.com", metric: "Orders/Post", value: 3800, color: "#FFB84D" },
+  
+  // Highest Commission
+  { creator_id: "1111111111", theme_id: "highest_commission", theme_title: "Highest Commission Brands", icon: "💰", tagline: "Earn more per post!", brand_name: "Dyson", logo_url: "https://logo.clearbit.com/dyson.com", metric: "Commission %", value: 35, color: "#FF6F3D" },
+  { creator_id: "1111111111", theme_id: "highest_commission", theme_title: "Highest Commission Brands", icon: "💰", tagline: "Earn more per post!", brand_name: "Apple", logo_url: "https://logo.clearbit.com/apple.com", metric: "Commission %", value: 28, color: "#FF6F3D" },
+  { creator_id: "1111111111", theme_id: "highest_commission", theme_title: "Highest Commission Brands", icon: "💰", tagline: "Earn more per post!", brand_name: "Bose", logo_url: "https://logo.clearbit.com/bose.com", metric: "Commission %", value: 25, color: "#FF6F3D" },
 ];
 
 export const useInsightsData = (creatorId: string) => {
