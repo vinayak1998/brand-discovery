@@ -1,4 +1,5 @@
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { useInsightsData, useSurveySubmission } from '@/hooks/useInsightsData';
 import PageHeader from '@/components/PageHeader';
 import BrandInsightCard from '@/components/BrandInsightCard';
@@ -6,13 +7,26 @@ import SurveySection from '@/components/SurveySection';
 import CallToAction from '@/components/CallToAction';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { AlertCircle } from 'lucide-react';
 
 const Index = () => {
   const [searchParams] = useSearchParams();
-  const creatorId = searchParams.get('creator_id') || 'creator_123'; // Default for demo
+  const navigate = useNavigate();
+  const creatorId = searchParams.get('creator_id');
   
-  const { insights, loading, error, getInsightsByTheme, hasData } = useInsightsData(creatorId);
+  // Redirect to landing if no creator_id
+  useEffect(() => {
+    if (!creatorId) {
+      navigate('/');
+    }
+  }, [creatorId, navigate]);
+
+  const { insights, loading, error, getInsightsByTheme, hasData } = useInsightsData(creatorId || '');
   const { submitSurvey } = useSurveySubmission();
+
+  // Check if this is an invalid creator ID (no data exists)
+  const isInvalidCreator = !loading && !error && !hasData && creatorId && creatorId !== '0000000000';
 
   const themes = [
     {
@@ -90,6 +104,28 @@ const Index = () => {
     );
   }
 
+  // Show invalid creator ID error
+  if (isInvalidCreator) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-destructive/5 flex items-center justify-center p-4">
+        <Card className="p-8 max-w-md text-center shadow-xl">
+          <div className="flex justify-center mb-4">
+            <div className="rounded-full bg-destructive/10 p-4">
+              <AlertCircle className="w-12 h-12 text-destructive" />
+            </div>
+          </div>
+          <h2 className="text-2xl font-bold mb-2">Invalid Creator ID</h2>
+          <p className="text-muted-foreground mb-6">
+            The Creator ID "{creatorId}" was not found in our system. Please check your ID and try again.
+          </p>
+          <Button onClick={() => navigate('/')}>
+            Go Back
+          </Button>
+        </Card>
+      </div>
+    );
+  }
+
   if (!hasData) {
     return (
       <div className="min-h-screen bg-background">
@@ -103,7 +139,7 @@ const Index = () => {
             {/* Still show survey even with no data */}
             <div className="max-w-2xl mx-auto">
               <SurveySection 
-                creatorId={creatorId} 
+                creatorId={creatorId || ''} 
                 onSubmit={submitSurvey}
               />
             </div>
@@ -145,7 +181,7 @@ const Index = () => {
         {/* Survey Section */}
         <div className="max-w-2xl mx-auto mb-12">
           <SurveySection 
-            creatorId={creatorId} 
+            creatorId={creatorId || ''} 
             onSubmit={submitSurvey}
           />
         </div>

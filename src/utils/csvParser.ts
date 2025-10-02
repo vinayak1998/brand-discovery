@@ -243,6 +243,60 @@ class CSVParser {
 
     return [headers, ...sampleData].map(row => row.join(',')).join('\n');
   }
+
+  static parseBrandLogosCSV(csvText: string): { data: Record<string, string>; errors: string[] } {
+    const errors: string[] = [];
+    const data: Record<string, string> = {};
+
+    try {
+      const rows = this.parseCSVText(csvText);
+      
+      if (rows.length === 0) {
+        return { data: {}, errors: ['CSV file is empty'] };
+      }
+
+      const headers = rows[0].map(h => h.toLowerCase());
+      
+      if (!headers.includes('brand_name') || !headers.includes('logo_url')) {
+        return {
+          data: {},
+          errors: ['Missing required columns: brand_name, logo_url']
+        };
+      }
+
+      const brandNameIndex = headers.indexOf('brand_name');
+      const logoUrlIndex = headers.indexOf('logo_url');
+
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        
+        if (row.length === 0 || row.every(cell => !cell.trim())) {
+          continue;
+        }
+
+        const brandName = row[brandNameIndex];
+        const logoUrl = row[logoUrlIndex];
+
+        if (brandName) {
+          data[brandName] = logoUrl || '';
+        }
+      }
+
+      return {
+        data,
+        errors
+      };
+
+    } catch (error) {
+      return {
+        data: {},
+        errors: [`Failed to parse CSV: ${error}`]
+      };
+    }
+  }
 }
 
 export { CSVParser };
+export const parseInsightsCSV = CSVParser.parseInsightsCSV.bind(CSVParser);
+export const parseSurveyCSV = CSVParser.parseSurveyCSV.bind(CSVParser);
+export const parseBrandLogosCSV = CSVParser.parseBrandLogosCSV.bind(CSVParser);

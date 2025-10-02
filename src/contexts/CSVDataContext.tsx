@@ -1,35 +1,43 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { InsightRow, SurveyResponse } from '@/utils/csvParser';
 
+export type BrandLogosMap = Record<string, string>;
+
 interface CSVDataContextType {
   insights: InsightRow[];
   surveys: SurveyResponse[];
+  brandLogos: BrandLogosMap;
   setInsights: (data: InsightRow[]) => void;
   setSurveys: (data: SurveyResponse[]) => void;
+  setBrandLogos: (data: BrandLogosMap) => void;
   addSurveyResponse: (response: SurveyResponse) => void;
   clearData: () => void;
   hasInsightsData: boolean;
   hasSurveyData: boolean;
   exportInsightsCSV: () => string;
   exportSurveysCSV: () => string;
+  getLogoUrl: (brandName: string) => string;
 }
 
 const CSVDataContext = createContext<CSVDataContextType | undefined>(undefined);
 
 const STORAGE_KEYS = {
   INSIGHTS: 'csv_insights_data',
-  SURVEYS: 'csv_surveys_data'
+  SURVEYS: 'csv_surveys_data',
+  BRAND_LOGOS: 'csv_brand_logos_data'
 };
 
 export function CSVDataProvider({ children }: { children: React.ReactNode }) {
   const [insights, setInsightsState] = useState<InsightRow[]>([]);
   const [surveys, setSurveysState] = useState<SurveyResponse[]>([]);
+  const [brandLogos, setBrandLogosState] = useState<BrandLogosMap>({});
 
   // Load data from localStorage on mount
   useEffect(() => {
     try {
       const savedInsights = localStorage.getItem(STORAGE_KEYS.INSIGHTS);
       const savedSurveys = localStorage.getItem(STORAGE_KEYS.SURVEYS);
+      const savedBrandLogos = localStorage.getItem(STORAGE_KEYS.BRAND_LOGOS);
 
       if (savedInsights) {
         const parsedInsights = JSON.parse(savedInsights);
@@ -39,6 +47,11 @@ export function CSVDataProvider({ children }: { children: React.ReactNode }) {
       if (savedSurveys) {
         const parsedSurveys = JSON.parse(savedSurveys);
         setSurveysState(parsedSurveys);
+      }
+
+      if (savedBrandLogos) {
+        const parsedBrandLogos = JSON.parse(savedBrandLogos);
+        setBrandLogosState(parsedBrandLogos);
       }
     } catch (error) {
       console.error('Error loading CSV data from localStorage:', error);
@@ -63,12 +76,25 @@ export function CSVDataProvider({ children }: { children: React.ReactNode }) {
     }
   }, [surveys]);
 
+  // Save brand logos to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.BRAND_LOGOS, JSON.stringify(brandLogos));
+    } catch (error) {
+      console.error('Error saving brand logos to localStorage:', error);
+    }
+  }, [brandLogos]);
+
   const setInsights = (data: InsightRow[]) => {
     setInsightsState(data);
   };
 
   const setSurveys = (data: SurveyResponse[]) => {
     setSurveysState(data);
+  };
+
+  const setBrandLogos = (data: BrandLogosMap) => {
+    setBrandLogosState(data);
   };
 
   const addSurveyResponse = (response: SurveyResponse) => {
@@ -78,8 +104,14 @@ export function CSVDataProvider({ children }: { children: React.ReactNode }) {
   const clearData = () => {
     setInsightsState([]);
     setSurveysState([]);
+    setBrandLogosState({});
     localStorage.removeItem(STORAGE_KEYS.INSIGHTS);
     localStorage.removeItem(STORAGE_KEYS.SURVEYS);
+    localStorage.removeItem(STORAGE_KEYS.BRAND_LOGOS);
+  };
+
+  const getLogoUrl = (brandName: string): string => {
+    return brandLogos[brandName] || '';
   };
 
   const exportInsightsCSV = (): string => {
@@ -129,14 +161,17 @@ export function CSVDataProvider({ children }: { children: React.ReactNode }) {
   const value: CSVDataContextType = {
     insights,
     surveys,
+    brandLogos,
     setInsights,
     setSurveys,
+    setBrandLogos,
     addSurveyResponse,
     clearData,
     hasInsightsData: insights.length > 0,
     hasSurveyData: surveys.length > 0,
     exportInsightsCSV,
-    exportSurveysCSV
+    exportSurveysCSV,
+    getLogoUrl
   };
 
   return (
