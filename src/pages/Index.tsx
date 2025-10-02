@@ -4,7 +4,6 @@ import { useInsightsData, useSurveySubmission } from '@/hooks/useInsightsData';
 import PageHeader from '@/components/PageHeader';
 import BrandInsightCard from '@/components/BrandInsightCard';
 import SurveySection from '@/components/SurveySection';
-import CallToAction from '@/components/CallToAction';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -179,15 +178,12 @@ const Index = () => {
         </div>
 
         {/* Survey Section */}
-        <div className="max-w-2xl mx-auto mb-12">
+        <div className="max-w-2xl mx-auto">
           <SurveySection 
             creatorId={creatorId || ''} 
             onSubmit={submitSurvey}
           />
         </div>
-
-        {/* Call to Action */}
-        <CallToAction />
       </main>
     </div>
   );
