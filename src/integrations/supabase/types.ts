@@ -14,7 +14,137 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      brands: {
+        Row: {
+          brand_name: string
+          created_at: string | null
+          id: string
+          logo_url: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          brand_name: string
+          created_at?: string | null
+          id?: string
+          logo_url?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          brand_name?: string
+          created_at?: string | null
+          id?: string
+          logo_url?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      creator_brand_insights: {
+        Row: {
+          brand_id: string
+          created_at: string | null
+          creator_id: string
+          id: string
+          metric: string
+          theme_id: string
+          updated_at: string | null
+          value: number
+        }
+        Insert: {
+          brand_id: string
+          created_at?: string | null
+          creator_id: string
+          id?: string
+          metric: string
+          theme_id: string
+          updated_at?: string | null
+          value: number
+        }
+        Update: {
+          brand_id?: string
+          created_at?: string | null
+          creator_id?: string
+          id?: string
+          metric?: string
+          theme_id?: string
+          updated_at?: string | null
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_brand_insights_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_brand_insights_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "creators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      creators: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string
+          name: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      survey_responses: {
+        Row: {
+          creator_id: string
+          id: string
+          q1_useful: string | null
+          q2_intent: string | null
+          q3_themes: string | null
+          submitted_at: string | null
+        }
+        Insert: {
+          creator_id: string
+          id?: string
+          q1_useful?: string | null
+          q2_intent?: string | null
+          q3_themes?: string | null
+          submitted_at?: string | null
+        }
+        Update: {
+          creator_id?: string
+          id?: string
+          q1_useful?: string | null
+          q2_intent?: string | null
+          q3_themes?: string | null
+          submitted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "survey_responses_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "creators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
