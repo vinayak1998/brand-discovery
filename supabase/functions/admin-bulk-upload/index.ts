@@ -7,14 +7,19 @@ const corsHeaders = {
 
 interface InsightRow {
   creator_id: string;
-  theme: string;
-  brand: string;
+  theme_id: string;
+  theme_title: string;
+  icon: string;
+  tagline: string;
+  color: string;
+  brand_name: string;
+  logo_url: string;
   metric: string;
   value: number;
 }
 
 interface LogoRow {
-  brand: string;
+  brand_name: string;
   logo_url: string;
 }
 
@@ -76,7 +81,7 @@ async function processInsights(supabase: any, rows: InsightRow[]) {
   // Collect unique creator IDs and brand names
   rows.forEach(row => {
     creatorIds.add(row.creator_id);
-    brandNames.add(row.brand);
+    brandNames.add(row.brand_name);
   });
 
   // Upsert creators
@@ -90,8 +95,15 @@ async function processInsights(supabase: any, rows: InsightRow[]) {
     stats.errors += creatorIds.size;
   }
 
-  // Upsert brands
-  const brandsToInsert = Array.from(brandNames).map(name => ({ brand_name: name }));
+  // Upsert brands with logo URLs
+  const brandsToInsert = Array.from(new Set(rows.map(r => r.brand_name))).map(brand_name => {
+    const row = rows.find(r => r.brand_name === brand_name);
+    return {
+      brand_name,
+      logo_url: row?.logo_url
+    };
+  });
+  
   const { error: brandError } = await supabase
     .from('brands')
     .upsert(brandsToInsert, { onConflict: 'brand_name' });
@@ -109,12 +121,12 @@ async function processInsights(supabase: any, rows: InsightRow[]) {
 
   const brandMap = new Map(brands?.map(b => [b.brand_name, b.id]) || []);
 
-  // Process insights
+  // Process insights with theme metadata
   for (const row of rows) {
-    const brandId = brandMap.get(row.brand);
+    const brandId = brandMap.get(row.brand_name);
     
     if (!brandId) {
-      console.error('Brand not found for:', row.brand);
+      console.error('Brand not found for:', row.brand_name);
       stats.errors++;
       continue;
     }
@@ -124,10 +136,14 @@ async function processInsights(supabase: any, rows: InsightRow[]) {
       .upsert({
         creator_id: row.creator_id,
         brand_id: brandId,
-        theme_id: row.theme,
+        theme_id: row.theme_id,
+        theme_title: row.theme_title,
+        theme_icon: row.icon,
+        theme_tagline: row.tagline,
+        theme_color: row.color,
         metric: row.metric,
         value: row.value
-      }, { onConflict: 'creator_id,brand_id,theme_id' });
+      }, { onConflict: 'creator_id,brand_id,theme_id,metric' });
 
     if (error) {
       console.error('Error upserting insight:', error);
@@ -147,7 +163,7 @@ async function processLogos(supabase: any, rows: LogoRow[]) {
     const { error } = await supabase
       .from('brands')
       .upsert({
-        brand_name: row.brand,
+        brand_name: row.brand_name,
         logo_url: row.logo_url
       }, { onConflict: 'brand_name' });
 

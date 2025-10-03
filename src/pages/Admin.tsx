@@ -3,16 +3,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { useCSVData } from "@/contexts/CSVDataContext";
 import { parseInsightsCSV, parseBrandLogosCSV } from "@/utils/csvParser";
 import { Upload, Database, ImageIcon } from "lucide-react";
 import wishLinkLogo from "@/assets/wishlink-logo.png";
+import { supabase } from "@/integrations/supabase/client";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
-const Admin = () => {
+const AdminContent = () => {
   const [insightsCSV, setInsightsCSV] = useState("");
   const [logosCSV, setLogosCSV] = useState("");
   const [loading, setLoading] = useState(false);
-  const { setInsights, setBrandLogos } = useCSVData();
   const { toast } = useToast();
 
   const handleInsightsUpload = async () => {
@@ -39,10 +39,21 @@ const Admin = () => {
         return;
       }
 
-      setInsights(data);
+      // Call the Edge Function to upload insights
+      const { data: result, error } = await supabase.functions.invoke('admin-bulk-upload', {
+        body: {
+          csvType: 'insights',
+          csvData: data
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
       toast({
         title: "Success!",
-        description: `Uploaded ${data.length} insights records`,
+        description: `Created: ${result.created}, Updated: ${result.updated}, Errors: ${result.errors}`,
       });
       setInsightsCSV("");
     } catch (error) {
@@ -80,10 +91,27 @@ const Admin = () => {
         return;
       }
 
-      setBrandLogos(data);
+      // Convert data object to array format for Edge Function
+      const logosArray = Object.entries(data).map(([brand_name, logo_url]) => ({
+        brand_name,
+        logo_url
+      }));
+
+      // Call the Edge Function to upload logos
+      const { data: result, error } = await supabase.functions.invoke('admin-bulk-upload', {
+        body: {
+          csvType: 'logos',
+          csvData: logosArray
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
       toast({
         title: "Success!",
-        description: `Uploaded ${Object.keys(data).length} brand logo mappings`,
+        description: `Created: ${result.created}, Updated: ${result.updated}, Errors: ${result.errors}`,
       });
       setLogosCSV("");
     } catch (error) {
@@ -200,6 +228,14 @@ const Admin = () => {
         </Card>
       </div>
     </div>
+  );
+};
+
+const Admin = () => {
+  return (
+    <ProtectedRoute requireAdmin>
+      <AdminContent />
+    </ProtectedRoute>
   );
 };
 
