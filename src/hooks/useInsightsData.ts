@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useCSVData } from '@/contexts/CSVDataContext';
 import { InsightRow as CSVInsightRow } from '@/utils/csvParser';
+import { supabase } from '@/integrations/supabase/client';
 
 // Types for our data structure - extending CSV types for backward compatibility
 export interface InsightRow {
@@ -77,10 +78,39 @@ export const useInsightsData = (creatorId: string) => {
       setError(null);
       
       try {
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        if (hasInsightsData) {
+        // First, try to fetch from Supabase
+        const { data: dbInsights, error: dbError } = await supabase
+          .from('creator_brand_insights')
+          .select(`
+            creator_id,
+            theme_id,
+            metric,
+            value,
+            brands (
+              brand_name,
+              logo_url
+            )
+          `)
+          .eq('creator_id', creatorId);
+
+        if (dbError) {
+          console.error('Error fetching from Supabase:', dbError);
+          throw dbError;
+        }
+
+        if (dbInsights && dbInsights.length > 0) {
+          // Transform Supabase data to InsightRow format
+          const transformedData: InsightRow[] = dbInsights.map(insight => ({
+            creator_id: insight.creator_id,
+            theme_id: insight.theme_id,
+            brand_name: (insight.brands as any)?.brand_name || '',
+            logo_url: (insight.brands as any)?.logo_url,
+            metric: insight.metric,
+            value: insight.value
+          }));
+          console.log('Fetched data from Supabase for creator:', creatorId, transformedData);
+          setInsights(transformedData);
+        } else if (hasInsightsData) {
           // Use CSV data if available
           const filteredData = csvInsights.filter(row => row.creator_id === creatorId);
           console.log('Filtered CSV data for creator:', creatorId, filteredData);
