@@ -5,13 +5,13 @@ interface BrandData {
   logo_url?: string;
   metric: string;
   value: number;
-  color?: string;
 }
 
 interface BrandInsightCardProps {
-  icon: string;
+  icon: any;
   title: string;
   tagline: string;
+  color: string;
   brands: BrandData[];
   delay?: number;
 }
@@ -52,7 +52,7 @@ const getInitials = (name: string): string => {
     .toUpperCase();
 };
 
-const BrandInsightCard = ({ icon, title, tagline, brands, delay = 0 }: BrandInsightCardProps) => {
+const BrandInsightCard = ({ icon: Icon, title, tagline, color, brands, delay = 0 }: BrandInsightCardProps) => {
   // Calculate max value for proper bar scaling
   const maxValue = brands.length > 0 ? Math.max(...brands.map(b => b.value)) : 0;
 
@@ -64,7 +64,7 @@ const BrandInsightCard = ({ icon, title, tagline, brands, delay = 0 }: BrandInsi
       {/* Card Header */}
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-2">
-          <span className="text-2xl">{icon}</span>
+          <Icon className="w-6 h-6" style={{ color }} />
           <h3 className="text-lg font-semibold text-foreground">{title}</h3>
         </div>
         <p className="text-sm text-muted-foreground">
@@ -116,7 +116,7 @@ const BrandInsightCard = ({ icon, title, tagline, brands, delay = 0 }: BrandInsi
                     className="h-full bg-primary rounded-full bar-fill"
                     style={{ 
                       width: `${barWidth}%`,
-                      backgroundColor: brand.color || 'hsl(var(--primary))',
+                      backgroundColor: color,
                       animationDelay: `${delay + (index * 100)}ms`
                     }}
                   />

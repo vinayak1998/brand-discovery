@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { AlertCircle } from 'lucide-react';
+import { THEMES, getTheme } from '@/config/themes';
 
 const Index = () => {
   const [searchParams] = useSearchParams();
@@ -27,32 +28,7 @@ const Index = () => {
   // Check if this is an invalid creator ID (no data exists)
   const isInvalidCreator = !loading && !error && !hasData && creatorId && creatorId !== '0000000000';
 
-  const themes = [
-    {
-      id: 'top_trending' as const,
-      title: 'Top Trending Brands',
-      icon: '🏆',
-      tagline: 'Ride the trend wave!',
-    },
-    {
-      id: 'best_reach' as const,
-      title: 'Best Reach Brands',
-      icon: '📈',
-      tagline: 'Maximize your reach!',
-    },
-    {
-      id: 'fastest_selling' as const,
-      title: 'Fastest Selling Brands',
-      icon: '⚡',
-      tagline: 'Turn views into sales!',
-    },
-    {
-      id: 'highest_commission' as const,
-      title: 'Highest Commission Brands',
-      icon: '💰',
-      tagline: 'Earn more per post!',
-    },
-  ];
+  const themes = Object.values(THEMES);
 
   if (loading) {
     return (
@@ -164,12 +140,12 @@ const Index = () => {
                 icon={theme.icon}
                 title={theme.title}
                 tagline={theme.tagline}
+                color={theme.color}
                 brands={themeBrands.map(insight => ({
                   brand_name: insight.brand_name,
                   logo_url: insight.logo_url,
                   metric: insight.metric,
                   value: insight.value,
-                  color: insight.color,
                 }))}
                 delay={index * 100}
               />
