@@ -45,11 +45,7 @@ export type Database = {
           creator_id: string
           id: string
           metric: string
-          theme_color: string | null
-          theme_icon: string | null
           theme_id: string
-          theme_tagline: string | null
-          theme_title: string | null
           updated_at: string | null
           value: number
         }
@@ -59,11 +55,7 @@ export type Database = {
           creator_id: string
           id?: string
           metric: string
-          theme_color?: string | null
-          theme_icon?: string | null
           theme_id: string
-          theme_tagline?: string | null
-          theme_title?: string | null
           updated_at?: string | null
           value: number
         }
@@ -73,11 +65,7 @@ export type Database = {
           creator_id?: string
           id?: string
           metric?: string
-          theme_color?: string | null
-          theme_icon?: string | null
           theme_id?: string
-          theme_tagline?: string | null
-          theme_title?: string | null
           updated_at?: string | null
           value?: number
         }

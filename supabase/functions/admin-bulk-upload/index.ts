@@ -8,10 +8,6 @@ const corsHeaders = {
 interface InsightRow {
   creator_id: string;
   theme_id: string;
-  theme_title: string;
-  icon: string;
-  tagline: string;
-  color: string;
   brand_name: string;
   logo_url: string;
   metric: string;
@@ -137,10 +133,6 @@ async function processInsights(supabase: any, rows: InsightRow[]) {
         creator_id: row.creator_id,
         brand_id: brandId,
         theme_id: row.theme_id,
-        theme_title: row.theme_title,
-        theme_icon: row.icon,
-        theme_tagline: row.tagline,
-        theme_color: row.color,
         metric: row.metric,
         value: row.value
       }, { onConflict: 'creator_id,brand_id,theme_id,metric' });
