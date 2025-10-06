@@ -1,4 +1,1 @@
 project_id = "svdswlryhqmdzmilslyz"
-
-[functions.sync-redash-brands]
-verify_jwt = false
