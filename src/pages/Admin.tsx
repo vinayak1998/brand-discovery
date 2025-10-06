@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,6 +14,17 @@ const AdminContent = () => {
   const [logosCSV, setLogosCSV] = useState("");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+
+  const autoSynced = useRef(false);
+  useEffect(() => {
+    if (!autoSynced.current) {
+      autoSynced.current = true;
+      // Auto-invoke Redash sync on page load
+      supabase.functions.invoke('sync-redash-brands').catch((e) =>
+        console.error('Auto sync error:', e)
+      );
+    }
+  }, []);
 
   const handleInsightsUpload = async () => {
     if (!insightsCSV.trim()) {
