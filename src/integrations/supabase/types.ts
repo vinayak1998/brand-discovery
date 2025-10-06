@@ -16,36 +16,39 @@ export type Database = {
     Tables: {
       brands: {
         Row: {
+          brand_id: number
           brand_name: string
           created_at: string | null
-          id: string
           logo_url: string | null
           updated_at: string | null
+          uuid: string
           website_url: string | null
         }
         Insert: {
+          brand_id: number
           brand_name: string
           created_at?: string | null
-          id?: string
           logo_url?: string | null
           updated_at?: string | null
+          uuid?: string
           website_url?: string | null
         }
         Update: {
+          brand_id?: number
           brand_name?: string
           created_at?: string | null
-          id?: string
           logo_url?: string | null
           updated_at?: string | null
+          uuid?: string
           website_url?: string | null
         }
         Relationships: []
       }
       creator_brand_insights: {
         Row: {
-          brand_id: string
+          brand_id: number
           created_at: string | null
-          creator_id: string
+          creator_id: number
           id: string
           metric: string
           theme_id: string
@@ -53,9 +56,9 @@ export type Database = {
           value: number
         }
         Insert: {
-          brand_id: string
+          brand_id: number
           created_at?: string | null
-          creator_id: string
+          creator_id: number
           id?: string
           metric: string
           theme_id: string
@@ -63,9 +66,9 @@ export type Database = {
           value: number
         }
         Update: {
-          brand_id?: string
+          brand_id?: number
           created_at?: string | null
-          creator_id?: string
+          creator_id?: number
           id?: string
           metric?: string
           theme_id?: string
@@ -78,41 +81,44 @@ export type Database = {
             columns: ["brand_id"]
             isOneToOne: false
             referencedRelation: "brands"
-            referencedColumns: ["id"]
+            referencedColumns: ["brand_id"]
           },
           {
             foreignKeyName: "creator_brand_insights_creator_id_fkey"
             columns: ["creator_id"]
             isOneToOne: false
             referencedRelation: "creators"
-            referencedColumns: ["id"]
+            referencedColumns: ["creator_id"]
           },
         ]
       }
       creators: {
         Row: {
           created_at: string | null
-          id: string
-          name: string | null
+          creator_id: number
+          name: string
           updated_at: string | null
+          uuid: string
         }
         Insert: {
           created_at?: string | null
-          id?: string
-          name?: string | null
+          creator_id: number
+          name: string
           updated_at?: string | null
+          uuid?: string
         }
         Update: {
           created_at?: string | null
-          id?: string
-          name?: string | null
+          creator_id?: number
+          name?: string
           updated_at?: string | null
+          uuid?: string
         }
         Relationships: []
       }
       survey_responses: {
         Row: {
-          creator_id: string
+          creator_id: number
           id: string
           q1_useful: string | null
           q1_value_rating: number | null
@@ -125,7 +131,7 @@ export type Database = {
           submitted_at: string | null
         }
         Insert: {
-          creator_id: string
+          creator_id: number
           id?: string
           q1_useful?: string | null
           q1_value_rating?: number | null
@@ -138,7 +144,7 @@ export type Database = {
           submitted_at?: string | null
         }
         Update: {
-          creator_id?: string
+          creator_id?: number
           id?: string
           q1_useful?: string | null
           q1_value_rating?: number | null
@@ -156,7 +162,7 @@ export type Database = {
             columns: ["creator_id"]
             isOneToOne: false
             referencedRelation: "creators"
-            referencedColumns: ["id"]
+            referencedColumns: ["creator_id"]
           },
         ]
       }

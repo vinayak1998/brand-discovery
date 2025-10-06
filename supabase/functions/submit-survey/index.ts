@@ -45,8 +45,8 @@ Deno.serve(async (req) => {
     // Verify creator exists
     const { data: creator, error: creatorError } = await supabase
       .from('creators')
-      .select('id')
-      .eq('id', creator_id)
+      .select('creator_id')
+      .eq('creator_id', creator_id)
       .maybeSingle();
 
     if (creatorError) {

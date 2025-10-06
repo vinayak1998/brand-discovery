@@ -1,16 +1,18 @@
 export interface InsightRow {
-  creator_id: string;
-  brand_name: string;
+  creator_id: number;
+  brand_id: number;
   theme_id: string;
   metric: string;
   value: number;
 }
 
 export interface CreatorRow {
+  creator_id: number;
   name: string;
 }
 
 export interface BrandRow {
+  brand_id: number;
   brand_name: string;
   logo_url?: string;
   website_url?: string;
@@ -48,7 +50,7 @@ class CSVParser {
   }
 
   private static validateInsightsHeaders(headers: string[]): string[] {
-    const requiredHeaders = ['creator_id', 'brand_name', 'theme_id', 'metric', 'value'];
+    const requiredHeaders = ['creator_id', 'brand_id', 'theme_id', 'metric', 'value'];
     const missingHeaders = requiredHeaders.filter(header => 
       !headers.some(h => h.toLowerCase() === header.toLowerCase())
     );
@@ -56,7 +58,7 @@ class CSVParser {
   }
 
   private static validateCreatorsHeaders(headers: string[]): string[] {
-    const requiredHeaders = ['name'];
+    const requiredHeaders = ['creator_id', 'name'];
     const missingHeaders = requiredHeaders.filter(header => 
       !headers.some(h => h.toLowerCase() === header.toLowerCase())
     );
@@ -64,7 +66,7 @@ class CSVParser {
   }
 
   private static validateBrandsHeaders(headers: string[]): string[] {
-    const requiredHeaders = ['brand_name'];
+    const requiredHeaders = ['brand_id', 'brand_name'];
     const missingHeaders = requiredHeaders.filter(header => 
       !headers.some(h => h.toLowerCase() === header.toLowerCase())
     );
@@ -117,14 +119,14 @@ class CSVParser {
 
         try {
           const insight: InsightRow = {
-            creator_id: row[headerMap['creator_id']] || '',
-            brand_name: row[headerMap['brand_name']] || '',
+            creator_id: parseInt(row[headerMap['creator_id']]) || 0,
+            brand_id: parseInt(row[headerMap['brand_id']]) || 0,
             theme_id: row[headerMap['theme_id']] || '',
             metric: row[headerMap['metric']] || '',
             value: parseFloat(row[headerMap['value']]) || 0
           };
 
-          if (!insight.creator_id || !insight.brand_name || !insight.theme_id) {
+          if (!insight.creator_id || !insight.brand_id || !insight.theme_id) {
             errors.push(`Row ${i + 1}: Missing required data`);
             continue;
           }
@@ -186,11 +188,12 @@ class CSVParser {
 
         try {
           const creator: CreatorRow = {
+            creator_id: parseInt(row[headerMap['creator_id']]) || 0,
             name: row[headerMap['name']] || ''
           };
 
-          if (!creator.name) {
-            errors.push(`Row ${i + 1}: Missing name`);
+          if (!creator.creator_id || !creator.name) {
+            errors.push(`Row ${i + 1}: Missing creator_id or name`);
             continue;
           }
 
@@ -251,13 +254,14 @@ class CSVParser {
 
         try {
           const brand: BrandRow = {
+            brand_id: parseInt(row[headerMap['brand_id']]) || 0,
             brand_name: row[headerMap['brand_name']] || '',
             logo_url: row[headerMap['logo_url']] || undefined,
             website_url: row[headerMap['website_url']] || undefined
           };
 
-          if (!brand.brand_name) {
-            errors.push(`Row ${i + 1}: Missing brand_name`);
+          if (!brand.brand_id || !brand.brand_name) {
+            errors.push(`Row ${i + 1}: Missing brand_id or brand_name`);
             continue;
           }
 

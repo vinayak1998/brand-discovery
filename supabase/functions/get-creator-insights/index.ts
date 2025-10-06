@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
         metric,
         value,
         brands (
-          id,
+          brand_id,
           brand_name,
           logo_url
         )

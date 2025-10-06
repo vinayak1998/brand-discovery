@@ -6,18 +6,20 @@ const corsHeaders = {
 };
 
 interface InsightRow {
-  creator_id: string;
-  brand_name: string;
+  creator_id: number;
+  brand_id: number;
   theme_id: string;
   metric: string;
   value: number;
 }
 
 interface CreatorRow {
+  creator_id: number;
   name: string;
 }
 
 interface BrandRow {
+  brand_id: number;
   brand_name: string;
   logo_url?: string;
   website_url?: string;
@@ -81,7 +83,10 @@ async function processCreators(supabase: any, rows: CreatorRow[]) {
   for (const row of rows) {
     const { error } = await supabase
       .from('creators')
-      .upsert({ name: row.name }, { onConflict: 'name', ignoreDuplicates: false });
+      .upsert({ 
+        creator_id: row.creator_id,
+        name: row.name 
+      }, { onConflict: 'creator_id', ignoreDuplicates: false });
 
     if (error) {
       console.error('Error upserting creator:', error);
@@ -101,10 +106,11 @@ async function processBrands(supabase: any, rows: BrandRow[]) {
     const { error } = await supabase
       .from('brands')
       .upsert({
+        brand_id: row.brand_id,
         brand_name: row.brand_name,
         logo_url: row.logo_url,
         website_url: row.website_url
-      }, { onConflict: 'brand_name', ignoreDuplicates: false });
+      }, { onConflict: 'brand_id', ignoreDuplicates: false });
 
     if (error) {
       console.error('Error upserting brand:', error);
@@ -120,29 +126,12 @@ async function processBrands(supabase: any, rows: BrandRow[]) {
 async function processInsights(supabase: any, rows: InsightRow[]) {
   const stats = { created: 0, updated: 0, errors: 0 };
 
-  // Fetch brand IDs for mapping
-  const brandNames = [...new Set(rows.map(r => r.brand_name))];
-  const { data: brands } = await supabase
-    .from('brands')
-    .select('id, brand_name')
-    .in('brand_name', brandNames);
-
-  const brandMap = new Map(brands?.map(b => [b.brand_name, b.id]) || []);
-
   for (const row of rows) {
-    const brandId = brandMap.get(row.brand_name);
-    
-    if (!brandId) {
-      console.error('Brand not found for:', row.brand_name);
-      stats.errors++;
-      continue;
-    }
-
     const { error } = await supabase
       .from('creator_brand_insights')
       .upsert({
         creator_id: row.creator_id,
-        brand_id: brandId,
+        brand_id: row.brand_id,
         theme_id: row.theme_id,
         metric: row.metric,
         value: row.value

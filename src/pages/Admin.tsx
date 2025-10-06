@@ -203,7 +203,7 @@ const AdminContent = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <Textarea
-                placeholder="Paste creators CSV data here...&#10;name"
+                placeholder="Paste creators CSV data here...&#10;creator_id,name"
                 value={creatorsCSV}
                 onChange={(e) => setCreatorsCSV(e.target.value)}
                 rows={10}
@@ -233,7 +233,7 @@ const AdminContent = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <Textarea
-                placeholder="Paste brands CSV data here...&#10;brand_name,logo_url,website_url"
+                placeholder="Paste brands CSV data here...&#10;brand_id,brand_name,logo_url,website_url"
                 value={brandsCSV}
                 onChange={(e) => setBrandsCSV(e.target.value)}
                 rows={10}
@@ -263,7 +263,7 @@ const AdminContent = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <Textarea
-                placeholder="Paste insights CSV data here...&#10;creator_id,brand_name,theme_id,metric,value"
+                placeholder="Paste insights CSV data here...&#10;creator_id,brand_id,theme_id,metric,value"
                 value={insightsCSV}
                 onChange={(e) => setInsightsCSV(e.target.value)}
                 rows={10}
@@ -289,25 +289,28 @@ const AdminContent = () => {
             <div>
               <p className="font-semibold mb-2">Creators CSV columns:</p>
               <code className="text-xs bg-muted p-2 rounded block">
-                name
+                creator_id,name
               </code>
+              <p className="text-xs text-muted-foreground mt-1">
+                (creator_id must be a long integer)
+              </p>
             </div>
             <div>
               <p className="font-semibold mb-2">Brands CSV columns:</p>
               <code className="text-xs bg-muted p-2 rounded block">
-                brand_name,logo_url,website_url
+                brand_id,brand_name,logo_url,website_url
               </code>
               <p className="text-xs text-muted-foreground mt-1">
-                (logo_url and website_url are optional)
+                (brand_id must be a long integer; logo_url and website_url are optional)
               </p>
             </div>
             <div>
               <p className="font-semibold mb-2">Creator Brand Insights CSV columns:</p>
               <code className="text-xs bg-muted p-2 rounded block">
-                creator_id,brand_name,theme_id,metric,value
+                creator_id,brand_id,theme_id,metric,value
               </code>
               <p className="text-xs text-muted-foreground mt-1">
-                (Make sure creators and brands exist before uploading insights)
+                (Both creator_id and brand_id must be long integers; make sure creators and brands exist before uploading insights)
               </p>
             </div>
           </CardContent>
