@@ -7,16 +7,20 @@ const corsHeaders = {
 
 interface InsightRow {
   creator_id: string;
-  theme_id: string;
   brand_name: string;
-  logo_url: string;
+  theme_id: string;
   metric: string;
   value: number;
 }
 
-interface LogoRow {
+interface CreatorRow {
+  name: string;
+}
+
+interface BrandRow {
   brand_name: string;
-  logo_url: string;
+  logo_url?: string;
+  website_url?: string;
 }
 
 Deno.serve(async (req) => {
@@ -42,13 +46,15 @@ Deno.serve(async (req) => {
 
     let stats = { created: 0, updated: 0, errors: 0 };
 
-    if (csvType === 'insights') {
+    if (csvType === 'creators') {
+      stats = await processCreators(supabase, csvData);
+    } else if (csvType === 'brands') {
+      stats = await processBrands(supabase, csvData);
+    } else if (csvType === 'insights') {
       stats = await processInsights(supabase, csvData);
-    } else if (csvType === 'logos') {
-      stats = await processLogos(supabase, csvData);
     } else {
       return new Response(
-        JSON.stringify({ error: 'Invalid csvType. Must be "insights" or "logos"' }),
+        JSON.stringify({ error: 'Invalid csvType. Must be "creators", "brands", or "insights"' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -56,7 +62,7 @@ Deno.serve(async (req) => {
     console.log('Bulk upload complete:', stats);
 
     return new Response(
-      JSON.stringify({ success: true, stats }),
+      JSON.stringify(stats),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
@@ -69,55 +75,60 @@ Deno.serve(async (req) => {
   }
 });
 
+async function processCreators(supabase: any, rows: CreatorRow[]) {
+  const stats = { created: 0, updated: 0, errors: 0 };
+
+  for (const row of rows) {
+    const { error } = await supabase
+      .from('creators')
+      .upsert({ name: row.name }, { onConflict: 'name', ignoreDuplicates: false });
+
+    if (error) {
+      console.error('Error upserting creator:', error);
+      stats.errors++;
+    } else {
+      stats.created++;
+    }
+  }
+
+  return stats;
+}
+
+async function processBrands(supabase: any, rows: BrandRow[]) {
+  const stats = { created: 0, updated: 0, errors: 0 };
+
+  for (const row of rows) {
+    const { error } = await supabase
+      .from('brands')
+      .upsert({
+        brand_name: row.brand_name,
+        logo_url: row.logo_url,
+        website_url: row.website_url
+      }, { onConflict: 'brand_name', ignoreDuplicates: false });
+
+    if (error) {
+      console.error('Error upserting brand:', error);
+      stats.errors++;
+    } else {
+      stats.created++;
+    }
+  }
+
+  return stats;
+}
+
 async function processInsights(supabase: any, rows: InsightRow[]) {
   const stats = { created: 0, updated: 0, errors: 0 };
-  const creatorIds = new Set<string>();
-  const brandNames = new Set<string>();
-
-  // Collect unique creator IDs and brand names
-  rows.forEach(row => {
-    creatorIds.add(row.creator_id);
-    brandNames.add(row.brand_name);
-  });
-
-  // Upsert creators
-  const creatorsToInsert = Array.from(creatorIds).map(id => ({ id }));
-  const { error: creatorError } = await supabase
-    .from('creators')
-    .upsert(creatorsToInsert, { onConflict: 'id' });
-
-  if (creatorError) {
-    console.error('Error upserting creators:', creatorError);
-    stats.errors += creatorIds.size;
-  }
-
-  // Upsert brands with logo URLs
-  const brandsToInsert = Array.from(new Set(rows.map(r => r.brand_name))).map(brand_name => {
-    const row = rows.find(r => r.brand_name === brand_name);
-    return {
-      brand_name,
-      logo_url: row?.logo_url
-    };
-  });
-  
-  const { error: brandError } = await supabase
-    .from('brands')
-    .upsert(brandsToInsert, { onConflict: 'brand_name' });
-
-  if (brandError) {
-    console.error('Error upserting brands:', brandError);
-    stats.errors += brandNames.size;
-  }
 
   // Fetch brand IDs for mapping
+  const brandNames = [...new Set(rows.map(r => r.brand_name))];
   const { data: brands } = await supabase
     .from('brands')
     .select('id, brand_name')
-    .in('brand_name', Array.from(brandNames));
+    .in('brand_name', brandNames);
 
   const brandMap = new Map(brands?.map(b => [b.brand_name, b.id]) || []);
 
-  // Process insights with theme metadata
   for (const row of rows) {
     const brandId = brandMap.get(row.brand_name);
     
@@ -135,32 +146,10 @@ async function processInsights(supabase: any, rows: InsightRow[]) {
         theme_id: row.theme_id,
         metric: row.metric,
         value: row.value
-      }, { onConflict: 'creator_id,brand_id,theme_id,metric' });
+      }, { onConflict: 'creator_id,brand_id,theme_id,metric', ignoreDuplicates: false });
 
     if (error) {
       console.error('Error upserting insight:', error);
-      stats.errors++;
-    } else {
-      stats.created++;
-    }
-  }
-
-  return stats;
-}
-
-async function processLogos(supabase: any, rows: LogoRow[]) {
-  const stats = { created: 0, updated: 0, errors: 0 };
-
-  for (const row of rows) {
-    const { error } = await supabase
-      .from('brands')
-      .upsert({
-        brand_name: row.brand_name,
-        logo_url: row.logo_url
-      }, { onConflict: 'brand_name' });
-
-    if (error) {
-      console.error('Error upserting brand logo:', error);
       stats.errors++;
     } else {
       stats.created++;

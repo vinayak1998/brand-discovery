@@ -1,14 +1,19 @@
 export interface InsightRow {
   creator_id: string;
-  theme_id: 'top_trending' | 'best_reach' | 'high_engagement' | 'top_spending';
-  theme_title: string;
-  icon: string;
-  tagline: string;
-  color: string;
   brand_name: string;
-  logo_url: string;
+  theme_id: string;
   metric: string;
   value: number;
+}
+
+export interface CreatorRow {
+  name: string;
+}
+
+export interface BrandRow {
+  brand_name: string;
+  logo_url?: string;
+  website_url?: string;
 }
 
 export interface SurveyResponse {
@@ -43,15 +48,26 @@ class CSVParser {
   }
 
   private static validateInsightsHeaders(headers: string[]): string[] {
-    const requiredHeaders = [
-      'creator_id', 'theme_id', 'theme_title', 'icon', 'tagline', 
-      'color', 'brand_name', 'logo_url', 'metric', 'value'
-    ];
-    
+    const requiredHeaders = ['creator_id', 'brand_name', 'theme_id', 'metric', 'value'];
     const missingHeaders = requiredHeaders.filter(header => 
       !headers.some(h => h.toLowerCase() === header.toLowerCase())
     );
-    
+    return missingHeaders;
+  }
+
+  private static validateCreatorsHeaders(headers: string[]): string[] {
+    const requiredHeaders = ['name'];
+    const missingHeaders = requiredHeaders.filter(header => 
+      !headers.some(h => h.toLowerCase() === header.toLowerCase())
+    );
+    return missingHeaders;
+  }
+
+  private static validateBrandsHeaders(headers: string[]): string[] {
+    const requiredHeaders = ['brand_name'];
+    const missingHeaders = requiredHeaders.filter(header => 
+      !headers.some(h => h.toLowerCase() === header.toLowerCase())
+    );
     return missingHeaders;
   }
 
@@ -87,48 +103,165 @@ class CSVParser {
         };
       }
 
-      // Create header index map
       const headerMap: Record<string, number> = {};
       headers.forEach((header, index) => {
         headerMap[header] = index;
       });
 
-      // Parse data rows
       for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
         
         if (row.length === 0 || row.every(cell => !cell.trim())) {
-          continue; // Skip empty rows
+          continue;
         }
 
         try {
           const insight: InsightRow = {
             creator_id: row[headerMap['creator_id']] || '',
-            theme_id: row[headerMap['theme_id']] as InsightRow['theme_id'],
-            theme_title: row[headerMap['theme_title']] || '',
-            icon: row[headerMap['icon']] || '',
-            tagline: row[headerMap['tagline']] || '',
-            color: row[headerMap['color']] || '',
             brand_name: row[headerMap['brand_name']] || '',
-            logo_url: row[headerMap['logo_url']] || '',
+            theme_id: row[headerMap['theme_id']] || '',
             metric: row[headerMap['metric']] || '',
             value: parseFloat(row[headerMap['value']]) || 0
           };
 
-          // Validate required fields
-          if (!insight.creator_id || !insight.theme_id || !insight.brand_name) {
-            errors.push(`Row ${i + 1}: Missing required data (creator_id, theme_id, or brand_name)`);
-            continue;
-          }
-
-          // Validate theme_id
-          const validThemes = ['top_trending', 'best_reach', 'high_engagement', 'top_spending'];
-          if (!validThemes.includes(insight.theme_id)) {
-            errors.push(`Row ${i + 1}: Invalid theme_id '${insight.theme_id}'. Must be one of: ${validThemes.join(', ')}`);
+          if (!insight.creator_id || !insight.brand_name || !insight.theme_id) {
+            errors.push(`Row ${i + 1}: Missing required data`);
             continue;
           }
 
           data.push(insight);
+        } catch (error) {
+          errors.push(`Row ${i + 1}: Error parsing data - ${error}`);
+        }
+      }
+
+      return {
+        data,
+        errors,
+        success: errors.length === 0 && data.length > 0
+      };
+
+    } catch (error) {
+      return {
+        data: [],
+        errors: [`Failed to parse CSV: ${error}`],
+        success: false
+      };
+    }
+  }
+
+  static parseCreatorsCSV(csvText: string): CSVParseResult<CreatorRow> {
+    const errors: string[] = [];
+    const data: CreatorRow[] = [];
+
+    try {
+      const rows = this.parseCSVText(csvText);
+      
+      if (rows.length === 0) {
+        return { data: [], errors: ['CSV file is empty'], success: false };
+      }
+
+      const headers = rows[0].map(h => h.toLowerCase());
+      const missingHeaders = this.validateCreatorsHeaders(headers);
+      
+      if (missingHeaders.length > 0) {
+        return {
+          data: [],
+          errors: [`Missing required columns: ${missingHeaders.join(', ')}`],
+          success: false
+        };
+      }
+
+      const headerMap: Record<string, number> = {};
+      headers.forEach((header, index) => {
+        headerMap[header] = index;
+      });
+
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        
+        if (row.length === 0 || row.every(cell => !cell.trim())) {
+          continue;
+        }
+
+        try {
+          const creator: CreatorRow = {
+            name: row[headerMap['name']] || ''
+          };
+
+          if (!creator.name) {
+            errors.push(`Row ${i + 1}: Missing name`);
+            continue;
+          }
+
+          data.push(creator);
+        } catch (error) {
+          errors.push(`Row ${i + 1}: Error parsing data - ${error}`);
+        }
+      }
+
+      return {
+        data,
+        errors,
+        success: errors.length === 0 && data.length > 0
+      };
+
+    } catch (error) {
+      return {
+        data: [],
+        errors: [`Failed to parse CSV: ${error}`],
+        success: false
+      };
+    }
+  }
+
+  static parseBrandsCSV(csvText: string): CSVParseResult<BrandRow> {
+    const errors: string[] = [];
+    const data: BrandRow[] = [];
+
+    try {
+      const rows = this.parseCSVText(csvText);
+      
+      if (rows.length === 0) {
+        return { data: [], errors: ['CSV file is empty'], success: false };
+      }
+
+      const headers = rows[0].map(h => h.toLowerCase());
+      const missingHeaders = this.validateBrandsHeaders(headers);
+      
+      if (missingHeaders.length > 0) {
+        return {
+          data: [],
+          errors: [`Missing required columns: ${missingHeaders.join(', ')}`],
+          success: false
+        };
+      }
+
+      const headerMap: Record<string, number> = {};
+      headers.forEach((header, index) => {
+        headerMap[header] = index;
+      });
+
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        
+        if (row.length === 0 || row.every(cell => !cell.trim())) {
+          continue;
+        }
+
+        try {
+          const brand: BrandRow = {
+            brand_name: row[headerMap['brand_name']] || '',
+            logo_url: row[headerMap['logo_url']] || undefined,
+            website_url: row[headerMap['website_url']] || undefined
+          };
+
+          if (!brand.brand_name) {
+            errors.push(`Row ${i + 1}: Missing brand_name`);
+            continue;
+          }
+
+          data.push(brand);
         } catch (error) {
           errors.push(`Row ${i + 1}: Error parsing data - ${error}`);
         }
@@ -251,58 +384,19 @@ class CSVParser {
   }
 
   static parseBrandLogosCSV(csvText: string): { data: Record<string, string>; errors: string[] } {
-    const errors: string[] = [];
+    // Legacy function for backward compatibility
+    const result = this.parseBrandsCSV(csvText);
     const data: Record<string, string> = {};
-
-    try {
-      const rows = this.parseCSVText(csvText);
-      
-      if (rows.length === 0) {
-        return { data: {}, errors: ['CSV file is empty'] };
-      }
-
-      const headers = rows[0].map(h => h.toLowerCase());
-      
-      if (!headers.includes('brand_name') || !headers.includes('logo_url')) {
-        return {
-          data: {},
-          errors: ['Missing required columns: brand_name, logo_url']
-        };
-      }
-
-      const brandNameIndex = headers.indexOf('brand_name');
-      const logoUrlIndex = headers.indexOf('logo_url');
-
-      for (let i = 1; i < rows.length; i++) {
-        const row = rows[i];
-        
-        if (row.length === 0 || row.every(cell => !cell.trim())) {
-          continue;
-        }
-
-        const brandName = row[brandNameIndex];
-        const logoUrl = row[logoUrlIndex];
-
-        if (brandName) {
-          data[brandName] = logoUrl || '';
-        }
-      }
-
-      return {
-        data,
-        errors
-      };
-
-    } catch (error) {
-      return {
-        data: {},
-        errors: [`Failed to parse CSV: ${error}`]
-      };
-    }
+    result.data.forEach(brand => {
+      data[brand.brand_name] = brand.logo_url || '';
+    });
+    return { data, errors: result.errors };
   }
 }
 
 export { CSVParser };
 export const parseInsightsCSV = CSVParser.parseInsightsCSV.bind(CSVParser);
+export const parseCreatorsCSV = CSVParser.parseCreatorsCSV.bind(CSVParser);
+export const parseBrandsCSV = CSVParser.parseBrandsCSV.bind(CSVParser);
 export const parseSurveyCSV = CSVParser.parseSurveyCSV.bind(CSVParser);
 export const parseBrandLogosCSV = CSVParser.parseBrandLogosCSV.bind(CSVParser);
