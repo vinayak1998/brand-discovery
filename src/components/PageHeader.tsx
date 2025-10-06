@@ -19,9 +19,9 @@ const PageHeader = ({ lastUpdated }: PageHeaderProps) => {
             </div>
             
             <div className="flex-1">
-              <h1 className="text-3xl md:text-4xl font-bold mb-2">Your Brand Insights</h1>
+              <h1 className="text-3xl md:text-4xl font-bold mb-2">Curated Brands for You!</h1>
               <p className="text-primary-foreground/90 text-lg mb-2">
-                Data-driven recommendations to help you earn more on Wishlink
+                Boost your reach & earnings with data-driven brand picks
               </p>
               {lastUpdated && (
                 <p className="text-primary-foreground/70 text-sm">
