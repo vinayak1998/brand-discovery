@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useCSVData } from '@/contexts/CSVDataContext';
 import { InsightRow as CSVInsightRow } from '@/utils/csvParser';
 import { supabase } from '@/integrations/supabase/client';
+import { format } from 'date-fns';
 
 // Types for our data structure - extending CSV types for backward compatibility
 export interface InsightRow {
@@ -71,6 +72,7 @@ export const useInsightsData = (creatorId: string) => {
   const [insights, setInsights] = useState<InsightRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const { insights: csvInsights, hasInsightsData } = useCSVData();
 
   useEffect(() => {
@@ -87,6 +89,7 @@ export const useInsightsData = (creatorId: string) => {
             theme_id,
             metric,
             value,
+            updated_at,
             brands (
               brand_name,
               logo_url,
@@ -111,6 +114,14 @@ export const useInsightsData = (creatorId: string) => {
             value: insight.value,
             website_url: (insight.brands as any)?.website_url
           }));
+          
+          // Get the most recent updated_at timestamp
+          const latestUpdate = dbInsights.reduce((latest, insight) => {
+            const currentDate = new Date(insight.updated_at);
+            return currentDate > latest ? currentDate : latest;
+          }, new Date(0));
+          
+          setLastUpdated(format(latestUpdate, 'MMMM d, yyyy'));
           console.log('Fetched data from Supabase for creator:', creatorId, transformedData);
           setInsights(transformedData);
         } else if (hasInsightsData) {
@@ -150,7 +161,8 @@ export const useInsightsData = (creatorId: string) => {
     loading,
     error,
     getInsightsByTheme,
-    hasData: insights.length > 0
+    hasData: insights.length > 0,
+    lastUpdated
   };
 };
 

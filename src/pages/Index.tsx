@@ -22,7 +22,7 @@ const Index = () => {
     }
   }, [creatorId, navigate]);
 
-  const { insights, loading, error, getInsightsByTheme, hasData } = useInsightsData(creatorId || '');
+  const { insights, loading, error, getInsightsByTheme, hasData, lastUpdated } = useInsightsData(creatorId || '');
   const { submitSurvey } = useSurveySubmission();
 
   // Check if this is an invalid creator ID (no data exists)
@@ -126,7 +126,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <PageHeader lastUpdated={new Date().toLocaleDateString()} />
+      <PageHeader lastUpdated={lastUpdated || undefined} />
       
       <main className="max-w-7xl mx-auto px-6 py-8">
         {/* Brand Insight Cards */}
