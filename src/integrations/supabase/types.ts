@@ -115,24 +115,39 @@ export type Database = {
           creator_id: string
           id: string
           q1_useful: string | null
+          q1_value_rating: number | null
+          q2_actionability: string | null
           q2_intent: string | null
           q3_themes: string | null
+          q4_missing_info: string | null
+          q5_barriers: string | null
+          q6_open_feedback: string | null
           submitted_at: string | null
         }
         Insert: {
           creator_id: string
           id?: string
           q1_useful?: string | null
+          q1_value_rating?: number | null
+          q2_actionability?: string | null
           q2_intent?: string | null
           q3_themes?: string | null
+          q4_missing_info?: string | null
+          q5_barriers?: string | null
+          q6_open_feedback?: string | null
           submitted_at?: string | null
         }
         Update: {
           creator_id?: string
           id?: string
           q1_useful?: string | null
+          q1_value_rating?: number | null
+          q2_actionability?: string | null
           q2_intent?: string | null
           q3_themes?: string | null
+          q4_missing_info?: string | null
+          q5_barriers?: string | null
+          q6_open_feedback?: string | null
           submitted_at?: string | null
         }
         Relationships: [

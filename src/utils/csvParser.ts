@@ -14,9 +14,12 @@ export interface InsightRow {
 export interface SurveyResponse {
   timestamp: string;
   creator_id: string;
-  q1_useful: string;
-  q2_intent: string;
+  q1_value_rating: number;
+  q2_actionability: string;
   q3_themes: string;
+  q4_missing_info: string;
+  q5_barriers?: string;
+  q6_open_feedback?: string;
 }
 
 export interface CSVParseResult<T> {
@@ -186,13 +189,16 @@ class CSVParser {
           const survey: SurveyResponse = {
             timestamp: row[headerMap['timestamp']] || '',
             creator_id: row[headerMap['creator_id']] || '',
-            q1_useful: row[headerMap['q1_useful']] || '',
-            q2_intent: row[headerMap['q2_intent']] || '',
-            q3_themes: row[headerMap['q3_themes']] || ''
+            q1_value_rating: parseInt(row[headerMap['q1_value_rating']] || '0'),
+            q2_actionability: row[headerMap['q2_actionability']] || '',
+            q3_themes: row[headerMap['q3_themes']] || '',
+            q4_missing_info: row[headerMap['q4_missing_info']] || '',
+            q5_barriers: row[headerMap['q5_barriers']] || undefined,
+            q6_open_feedback: row[headerMap['q6_open_feedback']] || undefined
           };
 
           // Validate required fields
-          if (!survey.creator_id || !survey.q1_useful) {
+          if (!survey.creator_id || !survey.q1_value_rating) {
             errors.push(`Row ${i + 1}: Missing required data`);
             continue;
           }

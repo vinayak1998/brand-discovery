@@ -15,13 +15,29 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { creator_id, q1_useful, q2_intent, q3_themes } = await req.json();
+    const { 
+      creator_id, 
+      q1_value_rating, 
+      q2_actionability, 
+      q3_themes, 
+      q4_missing_info, 
+      q5_barriers, 
+      q6_open_feedback 
+    } = await req.json();
 
     console.log('Submitting survey for creator:', creator_id);
 
     if (!creator_id) {
       return new Response(
         JSON.stringify({ error: 'creator_id is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate required fields
+    if (!q1_value_rating || !q2_actionability || !q3_themes || !q4_missing_info) {
+      return new Response(
+        JSON.stringify({ error: 'Required survey questions not answered' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -53,9 +69,12 @@ Deno.serve(async (req) => {
       .from('survey_responses')
       .insert({
         creator_id,
-        q1_useful,
-        q2_intent,
-        q3_themes
+        q1_value_rating,
+        q2_actionability,
+        q3_themes,
+        q4_missing_info,
+        q5_barriers: q5_barriers || null,
+        q6_open_feedback: q6_open_feedback || null
       })
       .select()
       .single();

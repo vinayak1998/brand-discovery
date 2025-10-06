@@ -18,9 +18,12 @@ export interface InsightRow {
 export interface SurveyResponse {
   timestamp: string;
   creator_id: string;
-  q1_useful: string;
-  q2_intent: string;
+  q1_value_rating: number;
+  q2_actionability: string;
   q3_themes: string;
+  q4_missing_info: string;
+  q5_barriers?: string;
+  q6_open_feedback?: string;
 }
 
 // Mock data for demonstration

@@ -143,14 +143,17 @@ export function CSVDataProvider({ children }: { children: React.ReactNode }) {
   const exportSurveysCSV = (): string => {
     if (surveys.length === 0) return '';
 
-    const headers = ['timestamp', 'creator_id', 'q1_useful', 'q2_intent', 'q3_themes'];
+    const headers = ['timestamp', 'creator_id', 'q1_value_rating', 'q2_actionability', 'q3_themes', 'q4_missing_info', 'q5_barriers', 'q6_open_feedback'];
 
     const rows = surveys.map(survey => [
       survey.timestamp,
       survey.creator_id,
-      survey.q1_useful,
-      survey.q2_intent,
-      survey.q3_themes
+      survey.q1_value_rating.toString(),
+      survey.q2_actionability,
+      survey.q3_themes,
+      survey.q4_missing_info,
+      survey.q5_barriers || '',
+      survey.q6_open_feedback || ''
     ]);
 
     return [headers, ...rows].map(row => 
