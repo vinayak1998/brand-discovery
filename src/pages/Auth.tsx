@@ -22,7 +22,7 @@ const Auth = () => {
   useEffect(() => {
     if (user) {
       // Redirect to the page they came from, or admin if they came from there
-      const from = (location.state as any)?.from || "/";
+      const from = (location.state as any)?.from || "/admin";
       navigate(from);
     }
   }, [user, navigate, location]);
@@ -135,17 +135,6 @@ const Auth = () => {
               </Button>
             </form>
 
-            <div className="mt-4 text-center text-sm">
-              <button
-                type="button"
-                onClick={() => setIsLogin(!isLogin)}
-                className="text-primary hover:underline"
-              >
-                {isLogin 
-                  ? "Don't have an account? Sign up" 
-                  : "Already have an account? Sign in"}
-              </button>
-            </div>
           </CardContent>
         </Card>
       </div>

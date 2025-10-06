@@ -9,7 +9,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRouteProps) {
-  const { user, isAdmin, loading, signOut } = useAuth();
+  const { user, isAdmin, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -17,11 +17,10 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
       if (!user) {
         navigate("/auth", { state: { from: window.location.pathname } });
       } else if (requireAdmin && !isAdmin) {
-        signOut();
         navigate("/auth", { state: { from: window.location.pathname } });
       }
       }
-    }, [user, isAdmin, loading, navigate, requireAdmin, signOut]);
+    }, [user, isAdmin, loading, navigate, requireAdmin]);
 
   if (loading) {
     return (
