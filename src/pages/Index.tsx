@@ -7,7 +7,7 @@ import SurveySection from '@/components/SurveySection';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Sparkles } from 'lucide-react';
 import { THEMES, getTheme } from '@/config/themes';
 
 const Index = () => {
@@ -146,12 +146,30 @@ const Index = () => {
                   logo_url: insight.logo_url,
                   metric: insight.metric,
                   value: insight.value,
+                  website_url: (insight as any).website_url,
                 }))}
                 delay={index * 100}
               />
             );
           })}
         </div>
+
+        {/* CTA Section */}
+        <Card className="p-8 mb-12 bg-gradient-to-br from-primary/10 via-primary/5 to-background border-primary/20">
+          <div className="text-center max-w-2xl mx-auto">
+            <Sparkles className="w-12 h-12 mx-auto mb-4 text-primary" />
+            <h2 className="text-2xl font-bold mb-3">Ready to Start Creating?</h2>
+            <p className="text-muted-foreground mb-6">
+              Now that you've discovered the trending brands, it's time to create content and share your unique links!
+            </p>
+            <Button
+              size="lg"
+              onClick={() => window.open('https://creator.wishlink.com/create-diy', '_blank')}
+            >
+              Start Creating Content
+            </Button>
+          </div>
+        </Card>
 
         {/* Survey Section */}
         <div className="max-w-2xl mx-auto">

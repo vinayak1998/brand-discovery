@@ -11,6 +11,7 @@ export interface InsightRow {
   logo_url?: string;
   metric: string;
   value: number;
+  website_url?: string;
 }
 
 export interface SurveyResponse {
@@ -88,7 +89,8 @@ export const useInsightsData = (creatorId: string) => {
             value,
             brands (
               brand_name,
-              logo_url
+              logo_url,
+              website_url
             )
           `)
           .eq('creator_id', creatorId);
@@ -106,7 +108,8 @@ export const useInsightsData = (creatorId: string) => {
             brand_name: (insight.brands as any)?.brand_name || '',
             logo_url: (insight.brands as any)?.logo_url,
             metric: insight.metric,
-            value: insight.value
+            value: insight.value,
+            website_url: (insight.brands as any)?.website_url
           }));
           console.log('Fetched data from Supabase for creator:', creatorId, transformedData);
           setInsights(transformedData);

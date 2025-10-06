@@ -1,10 +1,15 @@
 import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { ExternalLink } from "lucide-react";
+import { useState } from "react";
 
 interface BrandData {
   brand_name: string;
   logo_url?: string;
   metric: string;
   value: number;
+  website_url?: string;
 }
 
 interface BrandInsightCardProps {
@@ -53,10 +58,13 @@ const getInitials = (name: string): string => {
 };
 
 const BrandInsightCard = ({ icon: Icon, title, tagline, color, brands, delay = 0 }: BrandInsightCardProps) => {
+  const [selectedBrand, setSelectedBrand] = useState<BrandData | null>(null);
+  
   // Calculate max value for proper bar scaling
   const maxValue = brands.length > 0 ? Math.max(...brands.map(b => b.value)) : 0;
 
   return (
+    <>
     <Card 
       className="p-6 insight-card animate-fade-in bg-card border-border"
       style={{ animationDelay: `${delay}ms` }}
@@ -98,7 +106,10 @@ const BrandInsightCard = ({ icon: Icon, title, tagline, color, brands, delay = 0
             return (
               <div key={`${brand.brand_name}-${index}`} className="space-y-3">
                 {/* Brand Info Row */}
-                <div className="flex items-center justify-between">
+                <div 
+                  className="flex items-center justify-between cursor-pointer hover:bg-accent/50 p-2 rounded-lg transition-colors"
+                  onClick={() => setSelectedBrand(brand)}
+                >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <BrandAvatar logoUrl={brand.logo_url} brandName={brand.brand_name} />
                     <div className="flex-1 min-w-0">
@@ -127,6 +138,35 @@ const BrandInsightCard = ({ icon: Icon, title, tagline, color, brands, delay = 0
         )}
       </div>
     </Card>
+
+    <Dialog open={!!selectedBrand} onOpenChange={() => setSelectedBrand(null)}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-3">
+            {selectedBrand && (
+              <>
+                <BrandAvatar logoUrl={selectedBrand.logo_url} brandName={selectedBrand.brand_name} />
+                <span>{selectedBrand.brand_name}</span>
+              </>
+            )}
+          </DialogTitle>
+        </DialogHeader>
+        {selectedBrand?.website_url ? (
+          <Button
+            onClick={() => window.open(selectedBrand.website_url, '_blank')}
+            className="w-full"
+          >
+            <ExternalLink className="w-4 h-4 mr-2" />
+            Go to Website
+          </Button>
+        ) : (
+          <p className="text-sm text-muted-foreground text-center py-4">
+            Website URL not available for this brand
+          </p>
+        )}
+      </DialogContent>
+    </Dialog>
+    </>
   );
 };
 

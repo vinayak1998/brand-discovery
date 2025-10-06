@@ -21,6 +21,7 @@ export type Database = {
           id: string
           logo_url: string | null
           updated_at: string | null
+          website_url: string | null
         }
         Insert: {
           brand_name: string
@@ -28,6 +29,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           updated_at?: string | null
+          website_url?: string | null
         }
         Update: {
           brand_name?: string
@@ -35,6 +37,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           updated_at?: string | null
+          website_url?: string | null
         }
         Relationships: []
       }
