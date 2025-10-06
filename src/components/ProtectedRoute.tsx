@@ -18,10 +18,10 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
         navigate("/auth", { state: { from: window.location.pathname } });
       } else if (requireAdmin && !isAdmin) {
         signOut();
-        navigate("/auth");
+        navigate("/auth", { state: { from: window.location.pathname } });
       }
-    }
-  }, [user, isAdmin, loading, navigate, requireAdmin, signOut]);
+      }
+    }, [user, isAdmin, loading, navigate, requireAdmin, signOut]);
 
   if (loading) {
     return (
