@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { parseInsightsCSV, parseBrandLogosCSV } from "@/utils/csvParser";
-import { Upload, Database, ImageIcon } from "lucide-react";
+import { Upload, Database, ImageIcon, RefreshCw } from "lucide-react";
 import wishLinkLogo from "@/assets/wishlink-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -125,6 +125,35 @@ const AdminContent = () => {
     }
   };
 
+  const handleRedashSync = async () => {
+    setLoading(true);
+    try {
+      toast({
+        title: "Syncing...",
+        description: "Fetching data from Redash and updating brands table",
+      });
+
+      const { data, error } = await supabase.functions.invoke('sync-redash-brands');
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Success!",
+        description: `Synced ${data.synced} brands from Redash`,
+      });
+    } catch (error) {
+      toast({
+        title: "Sync failed",
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-8">
       <div className="max-w-5xl mx-auto space-y-8">
@@ -144,6 +173,30 @@ const AdminContent = () => {
             Upload and manage creator insights data
           </p>
         </div>
+
+        {/* Redash Sync Card */}
+        <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <RefreshCw className="h-5 w-5" />
+              Sync Brands from Redash
+            </CardTitle>
+            <CardDescription>
+              Manually trigger sync from Redash API (Auto-syncs daily at midnight)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button 
+              onClick={handleRedashSync}
+              disabled={loading}
+              className="w-full"
+              variant="default"
+            >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Sync Brands Now
+            </Button>
+          </CardContent>
+        </Card>
 
         <div className="grid md:grid-cols-2 gap-6">
           {/* Insights Upload */}
