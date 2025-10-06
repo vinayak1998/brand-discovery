@@ -88,8 +88,8 @@ const BrandInsightCard = ({ icon: Icon, title, tagline, color, brands, delay = 0
         <p className="text-xs text-muted-foreground font-medium">
           {title === "Top Trending Brands" && "% of Posts by other creators"}
           {title === "Best Reach Brands" && "Views per post"}
-          {title === "Fastest Selling Brands" && "Orders per post"}
-          {title === "Highest Commission Brands" && "Commission rates"}
+          {title === "Fastest Selling Brands" && "Orders per product link"}
+          {title === "Highest Commission Brands" && "Commission %"}
         </p>
       </div>
 
