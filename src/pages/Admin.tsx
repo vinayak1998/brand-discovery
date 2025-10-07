@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { parseInsightsCSV, parseCreatorsCSV, parseBrandsCSV } from "@/utils/csvParser";
 import { Upload, Database, Users, Building2 } from "lucide-react";
@@ -10,17 +10,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 const AdminContent = () => {
-  const [creatorsCSV, setCreatorsCSV] = useState("");
-  const [brandsCSV, setBrandsCSV] = useState("");
-  const [insightsCSV, setInsightsCSV] = useState("");
+  const [creatorsFile, setCreatorsFile] = useState<File | null>(null);
+  const [brandsFile, setBrandsFile] = useState<File | null>(null);
+  const [insightsFile, setInsightsFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
+  const readFileAsText = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target?.result as string);
+      reader.onerror = reject;
+      reader.readAsText(file);
+    });
+  };
+
   const handleCreatorsUpload = async () => {
-    if (!creatorsCSV.trim()) {
+    if (!creatorsFile) {
       toast({
-        title: "No data provided",
-        description: "Please paste the creators CSV data",
+        title: "No file selected",
+        description: "Please select a creators CSV file",
         variant: "destructive",
       });
       return;
@@ -28,7 +37,8 @@ const AdminContent = () => {
 
     setLoading(true);
     try {
-      const { data, errors } = parseCreatorsCSV(creatorsCSV);
+      const csvText = await readFileAsText(creatorsFile);
+      const { data, errors } = parseCreatorsCSV(csvText);
       
       if (errors.length > 0) {
         toast({
@@ -55,7 +65,7 @@ const AdminContent = () => {
         title: "Success!",
         description: `Created: ${result.created}, Errors: ${result.errors}`,
       });
-      setCreatorsCSV("");
+      setCreatorsFile(null);
     } catch (error) {
       toast({
         title: "Upload failed",
@@ -68,10 +78,10 @@ const AdminContent = () => {
   };
 
   const handleBrandsUpload = async () => {
-    if (!brandsCSV.trim()) {
+    if (!brandsFile) {
       toast({
-        title: "No data provided",
-        description: "Please paste the brands CSV data",
+        title: "No file selected",
+        description: "Please select a brands CSV file",
         variant: "destructive",
       });
       return;
@@ -79,7 +89,8 @@ const AdminContent = () => {
 
     setLoading(true);
     try {
-      const { data, errors } = parseBrandsCSV(brandsCSV);
+      const csvText = await readFileAsText(brandsFile);
+      const { data, errors } = parseBrandsCSV(csvText);
       
       if (errors.length > 0) {
         toast({
@@ -106,7 +117,7 @@ const AdminContent = () => {
         title: "Success!",
         description: `Created: ${result.created}, Errors: ${result.errors}`,
       });
-      setBrandsCSV("");
+      setBrandsFile(null);
     } catch (error) {
       toast({
         title: "Upload failed",
@@ -119,10 +130,10 @@ const AdminContent = () => {
   };
 
   const handleInsightsUpload = async () => {
-    if (!insightsCSV.trim()) {
+    if (!insightsFile) {
       toast({
-        title: "No data provided",
-        description: "Please paste the insights CSV data",
+        title: "No file selected",
+        description: "Please select an insights CSV file",
         variant: "destructive",
       });
       return;
@@ -130,7 +141,8 @@ const AdminContent = () => {
 
     setLoading(true);
     try {
-      const { data, errors } = parseInsightsCSV(insightsCSV);
+      const csvText = await readFileAsText(insightsFile);
+      const { data, errors } = parseInsightsCSV(csvText);
       
       if (errors.length > 0) {
         toast({
@@ -157,7 +169,7 @@ const AdminContent = () => {
         title: "Success!",
         description: `Created: ${result.created}, Errors: ${result.errors}`,
       });
-      setInsightsCSV("");
+      setInsightsFile(null);
     } catch (error) {
       toast({
         title: "Upload failed",
@@ -202,16 +214,22 @@ const AdminContent = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Textarea
-                placeholder="Paste creators CSV data here...&#10;creator_id,name"
-                value={creatorsCSV}
-                onChange={(e) => setCreatorsCSV(e.target.value)}
-                rows={10}
-                className="font-mono text-sm"
-              />
+              <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center hover:border-muted-foreground/50 transition-colors">
+                <Input
+                  type="file"
+                  accept=".csv"
+                  onChange={(e) => setCreatorsFile(e.target.files?.[0] || null)}
+                  className="max-w-full"
+                />
+                {creatorsFile && (
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Selected: {creatorsFile.name}
+                  </p>
+                )}
+              </div>
               <Button 
                 onClick={handleCreatorsUpload}
-                disabled={loading || !creatorsCSV.trim()}
+                disabled={loading || !creatorsFile}
                 className="w-full"
               >
                 <Upload className="mr-2 h-4 w-4" />
@@ -232,16 +250,22 @@ const AdminContent = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Textarea
-                placeholder="Paste brands CSV data here...&#10;brand_id,brand_name,logo_url,website_url"
-                value={brandsCSV}
-                onChange={(e) => setBrandsCSV(e.target.value)}
-                rows={10}
-                className="font-mono text-sm"
-              />
+              <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center hover:border-muted-foreground/50 transition-colors">
+                <Input
+                  type="file"
+                  accept=".csv"
+                  onChange={(e) => setBrandsFile(e.target.files?.[0] || null)}
+                  className="max-w-full"
+                />
+                {brandsFile && (
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Selected: {brandsFile.name}
+                  </p>
+                )}
+              </div>
               <Button 
                 onClick={handleBrandsUpload}
-                disabled={loading || !brandsCSV.trim()}
+                disabled={loading || !brandsFile}
                 className="w-full"
               >
                 <Upload className="mr-2 h-4 w-4" />
@@ -262,16 +286,22 @@ const AdminContent = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Textarea
-                placeholder="Paste insights CSV data here...&#10;creator_id,brand_id,theme_id,metric,value"
-                value={insightsCSV}
-                onChange={(e) => setInsightsCSV(e.target.value)}
-                rows={10}
-                className="font-mono text-sm"
-              />
+              <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center hover:border-muted-foreground/50 transition-colors">
+                <Input
+                  type="file"
+                  accept=".csv"
+                  onChange={(e) => setInsightsFile(e.target.files?.[0] || null)}
+                  className="max-w-full"
+                />
+                {insightsFile && (
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Selected: {insightsFile.name}
+                  </p>
+                )}
+              </div>
               <Button 
                 onClick={handleInsightsUpload}
-                disabled={loading || !insightsCSV.trim()}
+                disabled={loading || !insightsFile}
                 className="w-full"
               >
                 <Upload className="mr-2 h-4 w-4" />
