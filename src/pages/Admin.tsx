@@ -8,12 +8,18 @@ import { Upload, Database, Users, Building2 } from "lucide-react";
 import wishLinkLogo from "@/assets/wishlink-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { Progress } from "@/components/ui/progress";
 
 const AdminContent = () => {
   const [creatorsFile, setCreatorsFile] = useState<File | null>(null);
   const [brandsFile, setBrandsFile] = useState<File | null>(null);
   const [insightsFile, setInsightsFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{
+    type: 'creators' | 'brands' | 'insights' | null;
+    current: number;
+    total: number;
+  }>({ type: null, current: 0, total: 0 });
   const { toast } = useToast();
 
   const readFileAsText = (file: File): Promise<string> => {
@@ -36,6 +42,7 @@ const AdminContent = () => {
     }
 
     setLoading(true);
+    setUploadProgress({ type: 'creators', current: 0, total: 0 });
     try {
       const csvText = await readFileAsText(creatorsFile);
       const { data, errors } = parseCreatorsCSV(csvText);
@@ -47,8 +54,11 @@ const AdminContent = () => {
           variant: "destructive",
         });
         setLoading(false);
+        setUploadProgress({ type: null, current: 0, total: 0 });
         return;
       }
+
+      setUploadProgress({ type: 'creators', current: 0, total: data.length });
 
       const { data: result, error } = await supabase.functions.invoke('admin-bulk-upload', {
         body: {
@@ -60,6 +70,8 @@ const AdminContent = () => {
       if (error) {
         throw error;
       }
+
+      setUploadProgress({ type: 'creators', current: data.length, total: data.length });
 
       toast({
         title: "Success!",
@@ -74,6 +86,7 @@ const AdminContent = () => {
       });
     } finally {
       setLoading(false);
+      setTimeout(() => setUploadProgress({ type: null, current: 0, total: 0 }), 2000);
     }
   };
 
@@ -88,6 +101,7 @@ const AdminContent = () => {
     }
 
     setLoading(true);
+    setUploadProgress({ type: 'brands', current: 0, total: 0 });
     try {
       const csvText = await readFileAsText(brandsFile);
       const { data, errors } = parseBrandsCSV(csvText);
@@ -99,8 +113,11 @@ const AdminContent = () => {
           variant: "destructive",
         });
         setLoading(false);
+        setUploadProgress({ type: null, current: 0, total: 0 });
         return;
       }
+
+      setUploadProgress({ type: 'brands', current: 0, total: data.length });
 
       const { data: result, error } = await supabase.functions.invoke('admin-bulk-upload', {
         body: {
@@ -112,6 +129,8 @@ const AdminContent = () => {
       if (error) {
         throw error;
       }
+
+      setUploadProgress({ type: 'brands', current: data.length, total: data.length });
 
       toast({
         title: "Success!",
@@ -126,6 +145,7 @@ const AdminContent = () => {
       });
     } finally {
       setLoading(false);
+      setTimeout(() => setUploadProgress({ type: null, current: 0, total: 0 }), 2000);
     }
   };
 
@@ -140,6 +160,7 @@ const AdminContent = () => {
     }
 
     setLoading(true);
+    setUploadProgress({ type: 'insights', current: 0, total: 0 });
     try {
       const csvText = await readFileAsText(insightsFile);
       const { data, errors } = parseInsightsCSV(csvText);
@@ -151,8 +172,11 @@ const AdminContent = () => {
           variant: "destructive",
         });
         setLoading(false);
+        setUploadProgress({ type: null, current: 0, total: 0 });
         return;
       }
+
+      setUploadProgress({ type: 'insights', current: 0, total: data.length });
 
       const { data: result, error } = await supabase.functions.invoke('admin-bulk-upload', {
         body: {
@@ -164,6 +188,8 @@ const AdminContent = () => {
       if (error) {
         throw error;
       }
+
+      setUploadProgress({ type: 'insights', current: data.length, total: data.length });
 
       toast({
         title: "Success!",
@@ -178,6 +204,7 @@ const AdminContent = () => {
       });
     } finally {
       setLoading(false);
+      setTimeout(() => setUploadProgress({ type: null, current: 0, total: 0 }), 2000);
     }
   };
 
@@ -235,6 +262,14 @@ const AdminContent = () => {
                 <Upload className="mr-2 h-4 w-4" />
                 Upload Creators
               </Button>
+              {uploadProgress.type === 'creators' && uploadProgress.total > 0 && (
+                <div className="space-y-2">
+                  <Progress value={(uploadProgress.current / uploadProgress.total) * 100} />
+                  <p className="text-xs text-muted-foreground text-center">
+                    {uploadProgress.current} / {uploadProgress.total} rows
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -271,6 +306,14 @@ const AdminContent = () => {
                 <Upload className="mr-2 h-4 w-4" />
                 Upload Brands
               </Button>
+              {uploadProgress.type === 'brands' && uploadProgress.total > 0 && (
+                <div className="space-y-2">
+                  <Progress value={(uploadProgress.current / uploadProgress.total) * 100} />
+                  <p className="text-xs text-muted-foreground text-center">
+                    {uploadProgress.current} / {uploadProgress.total} rows
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -307,6 +350,14 @@ const AdminContent = () => {
                 <Upload className="mr-2 h-4 w-4" />
                 Upload Insights
               </Button>
+              {uploadProgress.type === 'insights' && uploadProgress.total > 0 && (
+                <div className="space-y-2">
+                  <Progress value={(uploadProgress.current / uploadProgress.total) * 100} />
+                  <p className="text-xs text-muted-foreground text-center">
+                    {uploadProgress.current} / {uploadProgress.total} rows
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
