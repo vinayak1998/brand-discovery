@@ -15,16 +15,34 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { creator_id, theme_id } = await req.json();
+    const { creator_uuid, theme_id } = await req.json();
 
-    console.log('Fetching insights for creator:', creator_id, 'theme:', theme_id);
+    console.log('Fetching insights for creator UUID:', creator_uuid, 'theme:', theme_id);
 
-    if (!creator_id) {
+    if (!creator_uuid) {
       return new Response(
-        JSON.stringify({ error: 'creator_id is required' }),
+        JSON.stringify({ error: 'creator_uuid is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // First, look up the creator by UUID to get the internal creator_id
+    const { data: creatorData, error: creatorError } = await supabase
+      .from('creators')
+      .select('creator_id')
+      .eq('uuid', creator_uuid)
+      .single();
+
+    if (creatorError || !creatorData) {
+      console.error('Creator not found:', creatorError);
+      return new Response(
+        JSON.stringify({ error: 'Creator not found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const creator_id = creatorData.creator_id;
+    console.log('Found creator_id:', creator_id);
 
     // Build query for insights with joins
     let query = supabase

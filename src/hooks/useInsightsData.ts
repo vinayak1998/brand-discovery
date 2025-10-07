@@ -40,7 +40,7 @@ const mockInsightsData: InsightRow[] = [
   { creator_id: 1001, theme_id: "best_reach", brand_name: "FoodieWorld", logo_url: "https://example.com/foodieworld-logo.png", metric: "Avg. Reach", value: 180000 },
 ];
 
-export const useInsightsData = (creatorId: string) => {
+export const useInsightsData = (creatorUuid: string) => {
   const [insights, setInsights] = useState<InsightRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +53,41 @@ export const useInsightsData = (creatorId: string) => {
       setError(null);
       
       try {
-        // First, try to fetch from Supabase
+        // First, look up the creator by UUID to get the internal creator_id
+        const { data: creatorData, error: creatorError } = await supabase
+          .from('creators')
+          .select('creator_id, uuid')
+          .eq('uuid', creatorUuid)
+          .maybeSingle();
+
+        if (creatorError) {
+          console.error('Error fetching creator:', creatorError);
+          throw creatorError;
+        }
+
+        if (!creatorData) {
+          console.log('Creator not found, trying fallback data');
+          // Try CSV or mock data as fallback
+          if (hasInsightsData) {
+            const creatorIdNum = parseInt(creatorUuid);
+            if (!isNaN(creatorIdNum)) {
+              const filteredData = csvInsights.filter(row => row.creator_id === creatorIdNum).map(row => ({
+                ...row,
+                brand_name: '',
+                logo_url: '',
+                website_url: ''
+              }));
+              setInsights(filteredData as any);
+            }
+          }
+          setLoading(false);
+          return;
+        }
+
+        const creator_id = creatorData.creator_id;
+        console.log('Found creator_id:', creator_id, 'for UUID:', creatorUuid);
+
+        // Now fetch insights using the creator_id
         const { data: dbInsights, error: dbError } = await supabase
           .from('creator_brand_insights')
           .select(`
@@ -68,7 +102,7 @@ export const useInsightsData = (creatorId: string) => {
               website_url
             )
           `)
-          .eq('creator_id', parseInt(creatorId));
+          .eq('creator_id', creator_id);
 
         if (dbError) {
           console.error('Error fetching from Supabase:', dbError);
@@ -94,25 +128,29 @@ export const useInsightsData = (creatorId: string) => {
           }, new Date(0));
           
           setLastUpdated(format(latestUpdate, 'MMMM d, yyyy'));
-          console.log('Fetched data from Supabase for creator:', creatorId, transformedData);
+          console.log('Fetched data from Supabase for creator UUID:', creatorUuid, transformedData);
           setInsights(transformedData);
         } else if (hasInsightsData) {
           // Use CSV data if available
-          const creatorIdNum = parseInt(creatorId);
-          const filteredData = csvInsights.filter(row => row.creator_id === creatorIdNum).map(row => ({
-            ...row,
-            brand_name: '', // CSV doesn't have brand_name anymore
-            logo_url: '',
-            website_url: ''
-          }));
-          console.log('Filtered CSV data for creator:', creatorId, filteredData);
-          setInsights(filteredData as any);
+          const creatorIdNum = parseInt(creatorUuid);
+          if (!isNaN(creatorIdNum)) {
+            const filteredData = csvInsights.filter(row => row.creator_id === creatorIdNum).map(row => ({
+              ...row,
+              brand_name: '',
+              logo_url: '',
+              website_url: ''
+            }));
+            console.log('Filtered CSV data for creator:', creatorUuid, filteredData);
+            setInsights(filteredData as any);
+          }
         } else {
           // Fallback to mock data
-          const creatorIdNum = parseInt(creatorId);
-          const filteredData = mockInsightsData.filter(row => row.creator_id === creatorIdNum);
-          console.log('Filtered mock data for creator:', creatorId, filteredData);
-          setInsights(filteredData);
+          const creatorIdNum = parseInt(creatorUuid);
+          if (!isNaN(creatorIdNum)) {
+            const filteredData = mockInsightsData.filter(row => row.creator_id === creatorIdNum);
+            console.log('Filtered mock data for creator:', creatorUuid, filteredData);
+            setInsights(filteredData);
+          }
         }
       } catch (err) {
         setError('Failed to load insights data');
@@ -122,10 +160,10 @@ export const useInsightsData = (creatorId: string) => {
       }
     };
 
-    if (creatorId) {
+    if (creatorUuid) {
       fetchInsights();
     }
-  }, [creatorId, csvInsights, hasInsightsData]);
+  }, [creatorUuid, csvInsights, hasInsightsData]);
 
   // Group insights by theme and sort by value (descending)
   const getInsightsByTheme = (themeId: InsightRow['theme_id']) => {

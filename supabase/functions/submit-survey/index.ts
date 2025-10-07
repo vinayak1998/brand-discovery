@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { 
-      creator_id, 
+      creator_id: creator_uuid, 
       q1_value_rating, 
       q2_actionability, 
       q3_themes, 
@@ -25,11 +25,11 @@ Deno.serve(async (req) => {
       q6_open_feedback 
     } = await req.json();
 
-    console.log('Submitting survey for creator:', creator_id);
+    console.log('Submitting survey for creator UUID:', creator_uuid);
 
-    if (!creator_id) {
+    if (!creator_uuid) {
       return new Response(
-        JSON.stringify({ error: 'creator_id is required' }),
+        JSON.stringify({ error: 'creator_id (UUID) is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -42,11 +42,11 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Verify creator exists
+    // Verify creator exists and get the internal creator_id
     const { data: creator, error: creatorError } = await supabase
       .from('creators')
       .select('creator_id')
-      .eq('creator_id', creator_id)
+      .eq('uuid', creator_uuid)
       .maybeSingle();
 
     if (creatorError) {
@@ -63,6 +63,8 @@ Deno.serve(async (req) => {
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    const creator_id = creator.creator_id;
 
     // Insert survey response
     const { data: survey, error: surveyError } = await supabase

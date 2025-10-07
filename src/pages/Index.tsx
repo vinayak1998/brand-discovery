@@ -13,20 +13,20 @@ import { THEMES, getTheme } from '@/config/themes';
 const Index = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const creatorId = searchParams.get('creator_id');
+  const creatorUuid = searchParams.get('creator_id');
   
   // Redirect to landing if no creator_id
   useEffect(() => {
-    if (!creatorId) {
+    if (!creatorUuid) {
       navigate('/');
     }
-  }, [creatorId, navigate]);
+  }, [creatorUuid, navigate]);
 
-  const { insights, loading, error, getInsightsByTheme, hasData, lastUpdated } = useInsightsData(creatorId || '');
+  const { insights, loading, error, getInsightsByTheme, hasData, lastUpdated } = useInsightsData(creatorUuid || '');
   const { submitSurvey } = useSurveySubmission();
 
   // Check if this is an invalid creator ID (no data exists)
-  const isInvalidCreator = !loading && !error && !hasData && creatorId && creatorId !== '0000000000';
+  const isInvalidCreator = !loading && !error && !hasData && creatorUuid && creatorUuid !== '0000000000';
 
   const themes = Object.values(THEMES);
 
@@ -91,7 +91,7 @@ const Index = () => {
           </div>
           <h2 className="text-2xl font-bold mb-2">Invalid Creator ID</h2>
           <p className="text-muted-foreground mb-6">
-            The Creator ID "{creatorId}" was not found in our system. Please check your ID and try again.
+            The Creator ID "{creatorUuid}" was not found in our system. Please check your ID and try again.
           </p>
           <Button onClick={() => navigate('/')}>
             Go Back
@@ -114,7 +114,7 @@ const Index = () => {
             {/* Still show survey even with no data */}
             <div className="max-w-2xl mx-auto">
               <SurveySection 
-                creatorId={creatorId || ''} 
+                creatorId={creatorUuid || ''} 
                 onSubmit={submitSurvey}
               />
             </div>
@@ -174,7 +174,7 @@ const Index = () => {
         {/* Survey Section */}
         <div className="max-w-2xl mx-auto">
           <SurveySection 
-            creatorId={creatorId || ''} 
+            creatorId={creatorUuid || ''} 
             onSubmit={submitSurvey}
           />
         </div>

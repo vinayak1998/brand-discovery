@@ -7,21 +7,21 @@ import { Sparkles } from "lucide-react";
 import wishLinkLogo from "@/assets/wishlink-logo.png";
 
 const Landing = () => {
-  const [creatorId, setCreatorId] = useState("");
+  const [creatorUuid, setCreatorUuid] = useState("");
   const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!creatorId.trim()) {
+    if (!creatorUuid.trim()) {
       return;
     }
 
     // Check if this is the master admin ID
-    if (creatorId === "0000000000") {
+    if (creatorUuid === "0000000000") {
       navigate("/admin");
     } else {
-      navigate(`/insights?creator_id=${creatorId}`);
+      navigate(`/insights?creator_id=${creatorUuid}`);
     }
   };
 
@@ -55,8 +55,8 @@ const Landing = () => {
                 id="creatorId"
                 type="text"
                 placeholder="Enter your Creator ID"
-                value={creatorId}
-                onChange={(e) => setCreatorId(e.target.value)}
+                value={creatorUuid}
+                onChange={(e) => setCreatorUuid(e.target.value)}
                 className="text-center text-lg tracking-wider"
               />
             </div>
@@ -64,7 +64,7 @@ const Landing = () => {
               type="submit" 
               className="w-full" 
               size="lg"
-              disabled={!creatorId.trim()}
+              disabled={!creatorUuid.trim()}
             >
               <Sparkles className="mr-2 h-4 w-4" />
               View Insights
