@@ -24,6 +24,8 @@ interface BrandRow {
   website_url?: string;
 }
 
+const BATCH_SIZE = 1000;
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -79,19 +81,21 @@ Deno.serve(async (req) => {
 async function processCreators(supabase: any, rows: CreatorRow[]) {
   const stats = { created: 0, updated: 0, errors: 0 };
 
-  for (const row of rows) {
+  for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+    const batch = rows.slice(i, i + BATCH_SIZE).map((r) => ({
+      creator_id: r.creator_id,
+      name: r.name,
+    }));
+
     const { error } = await supabase
       .from('creators')
-      .upsert({ 
-        creator_id: row.creator_id,
-        name: row.name 
-      }, { onConflict: 'creator_id', ignoreDuplicates: false });
+      .upsert(batch, { onConflict: 'creator_id', ignoreDuplicates: false });
 
     if (error) {
-      console.error('Error upserting creator:', error);
-      stats.errors++;
+      console.error(`Error upserting creators batch (${i}-${i + batch.length - 1}):`, error);
+      stats.errors += batch.length;
     } else {
-      stats.created++;
+      stats.created += batch.length;
     }
   }
 
@@ -101,21 +105,23 @@ async function processCreators(supabase: any, rows: CreatorRow[]) {
 async function processBrands(supabase: any, rows: BrandRow[]) {
   const stats = { created: 0, updated: 0, errors: 0 };
 
-  for (const row of rows) {
+  for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+    const batch = rows.slice(i, i + BATCH_SIZE).map((r) => ({
+      brand_id: r.brand_id,
+      brand_name: r.brand_name,
+      logo_url: r.logo_url,
+      website_url: r.website_url,
+    }));
+
     const { error } = await supabase
       .from('brands')
-      .upsert({
-        brand_id: row.brand_id,
-        brand_name: row.brand_name,
-        logo_url: row.logo_url,
-        website_url: row.website_url
-      }, { onConflict: 'brand_id', ignoreDuplicates: false });
+      .upsert(batch, { onConflict: 'brand_id', ignoreDuplicates: false });
 
     if (error) {
-      console.error('Error upserting brand:', error);
-      stats.errors++;
+      console.error(`Error upserting brands batch (${i}-${i + batch.length - 1}):`, error);
+      stats.errors += batch.length;
     } else {
-      stats.created++;
+      stats.created += batch.length;
     }
   }
 
@@ -125,21 +131,23 @@ async function processBrands(supabase: any, rows: BrandRow[]) {
 async function processInsights(supabase: any, rows: InsightRow[]) {
   const stats = { created: 0, updated: 0, errors: 0 };
 
-  for (const row of rows) {
+  for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+    const batch = rows.slice(i, i + BATCH_SIZE).map((r) => ({
+      creator_id: r.creator_id,
+      brand_id: r.brand_id,
+      theme_id: r.theme_id,
+      value: r.value,
+    }));
+
     const { error } = await supabase
       .from('creator_brand_insights')
-      .upsert({
-        creator_id: row.creator_id,
-        brand_id: row.brand_id,
-        theme_id: row.theme_id,
-        value: row.value
-      }, { onConflict: 'creator_id,brand_id,theme_id', ignoreDuplicates: false });
+      .upsert(batch, { onConflict: 'creator_id,brand_id,theme_id', ignoreDuplicates: false });
 
     if (error) {
-      console.error('Error upserting insight:', error);
-      stats.errors++;
+      console.error(`Error upserting insights batch (${i}-${i + batch.length - 1}):`, error);
+      stats.errors += batch.length;
     } else {
-      stats.created++;
+      stats.created += batch.length;
     }
   }
 
