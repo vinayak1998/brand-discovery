@@ -60,6 +60,12 @@ All colors MUST be HSL.
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Chart Colors */
+    --chart-1: 16 100% 61%; /* Orange - matches primary */
+    --chart-2: 142 76% 36%; /* Green for reach */
+    --chart-3: 262 83% 58%; /* Purple for selling */
+    --chart-4: 48 96% 53%; /* Yellow for commission */
   }
 
   .dark {
@@ -98,6 +104,12 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Chart Colors - Dark Mode */
+    --chart-1: 16 100% 61%;
+    --chart-2: 142 76% 45%;
+    --chart-3: 262 83% 65%;
+    --chart-4: 48 96% 60%;
   }
 }
 
