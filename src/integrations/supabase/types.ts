@@ -50,7 +50,6 @@ export type Database = {
           created_at: string | null
           creator_id: number
           id: string
-          metric: string
           theme_id: string
           updated_at: string | null
           value: number
@@ -60,7 +59,6 @@ export type Database = {
           created_at?: string | null
           creator_id: number
           id?: string
-          metric: string
           theme_id: string
           updated_at?: string | null
           value: number
@@ -70,7 +68,6 @@ export type Database = {
           created_at?: string | null
           creator_id?: number
           id?: string
-          metric?: string
           theme_id?: string
           updated_at?: string | null
           value?: number

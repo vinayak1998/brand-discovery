@@ -144,7 +144,6 @@ const Index = () => {
                 brands={themeBrands.map(insight => ({
                   brand_name: insight.brand_name,
                   logo_url: insight.logo_url,
-                  metric: insight.metric,
                   value: insight.value,
                   website_url: (insight as any).website_url,
                 }))}

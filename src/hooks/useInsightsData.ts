@@ -10,7 +10,6 @@ export interface InsightRow {
   theme_id: string;
   brand_name: string;
   logo_url?: string;
-  metric: string;
   value: number;
   website_url?: string;
 }
@@ -30,14 +29,14 @@ export interface SurveyResponse {
 const mockInsightsData: InsightRow[] = [
   // Creator: 1001
   // Top Trending
-  { creator_id: 1001, theme_id: "top_trending", brand_name: "TechCorp", logo_url: "https://example.com/techcorp-logo.png", metric: "Trend Score", value: 95 },
-  { creator_id: 1001, theme_id: "top_trending", brand_name: "FashionHub", logo_url: "https://example.com/fashionhub-logo.png", metric: "Trend Score", value: 88 },
-  { creator_id: 1001, theme_id: "top_trending", brand_name: "FoodieWorld", logo_url: "https://example.com/foodieworld-logo.png", metric: "Trend Score", value: 75 },
+  { creator_id: 1001, theme_id: "top_trending", brand_name: "TechCorp", logo_url: "https://example.com/techcorp-logo.png", value: 95 },
+  { creator_id: 1001, theme_id: "top_trending", brand_name: "FashionHub", logo_url: "https://example.com/fashionhub-logo.png", value: 88 },
+  { creator_id: 1001, theme_id: "top_trending", brand_name: "FoodieWorld", logo_url: "https://example.com/foodieworld-logo.png", value: 75 },
   
   // Best Reach
-  { creator_id: 1001, theme_id: "best_reach", brand_name: "TechCorp", logo_url: "https://example.com/techcorp-logo.png", metric: "Avg. Reach", value: 250000 },
-  { creator_id: 1001, theme_id: "best_reach", brand_name: "FashionHub", logo_url: "https://example.com/fashionhub-logo.png", metric: "Avg. Reach", value: 220000 },
-  { creator_id: 1001, theme_id: "best_reach", brand_name: "FoodieWorld", logo_url: "https://example.com/foodieworld-logo.png", metric: "Avg. Reach", value: 180000 },
+  { creator_id: 1001, theme_id: "best_reach", brand_name: "TechCorp", logo_url: "https://example.com/techcorp-logo.png", value: 250000 },
+  { creator_id: 1001, theme_id: "best_reach", brand_name: "FashionHub", logo_url: "https://example.com/fashionhub-logo.png", value: 220000 },
+  { creator_id: 1001, theme_id: "best_reach", brand_name: "FoodieWorld", logo_url: "https://example.com/foodieworld-logo.png", value: 180000 },
 ];
 
 export const useInsightsData = (creatorUuid: string) => {
@@ -93,7 +92,6 @@ export const useInsightsData = (creatorUuid: string) => {
           .select(`
             creator_id,
             theme_id,
-            metric,
             value,
             updated_at,
             brands (
@@ -116,7 +114,6 @@ export const useInsightsData = (creatorUuid: string) => {
             theme_id: insight.theme_id,
             brand_name: (insight.brands as any)?.brand_name || '',
             logo_url: (insight.brands as any)?.logo_url,
-            metric: insight.metric,
             value: insight.value,
             website_url: (insight.brands as any)?.website_url
           }));

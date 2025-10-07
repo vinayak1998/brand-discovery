@@ -337,10 +337,10 @@ const AdminContent = () => {
             <div>
               <p className="font-semibold mb-2">Creator Brand Insights CSV columns:</p>
               <code className="text-xs bg-muted p-2 rounded block">
-                creator_id,brand_id,theme_id,metric,value
+                creator_id,brand_id,theme_id,value
               </code>
               <p className="text-xs text-muted-foreground mt-1">
-                (Both creator_id and brand_id must be long integers; make sure creators and brands exist before uploading insights)
+                (Both creator_id and brand_id must be long integers; theme_id should be one of: top_trending, best_reach, fastest_selling, highest_commission. Make sure creators and brands exist before uploading insights)
               </p>
             </div>
           </CardContent>

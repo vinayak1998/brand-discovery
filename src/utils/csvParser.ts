@@ -2,7 +2,6 @@ export interface InsightRow {
   creator_id: number;
   brand_id: number;
   theme_id: string;
-  metric: string;
   value: number;
 }
 
@@ -50,7 +49,7 @@ class CSVParser {
   }
 
   private static validateInsightsHeaders(headers: string[]): string[] {
-    const requiredHeaders = ['creator_id', 'brand_id', 'theme_id', 'metric', 'value'];
+    const requiredHeaders = ['creator_id', 'brand_id', 'theme_id', 'value'];
     const missingHeaders = requiredHeaders.filter(header => 
       !headers.some(h => h.toLowerCase() === header.toLowerCase())
     );
@@ -122,7 +121,6 @@ class CSVParser {
             creator_id: parseInt(row[headerMap['creator_id']]) || 0,
             brand_id: parseInt(row[headerMap['brand_id']]) || 0,
             theme_id: row[headerMap['theme_id']] || '',
-            metric: row[headerMap['metric']] || '',
             value: parseFloat(row[headerMap['value']]) || 0
           };
 
@@ -362,15 +360,12 @@ class CSVParser {
   }
 
   static generateSampleInsightsCSV(): string {
-    const headers = [
-      'creator_id', 'theme_id', 'theme_title', 'icon', 'tagline',
-      'color', 'brand_name', 'logo_url', 'metric', 'value'
-    ];
+    const headers = ['creator_id', 'brand_id', 'theme_id', 'value'];
     
     const sampleData = [
-      ['creator123', 'top_trending', 'Top Trending Brands', 'TrendingUp', 'Most popular brands this month', '#FF6F3D', 'Nike', 'https://logo.clearbit.com/nike.com', 'Engagement', '95.5'],
-      ['creator123', 'best_reach', 'Best Reach', 'Users', 'Brands with highest audience reach', '#FF3E6C', 'Adidas', 'https://logo.clearbit.com/adidas.com', 'Reach', '85.2'],
-      ['creator123', 'high_engagement', 'High Engagement', 'Heart', 'Most engaging brand partnerships', '#FFB84D', 'Coca-Cola', 'https://logo.clearbit.com/coca-cola.com', 'Engagement Rate', '78.9']
+      ['1001', '2001', 'top_trending', '95.5'],
+      ['1001', '2002', 'best_reach', '85.2'],
+      ['1001', '2003', 'fastest_selling', '78.9']
     ];
 
     return [headers, ...sampleData].map(row => row.join(',')).join('\n');

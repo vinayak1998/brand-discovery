@@ -50,7 +50,6 @@ Deno.serve(async (req) => {
       .select(`
         id,
         theme_id,
-        metric,
         value,
         brands (
           brand_id,

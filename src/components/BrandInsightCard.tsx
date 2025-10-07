@@ -7,7 +7,6 @@ import { useState } from "react";
 interface BrandData {
   brand_name: string;
   logo_url?: string;
-  metric: string;
   value: number;
   website_url?: string;
 }

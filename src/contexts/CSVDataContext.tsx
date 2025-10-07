@@ -117,13 +117,12 @@ export function CSVDataProvider({ children }: { children: React.ReactNode }) {
   const exportInsightsCSV = (): string => {
     if (insights.length === 0) return '';
 
-    const headers = ['creator_id', 'brand_id', 'theme_id', 'metric', 'value'];
+    const headers = ['creator_id', 'brand_id', 'theme_id', 'value'];
 
     const rows = insights.map(insight => [
       insight.creator_id.toString(),
       insight.brand_id.toString(),
       insight.theme_id,
-      insight.metric,
       insight.value.toString()
     ]);
 

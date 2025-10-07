@@ -9,7 +9,6 @@ interface InsightRow {
   creator_id: number;
   brand_id: number;
   theme_id: string;
-  metric: string;
   value: number;
 }
 
@@ -133,9 +132,8 @@ async function processInsights(supabase: any, rows: InsightRow[]) {
         creator_id: row.creator_id,
         brand_id: row.brand_id,
         theme_id: row.theme_id,
-        metric: row.metric,
         value: row.value
-      }, { onConflict: 'creator_id,brand_id,theme_id,metric', ignoreDuplicates: false });
+      }, { onConflict: 'creator_id,brand_id,theme_id', ignoreDuplicates: false });
 
     if (error) {
       console.error('Error upserting insight:', error);
