@@ -69,8 +69,8 @@ const BrandInsightCard = ({ icon: Icon, title, tagline, color, themeId, creatorI
     trackThemeView(themeId);
   }, [themeId, trackThemeView]);
   
-  // Calculate max value for proper bar scaling
-  const maxValue = brands.length > 0 ? Math.max(...brands.map(b => b.value)) : 0;
+  // Calculate max value for proper bar scaling using rounded values
+  const maxValue = brands.length > 0 ? Math.max(...brands.map(b => Math.ceil(b.value))) : 0;
 
   return (
     <>
@@ -110,7 +110,8 @@ const BrandInsightCard = ({ icon: Icon, title, tagline, color, themeId, creatorI
           </div>
         ) : (
           brands.map((brand, index) => {
-            const barWidth = maxValue > 0 ? (brand.value / maxValue) * 100 : 0;
+            const roundedValue = Math.ceil(brand.value);
+            const barWidth = maxValue > 0 ? (roundedValue / maxValue) * 100 : 0;
             
             return (
               <div key={`${brand.brand_name}-${index}`} className="space-y-3">
