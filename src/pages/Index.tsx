@@ -147,7 +147,7 @@ const Index = () => {
             let themeBrands = getInsightsByTheme(theme.id);
             
             // Filter out brands with 0 commission for the commission theme
-            if (theme.id === 'commission') {
+            if (theme.id === 'highest_commission') {
               themeBrands = themeBrands.filter(insight => insight.value > 0);
             }
             
