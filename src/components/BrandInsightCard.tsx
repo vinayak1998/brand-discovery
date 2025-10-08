@@ -131,7 +131,7 @@ const BrandInsightCard = ({ icon: Icon, title, tagline, color, themeId, creatorI
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold text-foreground">{brand.value.toLocaleString()}</p>
+                    <p className="font-semibold text-foreground">{Math.ceil(brand.value).toLocaleString()}</p>
                   </div>
                 </div>
 
