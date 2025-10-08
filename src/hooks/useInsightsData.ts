@@ -44,6 +44,7 @@ export const useInsightsData = (creatorUuid: string) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const [creatorName, setCreatorName] = useState<string | null>(null);
   const { insights: csvInsights, hasInsightsData } = useCSVData();
 
   useEffect(() => {
@@ -55,7 +56,7 @@ export const useInsightsData = (creatorUuid: string) => {
         // First, look up the creator by UUID to get the internal creator_id
         const { data: creatorData, error: creatorError } = await supabase
           .from('creators')
-          .select('creator_id, uuid')
+          .select('creator_id, uuid, name')
           .eq('uuid', creatorUuid)
           .maybeSingle();
 
@@ -84,6 +85,7 @@ export const useInsightsData = (creatorUuid: string) => {
         }
 
         const creator_id = creatorData.creator_id;
+        setCreatorName(creatorData.name);
         console.log('Found creator_id:', creator_id, 'for UUID:', creatorUuid);
 
         // Now fetch insights using the creator_id
@@ -176,7 +178,8 @@ export const useInsightsData = (creatorUuid: string) => {
     error,
     getInsightsByTheme,
     hasData: insights.length > 0,
-    lastUpdated
+    lastUpdated,
+    creatorName
   };
 };
 

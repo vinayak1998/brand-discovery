@@ -23,7 +23,7 @@ const Index = () => {
     }
   }, [creatorUuid, navigate]);
 
-  const { insights, loading, error, getInsightsByTheme, hasData, lastUpdated } = useInsightsData(creatorUuid || '');
+  const { insights, loading, error, getInsightsByTheme, hasData, lastUpdated, creatorName } = useInsightsData(creatorUuid || '');
   const { submitSurvey } = useSurveySubmission();
   
   // Initialize analytics tracking
@@ -138,7 +138,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <PageHeader lastUpdated={lastUpdated || undefined} />
+      <PageHeader lastUpdated={lastUpdated || undefined} creatorName={creatorName || undefined} />
       
       <main className="max-w-7xl mx-auto px-6 py-8">
         {/* Brand Insight Cards */}

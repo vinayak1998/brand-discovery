@@ -2,9 +2,10 @@ import wishLinkLogo from "@/assets/wishlink-logo.png";
 
 interface PageHeaderProps {
   lastUpdated?: string;
+  creatorName?: string;
 }
 
-const PageHeader = ({ lastUpdated }: PageHeaderProps) => {
+const PageHeader = ({ lastUpdated, creatorName }: PageHeaderProps) => {
   return (
     <header className="bg-primary text-primary-foreground py-8 px-6">
       <div className="max-w-7xl mx-auto">
@@ -30,6 +31,13 @@ const PageHeader = ({ lastUpdated }: PageHeaderProps) => {
               )}
             </div>
           </div>
+
+          {creatorName && (
+            <div className="flex-shrink-0 text-right">
+              <p className="text-primary-foreground/70 text-xs md:text-sm mb-1">Creator</p>
+              <p className="text-primary-foreground font-semibold text-sm md:text-base">{creatorName}</p>
+            </div>
+          )}
         </div>
       </div>
     </header>
