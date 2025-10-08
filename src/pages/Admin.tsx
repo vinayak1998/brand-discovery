@@ -4,13 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { parseInsightsCSV, parseCreatorsCSV, parseBrandsCSV } from "@/utils/csvParser";
-import { Upload, Database, Users, Building2 } from "lucide-react";
+import { Upload, Database, Users, Building2, BarChart3 } from "lucide-react";
 import wishLinkLogo from "@/assets/wishlink-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Progress } from "@/components/ui/progress";
+import { useNavigate } from "react-router-dom";
 
 const AdminContent = () => {
+  const navigate = useNavigate();
   const [creatorsFile, setCreatorsFile] = useState<File | null>(null);
   const [brandsFile, setBrandsFile] = useState<File | null>(null);
   const [insightsFile, setInsightsFile] = useState<File | null>(null);
@@ -219,13 +221,19 @@ const AdminContent = () => {
           />
         </div>
 
-        <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            Admin Dashboard
-          </h1>
-          <p className="text-muted-foreground">
-            Bulk upload data for creators, brands, and insights
-          </p>
+        <div className="flex items-center justify-between">
+          <div className="text-center flex-1 space-y-2">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              Admin Dashboard
+            </h1>
+            <p className="text-muted-foreground">
+              Bulk upload data for creators, brands, and insights
+            </p>
+          </div>
+          <Button onClick={() => navigate('/admin/analytics')} className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            View Analytics
+          </Button>
         </div>
 
         <div className="grid md:grid-cols-3 gap-6">

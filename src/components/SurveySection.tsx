@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 interface SurveySectionProps {
   creatorId: string;
@@ -63,9 +64,21 @@ const SurveySection = ({ creatorId, onSubmit }: SurveySectionProps) => {
   const [q6Feedback, setQ6Feedback] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [surveyStartTracked, setSurveyStartTracked] = useState(false);
   const { toast } = useToast();
   
+  const creatorIdNum = parseInt(creatorId);
+  const { trackSurveyStart, trackSurveySubmit } = useAnalytics(creatorIdNum);
+  
   const showQ5 = q2Answer && ["Neutral", "Unlikely", "Very Unlikely"].includes(q2Answer);
+  
+  // Track survey start when user starts interacting
+  useEffect(() => {
+    if (!surveyStartTracked && (q1Rating > 0 || q2Answer || q3Answers.length > 0)) {
+      trackSurveyStart();
+      setSurveyStartTracked(true);
+    }
+  }, [q1Rating, q2Answer, q3Answers, surveyStartTracked, trackSurveyStart]);
 
   const handleQ3Change = (themeId: string, checked: boolean) => {
     if (checked) {
@@ -171,6 +184,9 @@ const SurveySection = ({ creatorId, onSubmit }: SurveySectionProps) => {
       });
 
       if (error) throw error;
+      
+      // Track survey submission
+      trackSurveySubmit();
       
       onSubmit?.(surveyData);
       

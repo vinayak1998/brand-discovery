@@ -1,1 +1,7 @@
 project_id = "svdswlryhqmdzmilslyz"
+
+[functions.track-engagement]
+verify_jwt = false
+
+[functions.get-analytics]
+verify_jwt = true

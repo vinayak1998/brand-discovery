@@ -89,6 +89,36 @@ export type Database = {
           },
         ]
       }
+      creator_engagement_events: {
+        Row: {
+          brand_id: number | null
+          created_at: string
+          creator_id: number
+          event_type: string
+          id: string
+          metadata: Json | null
+          theme_id: string | null
+        }
+        Insert: {
+          brand_id?: number | null
+          created_at?: string
+          creator_id: number
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          theme_id?: string | null
+        }
+        Update: {
+          brand_id?: number | null
+          created_at?: string
+          creator_id?: number
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          theme_id?: string | null
+        }
+        Relationships: []
+      }
       creators: {
         Row: {
           created_at: string | null

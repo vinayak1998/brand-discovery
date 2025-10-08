@@ -2,13 +2,15 @@ import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAnalytics, ThemeId } from "@/hooks/useAnalytics";
 
 interface BrandData {
   brand_name: string;
   logo_url?: string;
   value: number;
   website_url?: string;
+  brand_id?: number;
 }
 
 interface BrandInsightCardProps {
@@ -16,6 +18,8 @@ interface BrandInsightCardProps {
   title: string;
   tagline: string;
   color: string;
+  themeId: ThemeId;
+  creatorId: number | null;
   brands: BrandData[];
   delay?: number;
 }
@@ -56,8 +60,14 @@ const getInitials = (name: string): string => {
     .toUpperCase();
 };
 
-const BrandInsightCard = ({ icon: Icon, title, tagline, color, brands, delay = 0 }: BrandInsightCardProps) => {
+const BrandInsightCard = ({ icon: Icon, title, tagline, color, themeId, creatorId, brands, delay = 0 }: BrandInsightCardProps) => {
   const [selectedBrand, setSelectedBrand] = useState<BrandData | null>(null);
+  const { trackThemeView, trackBrandClick, trackBrandWebsiteClick } = useAnalytics(creatorId);
+  
+  // Track theme view on mount
+  useEffect(() => {
+    trackThemeView(themeId);
+  }, [themeId, trackThemeView]);
   
   // Calculate max value for proper bar scaling
   const maxValue = brands.length > 0 ? Math.max(...brands.map(b => b.value)) : 0;
@@ -107,7 +117,12 @@ const BrandInsightCard = ({ icon: Icon, title, tagline, color, brands, delay = 0
                 {/* Brand Info Row */}
                 <div 
                   className="flex items-center justify-between cursor-pointer hover:bg-accent/50 p-2 rounded-lg transition-colors"
-                  onClick={() => setSelectedBrand(brand)}
+                  onClick={() => {
+                    if (brand.brand_id) {
+                      trackBrandClick(brand.brand_id, themeId);
+                    }
+                    setSelectedBrand(brand);
+                  }}
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <BrandAvatar logoUrl={brand.logo_url} brandName={brand.brand_name} />
@@ -152,7 +167,12 @@ const BrandInsightCard = ({ icon: Icon, title, tagline, color, brands, delay = 0
         </DialogHeader>
         {selectedBrand?.website_url ? (
           <Button
-            onClick={() => window.open(selectedBrand.website_url, '_blank')}
+            onClick={() => {
+              if (selectedBrand.brand_id) {
+                trackBrandWebsiteClick(selectedBrand.brand_id, themeId);
+              }
+              window.open(selectedBrand.website_url, '_blank');
+            }}
             className="w-full"
           >
             <ExternalLink className="w-4 h-4 mr-2" />

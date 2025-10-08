@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, Sparkles } from 'lucide-react';
 import { THEMES, getTheme } from '@/config/themes';
+import { useAnalytics, ThemeId } from '@/hooks/useAnalytics';
 
 const Index = () => {
   const [searchParams] = useSearchParams();
@@ -24,6 +25,17 @@ const Index = () => {
 
   const { insights, loading, error, getInsightsByTheme, hasData, lastUpdated } = useInsightsData(creatorUuid || '');
   const { submitSurvey } = useSurveySubmission();
+  
+  // Initialize analytics tracking
+  const creatorIdNum = creatorUuid ? parseInt(creatorUuid) : null;
+  const { trackPageView, trackCTAClick } = useAnalytics(creatorIdNum);
+  
+  // Track page view on mount
+  useEffect(() => {
+    if (creatorIdNum && hasData) {
+      trackPageView();
+    }
+  }, [creatorIdNum, hasData, trackPageView]);
 
   // Check if this is an invalid creator ID (no data exists)
   const isInvalidCreator = !loading && !error && !hasData && creatorUuid && creatorUuid !== '0000000000';
@@ -141,11 +153,14 @@ const Index = () => {
                 title={theme.title}
                 tagline={theme.tagline}
                 color={theme.color}
+                themeId={theme.id as ThemeId}
+                creatorId={creatorIdNum}
                 brands={themeBrands.map(insight => ({
                   brand_name: insight.brand_name,
                   logo_url: insight.logo_url,
                   value: insight.value,
                   website_url: (insight as any).website_url,
+                  brand_id: (insight as any).brand_id,
                 }))}
                 delay={index * 100}
               />
@@ -163,7 +178,10 @@ const Index = () => {
             </p>
             <Button
               size="lg"
-              onClick={() => window.open('https://creator.wishlink.com/create-diy', '_blank')}
+              onClick={() => {
+                trackCTAClick();
+                window.open('https://creator.wishlink.com/create-diy', '_blank');
+              }}
             >
               Start Creating Content
             </Button>
