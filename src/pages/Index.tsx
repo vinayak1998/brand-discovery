@@ -144,7 +144,12 @@ const Index = () => {
         {/* Brand Insight Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
           {themes.map((theme, index) => {
-            const themeBrands = getInsightsByTheme(theme.id);
+            let themeBrands = getInsightsByTheme(theme.id);
+            
+            // Filter out brands with 0 commission for the commission theme
+            if (theme.id === 'commission') {
+              themeBrands = themeBrands.filter(insight => insight.value > 0);
+            }
             
             return (
               <BrandInsightCard
