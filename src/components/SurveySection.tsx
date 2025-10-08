@@ -35,21 +35,24 @@ const themeOptions = [
 ];
 
 const missingInfoOptions = [
+  { id: "brand_reviews", label: "Brand reviews" },
+  { id: "product_details", label: "Most relevant / best seller product details" },
+  { id: "content_inspiration", label: "Top performing content for inspiration" },
+  { id: "delivery_timelines", label: "Delivery timelines for sourcing" },
   { id: "commission_rates", label: "Exact commission rates" },
-  { id: "product_details", label: "More product details/images" },
-  { id: "audience_match", label: "Better audience match data" },
-  { id: "brand_reputation", label: "Brand reputation/reviews" },
-  { id: "past_performance", label: "My past performance with similar brands" },
-  { id: "other", label: "Other (please specify)" },
+  { id: "payment_timelines", label: "Payment timelines" },
+  { id: "other", label: "Others (please specify)" },
 ];
 
 const barrierOptions = [
-  { id: "not_relevant", label: "Brands not relevant to my audience" },
-  { id: "low_commission", label: "Commission rates too low" },
-  { id: "no_time", label: "Don't have time right now" },
-  { id: "need_samples", label: "Need product samples first" },
   { id: "brand_unknown", label: "Don't know these brands well enough" },
-  { id: "other", label: "Other (please specify)" },
+  { id: "never_tried", label: "Never tried / don't like these brands" },
+  { id: "not_relevant", label: "Brands not relevant to my audience" },
+  { id: "sourcing_problems", label: "Sourcing these products directly / via Wishlink is problematic (e.g., long delivery time)" },
+  { id: "need_samples", label: "Need product samples first" },
+  { id: "low_earnings", label: "Earnings are too low" },
+  { id: "other_marketplace_rewards", label: "Have rewards with other marketplaces which I would prioritize" },
+  { id: "other", label: "Others (please specify)" },
 ];
 
 const SurveySection = ({ creatorId, onSubmit }: SurveySectionProps) => {
