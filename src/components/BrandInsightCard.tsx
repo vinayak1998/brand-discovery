@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ExternalLink } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAnalytics, ThemeId } from "@/hooks/useAnalytics";
@@ -25,26 +26,12 @@ interface BrandInsightCardProps {
 }
 
 const BrandAvatar = ({ logoUrl, brandName }: { logoUrl?: string; brandName: string }) => {
-  if (logoUrl) {
-    return (
-      <img
-        src={logoUrl}
-        alt={`${brandName} logo`}
-        className="w-10 h-10 rounded-full object-cover"
-        onError={(e) => {
-          const target = e.target as HTMLImageElement;
-          target.style.display = "none";
-          const parent = target.parentElement;
-          if (parent) {
-            parent.innerHTML = getInitials(brandName);
-            parent.className = "brand-avatar";
-          }
-        }}
-      />
-    );
-  }
-
-  return <div className="brand-avatar">{getInitials(brandName)}</div>;
+  return (
+    <Avatar className="w-10 h-10">
+      {logoUrl && <AvatarImage src={logoUrl} alt={`${brandName} logo`} />}
+      <AvatarFallback className="brand-avatar">{getInitials(brandName)}</AvatarFallback>
+    </Avatar>
+  );
 };
 
 const getInitials = (name: string): string => {
