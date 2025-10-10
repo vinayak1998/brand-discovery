@@ -163,10 +163,31 @@ Deno.serve(async (req) => {
       creator_name: creatorMap.get(cm.creator_id) || `Creator ${cm.creator_id}`
     }));
 
+    // Fetch survey responses
+    let surveyQuery = supabase
+      .from('survey_responses')
+      .select('creator_id, q1_value_rating, q2_actionability, q3_themes, q4_missing_info, q5_barriers, q6_open_feedback, submitted_at')
+      .gte('submitted_at', dateFrom)
+      .lte('submitted_at', dateTo);
+
+    if (creatorId) {
+      surveyQuery = surveyQuery.eq('creator_id', parseInt(creatorId));
+    }
+
+    const { data: surveyResponses } = await surveyQuery;
+
+    const surveyResponsesWithNames = surveyResponses?.map(sr => ({
+      ...sr,
+      creator_name: creatorMap.get(sr.creator_id) || `Creator ${sr.creator_id}`
+    })) || [];
+
     console.log(`Returning analytics for ${metrics.unique_creators} creators`);
 
     return new Response(
-      JSON.stringify(metrics),
+      JSON.stringify({
+        ...metrics,
+        survey_responses: surveyResponsesWithNames
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200 

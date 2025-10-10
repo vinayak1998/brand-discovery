@@ -37,6 +37,15 @@ interface AnalyticsData {
     events: number;
     unique_creators: number;
   }>;
+  survey_responses?: Array<{
+    q1_value_rating: number;
+    q2_actionability: string;
+    q3_themes: string;
+    q4_missing_info: string;
+    q5_barriers?: string;
+    q6_open_feedback?: string;
+    creator_name: string;
+  }>;
 }
 
 const THEME_COLORS = {
@@ -122,12 +131,34 @@ const AnalyticsContent = () => {
   }));
 
   const funnelData = [
-    { stage: "Page Views", count: data.events_by_type.page_view || 0, color: "hsl(var(--chart-1))" },
-    { stage: "Brand Clicks", count: data.brand_clicks, color: "hsl(var(--chart-2))" },
-    { stage: "Website Visits", count: data.brand_website_clicks, color: "hsl(var(--chart-3))" },
-    { stage: "CTA Clicks", count: data.cta_clicks, color: "hsl(var(--chart-4))" },
-    { stage: "Survey Submitted", count: data.survey_submits, color: "hsl(var(--primary))" },
+    { stage: "Page Views", count: data.events_by_type.page_view || 0, color: "hsl(var(--chart-1))", creators: [] as string[] },
+    { stage: "Brand Clicks", count: data.brand_clicks, color: "hsl(var(--chart-2))", creators: [] as string[] },
+    { stage: "Website Visits", count: data.brand_website_clicks, color: "hsl(var(--chart-3))", creators: [] as string[] },
+    { stage: "CTA Clicks", count: data.cta_clicks, color: "hsl(var(--chart-4))", creators: [] as string[] },
+    { stage: "Survey Started", count: data.survey_starts, color: "hsl(var(--chart-5))", creators: [] as string[] },
+    { stage: "Survey Submitted", count: data.survey_submits, color: "hsl(var(--primary))", creators: [] as string[] },
   ];
+
+  // Map creators to funnel stages
+  data.creator_metrics.forEach(creator => {
+    if (creator.page_views > 0) funnelData[0].creators.push(creator.creator_name);
+    if (creator.brand_clicks > 0) funnelData[1].creators.push(creator.creator_name);
+    if (creator.website_clicks > 0) funnelData[2].creators.push(creator.creator_name);
+    if (creator.cta_clicks > 0) funnelData[3].creators.push(creator.creator_name);
+  });
+
+  // Survey responses visualization
+  const surveyValueDistribution = data.survey_responses ? 
+    [1, 2, 3, 4, 5].map(rating => ({
+      rating: `${rating} Star${rating > 1 ? 's' : ''}`,
+      count: data.survey_responses!.filter(r => r.q1_value_rating === rating).length,
+    })) : [];
+
+  const surveyActionabilityData = data.survey_responses ?
+    ["Very Likely", "Likely", "Neutral", "Unlikely", "Very Unlikely"].map(response => ({
+      response,
+      count: data.survey_responses!.filter(r => r.q2_actionability === response).length,
+    })).filter(d => d.count > 0) : [];
 
   const topCreators = [...data.creator_metrics]
     .sort((a, b) => b.total_engagement - a.total_engagement)
@@ -273,7 +304,24 @@ const AnalyticsContent = () => {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis type="number" />
                   <YAxis dataKey="stage" type="category" width={120} />
-                  <Tooltip />
+                  <Tooltip 
+                    content={({ payload }) => {
+                      if (!payload || !payload.length) return null;
+                      const data = payload[0].payload;
+                      return (
+                        <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
+                          <p className="font-semibold">{data.stage}</p>
+                          <p className="text-sm">Count: {data.count}</p>
+                          {data.creators.length > 0 && (
+                            <div className="mt-2 text-xs max-w-xs">
+                              <p className="font-medium">Creators:</p>
+                              <p className="text-muted-foreground">{data.creators.join(', ')}</p>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }}
+                  />
                   <Bar dataKey="count" fill="hsl(var(--primary))">
                     {funnelData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
@@ -284,6 +332,49 @@ const AnalyticsContent = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Survey Results - Only show if there are responses */}
+        {data.survey_responses && data.survey_responses.length > 0 && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Survey Value Rating Distribution */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Survey: Value Rating</CardTitle>
+                <CardDescription>How valuable creators found the insights</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={surveyValueDistribution}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="rating" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="count" fill="hsl(var(--chart-1))" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Survey Actionability */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Survey: Likelihood to Act</CardTitle>
+                <CardDescription>How likely creators are to take action</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={surveyActionabilityData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="response" angle={-15} textAnchor="end" height={80} />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="count" fill="hsl(var(--chart-2))" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Daily Trend */}
         <Card>
