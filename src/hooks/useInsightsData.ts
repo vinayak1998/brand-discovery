@@ -45,6 +45,7 @@ export const useInsightsData = (creatorUuid: string) => {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [creatorName, setCreatorName] = useState<string | null>(null);
+  const [creatorIdNum, setCreatorIdNum] = useState<number | null>(null);
   const { insights: csvInsights, hasInsightsData } = useCSVData();
 
   useEffect(() => {
@@ -86,6 +87,7 @@ export const useInsightsData = (creatorUuid: string) => {
 
         const creator_id = creatorData.creator_id;
         setCreatorName(creatorData.name);
+        setCreatorIdNum(creator_id);
         console.log('Found creator_id:', creator_id, 'for UUID:', creatorUuid);
 
         // Now fetch insights using the creator_id
@@ -179,7 +181,8 @@ export const useInsightsData = (creatorUuid: string) => {
     getInsightsByTheme,
     hasData: insights.length > 0,
     lastUpdated,
-    creatorName
+    creatorName,
+    creatorIdNum
   };
 };
 

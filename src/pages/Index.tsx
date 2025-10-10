@@ -23,11 +23,10 @@ const Index = () => {
     }
   }, [creatorUuid, navigate]);
 
-  const { insights, loading, error, getInsightsByTheme, hasData, lastUpdated, creatorName } = useInsightsData(creatorUuid || '');
+  const { insights, loading, error, getInsightsByTheme, hasData, lastUpdated, creatorName, creatorIdNum } = useInsightsData(creatorUuid || '');
   const { submitSurvey } = useSurveySubmission();
   
   // Initialize analytics tracking
-  const creatorIdNum = creatorUuid ? parseInt(creatorUuid) : null;
   const { trackPageView, trackCTAClick } = useAnalytics(creatorIdNum);
   
   // Track page view on mount
