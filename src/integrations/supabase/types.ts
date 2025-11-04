@@ -119,6 +119,59 @@ export type Database = {
         }
         Relationships: []
       }
+      creator_x_product_recommendations: {
+        Row: {
+          brand: string | null
+          created_at: string
+          creator_id: number | null
+          header: string | null
+          id: number
+          name: string
+          platform: string | null
+          post_clicks: number
+          purchase_url: string | null
+          sim_score: number
+          thumbnail_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          brand?: string | null
+          created_at?: string
+          creator_id?: number | null
+          header?: string | null
+          id?: never
+          name: string
+          platform?: string | null
+          post_clicks?: number
+          purchase_url?: string | null
+          sim_score: number
+          thumbnail_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          brand?: string | null
+          created_at?: string
+          creator_id?: number | null
+          header?: string | null
+          id?: never
+          name?: string
+          platform?: string | null
+          post_clicks?: number
+          purchase_url?: string | null
+          sim_score?: number
+          thumbnail_url?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_x_product_recommendations_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "creators"
+            referencedColumns: ["creator_id"]
+          },
+        ]
+      }
       creators: {
         Row: {
           created_at: string | null
