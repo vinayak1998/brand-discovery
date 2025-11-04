@@ -122,6 +122,7 @@ export type Database = {
       creator_x_product_recommendations: {
         Row: {
           brand: string | null
+          count_90_days: number
           created_at: string
           creator_id: number | null
           header: string | null
@@ -137,6 +138,7 @@ export type Database = {
         }
         Insert: {
           brand?: string | null
+          count_90_days?: number
           created_at?: string
           creator_id?: number | null
           header?: string | null
@@ -152,6 +154,7 @@ export type Database = {
         }
         Update: {
           brand?: string | null
+          count_90_days?: number
           created_at?: string
           creator_id?: number | null
           header?: string | null
