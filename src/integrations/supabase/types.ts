@@ -129,6 +129,7 @@ export type Database = {
           name: string
           platform: string | null
           post_clicks: number
+          product_id: number | null
           purchase_url: string | null
           sim_score: number
           thumbnail_url: string | null
@@ -143,6 +144,7 @@ export type Database = {
           name: string
           platform?: string | null
           post_clicks?: number
+          product_id?: number | null
           purchase_url?: string | null
           sim_score: number
           thumbnail_url?: string | null
@@ -157,6 +159,7 @@ export type Database = {
           name?: string
           platform?: string | null
           post_clicks?: number
+          product_id?: number | null
           purchase_url?: string | null
           sim_score?: number
           thumbnail_url?: string | null
