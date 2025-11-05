@@ -275,7 +275,21 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      creator_brand_pairs: {
+        Row: {
+          brand_name: string | null
+          creator_id: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_brand_insights_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "creators"
+            referencedColumns: ["creator_id"]
+          },
+        ]
+      }
     }
     Functions: {
       has_role: {
