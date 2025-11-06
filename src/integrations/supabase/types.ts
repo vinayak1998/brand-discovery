@@ -90,6 +90,13 @@ export type Database = {
             referencedRelation: "creators"
             referencedColumns: ["creator_id"]
           },
+          {
+            foreignKeyName: "fk_creator_brand_insights_brand"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["brand_id"]
+          },
         ]
       }
       creator_engagement_events: {
