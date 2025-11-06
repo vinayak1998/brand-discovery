@@ -4,21 +4,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { parseInsightsCSV, parseCreatorsCSV, parseBrandsCSV } from "@/utils/csvParser";
-import { Upload, Database, Users, Building2, BarChart3 } from "lucide-react";
+import { Upload, Database, Users, Building2, BarChart3, PackageCheck } from "lucide-react";
 import wishLinkLogo from "@/assets/wishlink-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Progress } from "@/components/ui/progress";
 import { useNavigate } from "react-router-dom";
+import { Textarea } from "@/components/ui/textarea";
 
 const AdminContent = () => {
   const navigate = useNavigate();
   const [creatorsFile, setCreatorsFile] = useState<File | null>(null);
   const [brandsFile, setBrandsFile] = useState<File | null>(null);
   const [insightsFile, setInsightsFile] = useState<File | null>(null);
+  const [sourcingCreatorIds, setSourcingCreatorIds] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{
-    type: 'creators' | 'brands' | 'insights' | null;
+    type: 'creators' | 'brands' | 'insights' | 'sourcing' | null;
     current: number;
     total: number;
   }>({ type: null, current: 0, total: 0 });
@@ -210,6 +212,69 @@ const AdminContent = () => {
     }
   };
 
+  const handleSourcingUpload = async () => {
+    if (!sourcingCreatorIds.trim()) {
+      toast({
+        title: "No Creator IDs provided",
+        description: "Please enter at least one creator ID",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    setUploadProgress({ type: 'sourcing', current: 0, total: 0 });
+    
+    try {
+      // Parse creator IDs (comma or newline separated)
+      const ids = sourcingCreatorIds
+        .split(/[\n,]/)
+        .map(id => id.trim())
+        .filter(id => id.length > 0)
+        .map(id => parseInt(id, 10))
+        .filter(id => !isNaN(id));
+
+      if (ids.length === 0) {
+        toast({
+          title: "Invalid Creator IDs",
+          description: "Please enter valid numeric creator IDs",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      setUploadProgress({ type: 'sourcing', current: 0, total: ids.length });
+
+      // Update creators in the database
+      const { error } = await supabase
+        .from('creators')
+        .update({ brand_sourcing: true })
+        .in('creator_id', ids);
+
+      if (error) {
+        throw error;
+      }
+
+      setUploadProgress({ type: 'sourcing', current: ids.length, total: ids.length });
+
+      toast({
+        title: "Success!",
+        description: `Brand sourcing enabled for ${ids.length} creator(s)`,
+      });
+      setSourcingCreatorIds("");
+    } catch (error) {
+      toast({
+        title: "Update failed",
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+      setTimeout(() => setUploadProgress({ type: null, current: 0, total: 0 }), 2000);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-8">
       <div className="max-w-6xl mx-auto space-y-8">
@@ -369,6 +434,43 @@ const AdminContent = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Brand Sourcing Section */}
+        <Card className="border-accent/30">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <PackageCheck className="h-5 w-5" />
+              Enable Brand Sourcing
+            </CardTitle>
+            <CardDescription>
+              Enable brand sourcing for specific creators by entering their IDs
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Textarea
+              placeholder="Enter creator IDs (comma or newline separated)&#10;Example: 123456, 789012&#10;Or:&#10;123456&#10;789012"
+              value={sourcingCreatorIds}
+              onChange={(e) => setSourcingCreatorIds(e.target.value)}
+              className="min-h-[120px] font-mono text-sm"
+            />
+            <Button 
+              onClick={handleSourcingUpload}
+              disabled={loading || !sourcingCreatorIds.trim()}
+              className="w-full"
+            >
+              <PackageCheck className="mr-2 h-4 w-4" />
+              Enable Sourcing for Creators
+            </Button>
+            {uploadProgress.type === 'sourcing' && uploadProgress.total > 0 && (
+              <div className="space-y-2">
+                <Progress value={(uploadProgress.current / uploadProgress.total) * 100} />
+                <p className="text-xs text-muted-foreground text-center">
+                  {uploadProgress.current} / {uploadProgress.total} creators updated
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         <Card className="border-primary/20 bg-primary/5">
           <CardHeader>

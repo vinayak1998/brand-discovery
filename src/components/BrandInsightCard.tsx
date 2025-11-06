@@ -58,6 +58,7 @@ const BrandInsightCard = ({
 }: BrandInsightCardProps) => {
   const [selectedBrand, setSelectedBrand] = useState<BrandData | null>(null);
   const [hasProducts, setHasProducts] = useState<boolean>(true);
+  const [brandSourcingEnabled, setBrandSourcingEnabled] = useState<boolean>(false);
   const { trackThemeView, trackBrandClick, trackBrandWebsiteClick } = useAnalytics(creatorId);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -67,6 +68,23 @@ const BrandInsightCard = ({
   useEffect(() => {
     trackThemeView(themeId);
   }, [themeId, trackThemeView]);
+
+  // Fetch creator's brand sourcing status
+  useEffect(() => {
+    const fetchCreatorSourcingStatus = async () => {
+      if (creatorId) {
+        const { data } = await supabase
+          .from('creators')
+          .select('brand_sourcing')
+          .eq('creator_id', creatorId)
+          .maybeSingle();
+        
+        setBrandSourcingEnabled(data?.brand_sourcing ?? false);
+      }
+    };
+
+    fetchCreatorSourcingStatus();
+  }, [creatorId]);
 
   // Check if products exist when brand is selected
   useEffect(() => {
@@ -195,7 +213,7 @@ const BrandInsightCard = ({
             )}
 
             {/* Secondary CTA: Source Products */}
-            {selectedBrand?.sourcing_link ? (
+            {brandSourcingEnabled && selectedBrand?.sourcing_link ? (
               <Button
                 variant="outline"
                 onClick={() => {

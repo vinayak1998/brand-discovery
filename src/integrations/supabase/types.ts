@@ -183,6 +183,7 @@ export type Database = {
       }
       creators: {
         Row: {
+          brand_sourcing: boolean
           created_at: string | null
           creator_id: number
           name: string
@@ -190,6 +191,7 @@ export type Database = {
           uuid: string
         }
         Insert: {
+          brand_sourcing?: boolean
           created_at?: string | null
           creator_id: number
           name: string
@@ -197,6 +199,7 @@ export type Database = {
           uuid?: string
         }
         Update: {
+          brand_sourcing?: boolean
           created_at?: string | null
           creator_id?: number
           name?: string
