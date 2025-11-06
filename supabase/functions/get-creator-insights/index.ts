@@ -54,7 +54,9 @@ Deno.serve(async (req) => {
         brands (
           brand_id,
           brand_name,
-          logo_url
+          logo_url,
+          website_url,
+          sourcing_link
         )
       `)
       .eq('creator_id', creator_id);

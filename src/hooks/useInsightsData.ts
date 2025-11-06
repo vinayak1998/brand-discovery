@@ -12,6 +12,8 @@ export interface InsightRow {
   logo_url?: string;
   value: number;
   website_url?: string;
+  brand_id?: number;
+  sourcing_link?: string;
 }
 
 export interface SurveyResponse {
@@ -99,9 +101,11 @@ export const useInsightsData = (creatorUuid: string) => {
             value,
             updated_at,
             brands (
+              brand_id,
               brand_name,
               logo_url,
-              website_url
+              website_url,
+              sourcing_link
             )
           `)
           .eq('creator_id', creator_id);
@@ -119,7 +123,9 @@ export const useInsightsData = (creatorUuid: string) => {
             brand_name: (insight.brands as any)?.brand_name || '',
             logo_url: (insight.brands as any)?.logo_url,
             value: insight.value,
-            website_url: (insight.brands as any)?.website_url
+            website_url: (insight.brands as any)?.website_url,
+            brand_id: (insight.brands as any)?.brand_id,
+            sourcing_link: (insight.brands as any)?.sourcing_link
           }));
           
           // Get the most recent updated_at timestamp
