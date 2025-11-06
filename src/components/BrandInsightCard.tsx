@@ -2,8 +2,10 @@ import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { ExternalLink, ShoppingBag } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ExternalLink, ShoppingBag, ChevronDown, ChevronRight } from "lucide-react";
 import { useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
 import { useAnalytics, ThemeId } from "@/hooks/useAnalytics";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -56,6 +58,7 @@ const BrandInsightCard = ({
   brands,
   delay = 0,
 }: BrandInsightCardProps) => {
+  const [isOpen, setIsOpen] = useState(false);
   const [selectedBrand, setSelectedBrand] = useState<BrandData | null>(null);
   const [hasProducts, setHasProducts] = useState<boolean | undefined>(undefined);
   const [brandSourcingEnabled, setBrandSourcingEnabled] = useState<boolean>(false);
@@ -108,30 +111,43 @@ const BrandInsightCard = ({
 
   return (
     <>
-      <Card className="p-6 insight-card animate-fade-in bg-card border-border" style={{ animationDelay: `${delay}ms` }}>
-        {/* Card Header */}
-        <div className="mb-6">
-          <div className="flex items-center gap-3 mb-2">
-            <Icon className="w-6 h-6" style={{ color }} />
-            <h3 className="text-lg font-semibold text-foreground">{title}</h3>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            {title === "Top Trending Brands" ? "What other creators similar to you are talking about most" : tagline}
-          </p>
-        </div>
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <Card className="insight-card animate-fade-in bg-card border-border overflow-hidden" style={{ animationDelay: `${delay}ms` }}>
+          {/* Collapsible Header */}
+          <CollapsibleTrigger className="w-full p-6 text-left hover:bg-accent/30 transition-colors">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 flex-1">
+                <Icon className="w-6 h-6 flex-shrink-0" style={{ color }} />
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-semibold text-foreground mb-1">{title}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {title === "Top Trending Brands" ? "What other creators similar to you are talking about most" : tagline}
+                  </p>
+                </div>
+              </div>
+              <ChevronDown 
+                className={cn(
+                  "w-5 h-5 text-muted-foreground transition-transform duration-200 flex-shrink-0 ml-2",
+                  isOpen && "rotate-180"
+                )}
+              />
+            </div>
+          </CollapsibleTrigger>
 
-        {/* Metric Header */}
-        <div className="flex justify-end mb-3">
-          <p className="text-xs text-muted-foreground font-medium">
-            {title === "Top Trending Brands" && "Products recently shared by other creators like you!"}
-            {title === "Best Reach Brands" && "Views per recent posts"}
-            {title === "Fastest Selling Products" && "Sales per link"}
-            {title === "Highest Commission Rates" && "Commission%"}
-          </p>
-        </div>
+          {/* Collapsible Content */}
+          <CollapsibleContent>
+            <div className="px-6 pb-6 pt-2">
+              {/* Metric Header */}
+              <div className="flex justify-end mb-3">
+                <p className="text-xs text-muted-foreground font-medium">
+                  {title === "Top Trending Brands" && "Products recently shared by other creators like you!"}
+                  {title === "Best Reach Brands" && "Views per recent posts"}
+                  {title === "Fastest Selling Products" && "Sales per link"}
+                </p>
+              </div>
 
-        {/* Brand List */}
-        <div className="space-y-4">
+              {/* Brand List */}
+              <div className="space-y-4">
           {brands.length === 0 ? (
             <div className="py-8 text-center">
               <p className="text-muted-foreground">No brands available for this category</p>
@@ -145,7 +161,7 @@ const BrandInsightCard = ({
                 <div key={`${brand.brand_name}-${index}`} className="space-y-3">
                   {/* Brand Info Row */}
                   <div
-                    className="flex items-center justify-between cursor-pointer hover:bg-accent/50 active:bg-accent p-3 rounded-lg transition-all ring-offset-background focus-visible:outline-none focus-visible:ring-2 border border-transparent hover:border-primary/20"
+                    className="group flex items-center justify-between cursor-pointer hover:bg-accent/70 active:bg-accent p-3 rounded-lg transition-all ring-offset-background focus-visible:outline-none focus-visible:ring-2 border border-border hover:border-primary/40 hover:shadow-sm"
                     onClick={() => {
                       if (brand.brand_id) {
                         trackBrandClick(brand.brand_id, themeId);
@@ -161,8 +177,9 @@ const BrandInsightCard = ({
                         <p className="font-semibold text-foreground truncate">{brand.brand_name}</p>
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="flex items-center gap-2">
                       <p className="font-semibold text-foreground">{Math.ceil(brand.value).toLocaleString()}</p>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                     </div>
                   </div>
 
@@ -181,8 +198,11 @@ const BrandInsightCard = ({
               );
             })
           )}
-        </div>
-      </Card>
+              </div>
+            </div>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
 
       <Dialog open={!!selectedBrand} onOpenChange={() => setSelectedBrand(null)}>
         <DialogContent>
