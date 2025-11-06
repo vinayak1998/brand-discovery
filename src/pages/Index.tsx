@@ -159,12 +159,13 @@ const Index = () => {
                 color={theme.color}
                 themeId={theme.id as ThemeId}
                 creatorId={creatorIdNum}
-                brands={themeBrands.map(insight => ({
+                brands={themeBrands.map((insight) => ({
                   brand_name: insight.brand_name,
                   logo_url: insight.logo_url,
                   value: insight.value,
-                  website_url: (insight as any).website_url,
-                  brand_id: (insight as any).brand_id,
+                  website_url: insight.website_url,
+                  brand_id: insight.brand_id,
+                  sourcing_link: insight.sourcing_link,
                 }))}
                 delay={index * 100}
               />
