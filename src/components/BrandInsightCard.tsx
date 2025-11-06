@@ -2,9 +2,10 @@ import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, ShoppingBag } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAnalytics, ThemeId } from "@/hooks/useAnalytics";
+import { useSearchParams, useNavigate } from "react-router-dom";
 
 interface BrandData {
   brand_name: string;
@@ -55,6 +56,9 @@ const BrandInsightCard = ({
 }: BrandInsightCardProps) => {
   const [selectedBrand, setSelectedBrand] = useState<BrandData | null>(null);
   const { trackThemeView, trackBrandClick, trackBrandWebsiteClick } = useAnalytics(creatorId);
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const creatorUuid = searchParams.get('creator_id');
 
   // Track theme view on mount
   useEffect(() => {
@@ -152,22 +156,39 @@ const BrandInsightCard = ({
               )}
             </DialogTitle>
           </DialogHeader>
-          {selectedBrand?.website_url ? (
+          <div className="space-y-3">
+            {/* Primary CTA: View Recommended Products */}
             <Button
               onClick={() => {
-                if (selectedBrand.brand_id) {
-                  trackBrandWebsiteClick(selectedBrand.brand_id, themeId);
+                if (selectedBrand?.brand_id) {
+                  trackBrandClick(selectedBrand.brand_id, themeId);
                 }
-                window.open(selectedBrand.website_url, "_blank");
+                navigate(`/brand/products?creator_id=${creatorUuid}&brand_name=${encodeURIComponent(selectedBrand?.brand_name || '')}`);
               }}
               className="w-full"
+              size="lg"
             >
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Go to Website
+              <ShoppingBag className="w-4 h-4 mr-2" />
+              View Recommended Products
             </Button>
-          ) : (
-            <p className="text-sm text-muted-foreground text-center py-4">Website URL not available for this brand</p>
-          )}
+
+            {/* Secondary CTA: Go to Brand Website */}
+            {selectedBrand?.website_url ? (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (selectedBrand.brand_id) {
+                    trackBrandWebsiteClick(selectedBrand.brand_id, themeId);
+                  }
+                  window.open(selectedBrand.website_url, "_blank");
+                }}
+                className="w-full"
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                Visit Brand Website
+              </Button>
+            ) : null}
+          </div>
         </DialogContent>
       </Dialog>
     </>
