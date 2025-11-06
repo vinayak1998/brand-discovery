@@ -30,13 +30,6 @@ export const THEMES: Record<string, ThemeConfig> = {
     tagline: "Products flying off the shelves",
     color: "hsl(var(--chart-3))",
   },
-  highest_commission: {
-    id: "highest_commission",
-    title: "Highest Commission Rates",
-    icon: DollarSign,
-    tagline: "Earn more with these top-paying brands",
-    color: "hsl(var(--chart-4))",
-  },
 };
 
 export const getTheme = (themeId: string): ThemeConfig | undefined => {

@@ -57,7 +57,7 @@ const BrandInsightCard = ({
   delay = 0,
 }: BrandInsightCardProps) => {
   const [selectedBrand, setSelectedBrand] = useState<BrandData | null>(null);
-  const [hasProducts, setHasProducts] = useState<boolean>(true);
+  const [hasProducts, setHasProducts] = useState<boolean | undefined>(undefined);
   const [brandSourcingEnabled, setBrandSourcingEnabled] = useState<boolean>(false);
   const { trackThemeView, trackBrandClick, trackBrandWebsiteClick } = useAnalytics(creatorId);
   const [searchParams] = useSearchParams();
@@ -145,13 +145,15 @@ const BrandInsightCard = ({
                 <div key={`${brand.brand_name}-${index}`} className="space-y-3">
                   {/* Brand Info Row */}
                   <div
-                    className="flex items-center justify-between cursor-pointer hover:bg-accent/50 p-2 rounded-lg transition-colors"
+                    className="flex items-center justify-between cursor-pointer hover:bg-accent/50 active:bg-accent p-3 rounded-lg transition-all ring-offset-background focus-visible:outline-none focus-visible:ring-2 border border-transparent hover:border-primary/20"
                     onClick={() => {
                       if (brand.brand_id) {
                         trackBrandClick(brand.brand_id, themeId);
                       }
                       setSelectedBrand(brand);
                     }}
+                    role="button"
+                    tabIndex={0}
                   >
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <BrandAvatar logoUrl={brand.logo_url} brandName={brand.brand_name} />
@@ -196,7 +198,9 @@ const BrandInsightCard = ({
           </DialogHeader>
           <div className="space-y-3">
             {/* Primary CTA: View Recommended Products */}
-            {hasProducts && (
+            {hasProducts === undefined ? (
+              <div className="h-12 w-full bg-muted animate-pulse rounded-md" />
+            ) : hasProducts ? (
               <Button
                 onClick={() => {
                   if (selectedBrand?.brand_id) {
@@ -210,7 +214,7 @@ const BrandInsightCard = ({
                 <ShoppingBag className="w-4 h-4 mr-2" />
                 View Recommended Products
               </Button>
-            )}
+            ) : null}
 
             {/* Secondary CTA: Source Products */}
             {brandSourcingEnabled && selectedBrand?.sourcing_link ? (

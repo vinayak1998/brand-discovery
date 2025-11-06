@@ -47,7 +47,7 @@ const Index = () => {
         <PageHeader />
         <main className="max-w-7xl mx-auto px-6 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
-            {[1, 2, 3, 4].map((i) => (
+            {[1, 2, 3].map((i) => (
               <Card key={i} className="p-6">
                 <div className="space-y-4">
                   <Skeleton className="h-8 w-48" />
@@ -143,12 +143,7 @@ const Index = () => {
         {/* Brand Insight Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
           {themes.map((theme, index) => {
-            let themeBrands = getInsightsByTheme(theme.id);
-            
-            // Filter out brands with 0 commission for the commission theme
-            if (theme.id === 'highest_commission') {
-              themeBrands = themeBrands.filter(insight => insight.value > 0);
-            }
+            const themeBrands = getInsightsByTheme(theme.id);
             
             return (
               <BrandInsightCard

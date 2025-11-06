@@ -12,7 +12,7 @@ export type EventType =
   | 'session_start'
   | 'session_end';
 
-export type ThemeId = 'top_trending' | 'best_reach' | 'fastest_selling' | 'highest_commission';
+export type ThemeId = 'top_trending' | 'best_reach' | 'fastest_selling';
 
 interface TrackEventParams {
   eventType: EventType;

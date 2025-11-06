@@ -25,6 +25,7 @@ const BrandProducts = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [creatorName, setCreatorName] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -37,15 +38,17 @@ const BrandProducts = () => {
       try {
         setLoading(true);
         
-        // First get the creator's internal ID
+        // First get the creator's internal ID and name
         const { data: creatorData, error: creatorError } = await supabase
           .from('creators')
-          .select('creator_id')
+          .select('creator_id, name')
           .eq('uuid', creatorId)
           .single();
 
         if (creatorError) throw creatorError;
         if (!creatorData) throw new Error('Creator not found');
+        
+        setCreatorName(creatorData.name);
 
         // Fetch products for this creator x brand
         const { data, error: productsError } = await supabase
@@ -73,15 +76,19 @@ const BrandProducts = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <PageHeader />
-        <main className="max-w-7xl mx-auto px-6 py-8">
-          <Skeleton className="h-10 w-64 mb-8" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <PageHeader creatorName={creatorName || undefined} pageContext="products" brandName={brandName || undefined} />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b mb-6 pb-4">
+            <Skeleton className="h-8 w-32 mb-2" />
+            <h1 className="text-2xl font-bold mb-2">{brandName}</h1>
+            <Skeleton className="h-4 w-24" />
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-6">
             {[...Array(12)].map((_, i) => (
-              <Card key={i} className="p-4">
-                <Skeleton className="w-full aspect-square mb-4 rounded" />
-                <Skeleton className="h-6 w-3/4 mb-2" />
-                <Skeleton className="h-10 w-full" />
+              <Card key={i} className="p-2 sm:p-4">
+                <Skeleton className="w-full aspect-[3/4] sm:aspect-square mb-2 sm:mb-4 rounded" />
+                <Skeleton className="h-4 w-3/4 mb-2" />
+                <Skeleton className="h-9 w-full" />
               </Card>
             ))}
           </div>
@@ -93,7 +100,7 @@ const BrandProducts = () => {
   if (error) {
     return (
       <div className="min-h-screen bg-background">
-        <PageHeader />
+        <PageHeader creatorName={creatorName || undefined} pageContext="products" brandName={brandName || undefined} />
         <main className="max-w-7xl mx-auto px-6 py-8">
           <Card className="p-8 text-center">
             <div className="text-6xl mb-4">⚠️</div>
@@ -110,23 +117,24 @@ const BrandProducts = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <PageHeader />
+      <PageHeader creatorName={creatorName || undefined} pageContext="products" brandName={brandName || undefined} />
       
-      <main className="max-w-7xl mx-auto px-6 py-8">
-        {/* Back Button & Header */}
-        <div className="mb-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        {/* Sticky Back Button & Header */}
+        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b mb-6 pb-4">
           <Button
             variant="ghost"
             onClick={() => navigate(`/insights?creator_id=${creatorId}`)}
-            className="mb-4"
+            className="mb-3 -ml-2"
+            size="sm"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Insights
           </Button>
-          <h1 className="text-3xl font-bold text-foreground">
-            {brandName} - Recommended Products
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+            {brandName}
           </h1>
-          <p className="text-muted-foreground mt-2">
+          <p className="text-sm sm:text-base text-muted-foreground mt-1">
             {products.length} products curated for you
           </p>
         </div>
@@ -141,11 +149,11 @@ const BrandProducts = () => {
             </p>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-6">
             {products.map((product) => (
-              <Card key={product.id} className="p-4 flex flex-col hover:shadow-lg transition-shadow">
+              <Card key={product.id} className="p-2 sm:p-4 flex flex-col hover:shadow-lg transition-shadow">
                 {/* Product Image */}
-                <div className="w-full aspect-square mb-4 bg-muted rounded overflow-hidden">
+                <div className="w-full aspect-[3/4] sm:aspect-square mb-2 sm:mb-4 bg-muted rounded overflow-hidden">
                   {product.thumbnail_url ? (
                     <img
                       src={product.thumbnail_url}
@@ -154,19 +162,19 @@ const BrandProducts = () => {
                       loading="lazy"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                    <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
                       No Image
                     </div>
                   )}
                 </div>
 
                 {/* Product Name */}
-                <h3 className="font-semibold text-foreground mb-2 line-clamp-2 flex-1">
+                <h3 className="text-xs sm:text-sm font-semibold text-foreground mb-1 sm:mb-2 line-clamp-2 flex-1">
                   {product.name}
                 </h3>
 
-                {/* Similarity Score (optional, can be removed) */}
-                <p className="text-xs text-muted-foreground mb-3">
+                {/* Match Score - hidden on mobile */}
+                <p className="hidden sm:block text-xs text-muted-foreground mb-2">
                   Match Score: {(product.sim_score * 100).toFixed(0)}%
                 </p>
 
@@ -174,14 +182,16 @@ const BrandProducts = () => {
                 {product.purchase_url ? (
                   <Button
                     onClick={() => window.open(product.purchase_url!, '_blank')}
-                    className="w-full"
+                    className="w-full text-xs sm:text-sm"
+                    size="sm"
                   >
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    View Product
+                    <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                    <span className="hidden sm:inline">View Product</span>
+                    <span className="sm:hidden">View</span>
                   </Button>
                 ) : (
-                  <Button disabled className="w-full">
-                    Link Unavailable
+                  <Button disabled className="w-full text-xs sm:text-sm" size="sm">
+                    Unavailable
                   </Button>
                 )}
               </Card>
