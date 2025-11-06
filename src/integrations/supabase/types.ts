@@ -20,6 +20,7 @@ export type Database = {
           brand_name: string
           created_at: string | null
           logo_url: string | null
+          sourcing_link: string | null
           updated_at: string | null
           uuid: string
           website_url: string | null
@@ -29,6 +30,7 @@ export type Database = {
           brand_name: string
           created_at?: string | null
           logo_url?: string | null
+          sourcing_link?: string | null
           updated_at?: string | null
           uuid?: string
           website_url?: string | null
@@ -38,6 +40,7 @@ export type Database = {
           brand_name?: string
           created_at?: string | null
           logo_url?: string | null
+          sourcing_link?: string | null
           updated_at?: string | null
           uuid?: string
           website_url?: string | null

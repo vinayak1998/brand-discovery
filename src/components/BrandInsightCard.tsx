@@ -13,6 +13,7 @@ interface BrandData {
   value: number;
   website_url?: string;
   brand_id?: number;
+  sourcing_link?: string;
 }
 
 interface BrandInsightCardProps {
@@ -172,7 +173,21 @@ const BrandInsightCard = ({
               View Recommended Products
             </Button>
 
-            {/* Secondary CTA: Go to Brand Website */}
+            {/* Secondary CTA: Source Products */}
+            {selectedBrand?.sourcing_link ? (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  window.open(selectedBrand.sourcing_link, "_blank");
+                }}
+                className="w-full"
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                Source Products
+              </Button>
+            ) : null}
+
+            {/* Tertiary CTA: Go to Brand Website */}
             {selectedBrand?.website_url ? (
               <Button
                 variant="outline"
