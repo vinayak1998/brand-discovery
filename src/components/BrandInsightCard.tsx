@@ -65,7 +65,7 @@ const BrandInsightCard = ({
   const { trackThemeView, trackBrandClick, trackBrandWebsiteClick } = useAnalytics(creatorId);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const creatorUuid = searchParams.get('creator_id');
+  const creatorUuid = searchParams.get("creator_id");
 
   // Track theme view on mount
   useEffect(() => {
@@ -77,11 +77,11 @@ const BrandInsightCard = ({
     const fetchCreatorSourcingStatus = async () => {
       if (creatorId) {
         const { data } = await supabase
-          .from('creators')
-          .select('brand_sourcing')
-          .eq('creator_id', creatorId)
+          .from("creators")
+          .select("brand_sourcing")
+          .eq("creator_id", creatorId)
           .maybeSingle();
-        
+
         setBrandSourcingEnabled(data?.brand_sourcing ?? false);
       }
     };
@@ -94,11 +94,11 @@ const BrandInsightCard = ({
     const checkProducts = async () => {
       if (selectedBrand && creatorId) {
         const { count } = await supabase
-          .from('creator_x_product_recommendations')
-          .select('*', { count: 'exact', head: true })
-          .eq('creator_id', creatorId)
-          .eq('brand', selectedBrand.brand_name);
-        
+          .from("creator_x_product_recommendations")
+          .select("*", { count: "exact", head: true })
+          .eq("creator_id", creatorId)
+          .eq("brand", selectedBrand.brand_name);
+
         setHasProducts((count ?? 0) > 0);
       }
     };
@@ -112,7 +112,10 @@ const BrandInsightCard = ({
   return (
     <>
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <Card className="insight-card animate-fade-in bg-card border-border overflow-hidden" style={{ animationDelay: `${delay}ms` }}>
+        <Card
+          className="insight-card animate-fade-in bg-card border-border overflow-hidden"
+          style={{ animationDelay: `${delay}ms` }}
+        >
           {/* Collapsible Header */}
           <CollapsibleTrigger className="w-full p-6 text-left hover:bg-accent/30 transition-colors">
             <div className="flex items-center justify-between">
@@ -121,14 +124,16 @@ const BrandInsightCard = ({
                 <div className="flex-1 min-w-0">
                   <h3 className="text-lg font-semibold text-foreground mb-1">{title}</h3>
                   <p className="text-sm text-muted-foreground">
-                    {title === "Top Trending Brands" ? "What other creators similar to you are talking about most" : tagline}
+                    {title === "Top Trending Brands"
+                      ? "What other creators similar to you are talking about most"
+                      : tagline}
                   </p>
                 </div>
               </div>
-              <ChevronDown 
+              <ChevronDown
                 className={cn(
                   "w-5 h-5 text-muted-foreground transition-transform duration-200 flex-shrink-0 ml-2",
-                  isOpen && "rotate-180"
+                  isOpen && "rotate-180",
                 )}
               />
             </div>
@@ -140,7 +145,7 @@ const BrandInsightCard = ({
               {/* Metric Header */}
               <div className="flex justify-end mb-3">
                 <p className="text-xs text-muted-foreground font-medium">
-                  {title === "Top Trending Brands" && "Products recently shared by other creators like you!"}
+                  {title === "Top Trending Brands" && "Brands recently shared by similar creators!"}
                   {title === "Best Reach Brands" && "Views per recent posts"}
                   {title === "Fastest Selling Products" && "Sales per link"}
                 </p>
@@ -148,56 +153,56 @@ const BrandInsightCard = ({
 
               {/* Brand List */}
               <div className="space-y-4">
-          {brands.length === 0 ? (
-            <div className="py-8 text-center">
-              <p className="text-muted-foreground">No brands available for this category</p>
-            </div>
-          ) : (
-            brands.map((brand, index) => {
-              const roundedValue = Math.ceil(brand.value);
-              const barWidth = maxValue > 0 ? (roundedValue / maxValue) * 100 : 0;
+                {brands.length === 0 ? (
+                  <div className="py-8 text-center">
+                    <p className="text-muted-foreground">No brands available for this category</p>
+                  </div>
+                ) : (
+                  brands.map((brand, index) => {
+                    const roundedValue = Math.ceil(brand.value);
+                    const barWidth = maxValue > 0 ? (roundedValue / maxValue) * 100 : 0;
 
-              return (
-                <div key={`${brand.brand_name}-${index}`} className="space-y-3">
-                  {/* Brand Info Row */}
-                  <div
-                    className="group flex items-center justify-between cursor-pointer hover:bg-accent/70 active:bg-accent p-3 rounded-lg transition-all ring-offset-background focus-visible:outline-none focus-visible:ring-2 border border-border hover:border-primary/40 hover:shadow-sm"
-                    onClick={() => {
-                      if (brand.brand_id) {
-                        trackBrandClick(brand.brand_id, themeId);
-                      }
-                      setSelectedBrand(brand);
-                    }}
-                    role="button"
-                    tabIndex={0}
-                  >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <BrandAvatar logoUrl={brand.logo_url} brandName={brand.brand_name} />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-foreground truncate">{brand.brand_name}</p>
+                    return (
+                      <div key={`${brand.brand_name}-${index}`} className="space-y-3">
+                        {/* Brand Info Row */}
+                        <div
+                          className="group flex items-center justify-between cursor-pointer hover:bg-accent/70 active:bg-accent p-3 rounded-lg transition-all ring-offset-background focus-visible:outline-none focus-visible:ring-2 border border-border hover:border-primary/40 hover:shadow-sm"
+                          onClick={() => {
+                            if (brand.brand_id) {
+                              trackBrandClick(brand.brand_id, themeId);
+                            }
+                            setSelectedBrand(brand);
+                          }}
+                          role="button"
+                          tabIndex={0}
+                        >
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <BrandAvatar logoUrl={brand.logo_url} brandName={brand.brand_name} />
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-foreground truncate">{brand.brand_name}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <p className="font-semibold text-foreground">{Math.ceil(brand.value).toLocaleString()}</p>
+                            <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                          </div>
+                        </div>
+
+                        {/* Progress Bar */}
+                        <div className="w-full bg-border rounded-full h-3 overflow-hidden">
+                          <div
+                            className="h-full bg-primary rounded-full bar-fill"
+                            style={{
+                              width: `${barWidth}%`,
+                              backgroundColor: color,
+                              animationDelay: `${delay + index * 100}ms`,
+                            }}
+                          />
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-semibold text-foreground">{Math.ceil(brand.value).toLocaleString()}</p>
-                      <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                    </div>
-                  </div>
-
-                  {/* Progress Bar */}
-                  <div className="w-full bg-border rounded-full h-3 overflow-hidden">
-                    <div
-                      className="h-full bg-primary rounded-full bar-fill"
-                      style={{
-                        width: `${barWidth}%`,
-                        backgroundColor: color,
-                        animationDelay: `${delay + index * 100}ms`,
-                      }}
-                    />
-                  </div>
-                </div>
-              );
-            })
-          )}
+                    );
+                  })
+                )}
               </div>
             </div>
           </CollapsibleContent>
@@ -226,7 +231,9 @@ const BrandInsightCard = ({
                   if (selectedBrand?.brand_id) {
                     trackBrandClick(selectedBrand.brand_id, themeId);
                   }
-                  navigate(`/brand/products?creator_id=${creatorUuid}&brand_name=${encodeURIComponent(selectedBrand?.brand_name || '')}`);
+                  navigate(
+                    `/brand/products?creator_id=${creatorUuid}&brand_name=${encodeURIComponent(selectedBrand?.brand_name || "")}`,
+                  );
                 }}
                 className="w-full"
                 size="lg"
