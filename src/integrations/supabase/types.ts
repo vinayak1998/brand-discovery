@@ -126,6 +126,7 @@ export type Database = {
         Row: {
           brand: string | null
           brand_id: number | null
+          commission_pct: number | null
           count_90_days: number
           created_at: string
           creator_id: number | null
@@ -145,6 +146,7 @@ export type Database = {
         Insert: {
           brand?: string | null
           brand_id?: number | null
+          commission_pct?: number | null
           count_90_days?: number
           created_at?: string
           creator_id?: number | null
@@ -164,6 +166,7 @@ export type Database = {
         Update: {
           brand?: string | null
           brand_id?: number | null
+          commission_pct?: number | null
           count_90_days?: number
           created_at?: string
           creator_id?: number | null
