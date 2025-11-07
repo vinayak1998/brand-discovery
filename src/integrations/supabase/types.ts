@@ -125,6 +125,7 @@ export type Database = {
       creator_x_product_recommendations: {
         Row: {
           brand: string | null
+          brand_id: number | null
           count_90_days: number
           created_at: string
           creator_id: number | null
@@ -133,14 +134,17 @@ export type Database = {
           name: string
           platform: string | null
           post_clicks: number
+          price: number | null
           product_id: number | null
           purchase_url: string | null
+          short_code: string | null
           sim_score: number
           thumbnail_url: string | null
           updated_at: string
         }
         Insert: {
           brand?: string | null
+          brand_id?: number | null
           count_90_days?: number
           created_at?: string
           creator_id?: number | null
@@ -149,14 +153,17 @@ export type Database = {
           name: string
           platform?: string | null
           post_clicks?: number
+          price?: number | null
           product_id?: number | null
           purchase_url?: string | null
+          short_code?: string | null
           sim_score: number
           thumbnail_url?: string | null
           updated_at?: string
         }
         Update: {
           brand?: string | null
+          brand_id?: number | null
           count_90_days?: number
           created_at?: string
           creator_id?: number | null
@@ -165,8 +172,10 @@ export type Database = {
           name?: string
           platform?: string | null
           post_clicks?: number
+          price?: number | null
           product_id?: number | null
           purchase_url?: string | null
+          short_code?: string | null
           sim_score?: number
           thumbnail_url?: string | null
           updated_at?: string
