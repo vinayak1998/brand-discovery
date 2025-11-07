@@ -60,7 +60,6 @@ const BrandInsightCard = ({
 }: BrandInsightCardProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedBrand, setSelectedBrand] = useState<BrandData | null>(null);
-  const [hasProducts, setHasProducts] = useState<boolean | undefined>(undefined);
   const [brandSourcingEnabled, setBrandSourcingEnabled] = useState<boolean>(false);
   const { trackThemeView, trackBrandClick, trackBrandWebsiteClick } = useAnalytics(creatorId);
   const [searchParams] = useSearchParams();
@@ -88,23 +87,6 @@ const BrandInsightCard = ({
 
     fetchCreatorSourcingStatus();
   }, [creatorId]);
-
-  // Check if products exist when brand is selected
-  useEffect(() => {
-    const checkProducts = async () => {
-      if (selectedBrand && creatorId) {
-        const { count } = await supabase
-          .from("creator_x_product_recommendations")
-          .select("*", { count: "exact", head: true })
-          .eq("creator_id", creatorId)
-          .eq("brand", selectedBrand.brand_name);
-
-        setHasProducts((count ?? 0) > 0);
-      }
-    };
-
-    checkProducts();
-  }, [selectedBrand, creatorId]);
 
   // Calculate max value for proper bar scaling using rounded values
   const maxValue = brands.length > 0 ? Math.max(...brands.map((b) => Math.ceil(b.value))) : 0;
@@ -223,25 +205,21 @@ const BrandInsightCard = ({
           </DialogHeader>
           <div className="space-y-3">
             {/* Primary CTA: View Recommended Products */}
-            {hasProducts === undefined ? (
-              <div className="h-12 w-full bg-muted animate-pulse rounded-md" />
-            ) : hasProducts ? (
-              <Button
-                onClick={() => {
-                  if (selectedBrand?.brand_id) {
-                    trackBrandClick(selectedBrand.brand_id, themeId);
-                  }
-                  navigate(
-                    `/brand/products?creator_id=${creatorUuid}&brand_name=${encodeURIComponent(selectedBrand?.brand_name || "")}`,
-                  );
-                }}
-                className="w-full"
-                size="lg"
-              >
-                <ShoppingBag className="w-4 h-4 mr-2" />
-                View Recommended Products
-              </Button>
-            ) : null}
+            <Button
+              onClick={() => {
+                if (selectedBrand?.brand_id) {
+                  trackBrandClick(selectedBrand.brand_id, themeId);
+                }
+                navigate(
+                  `/brand/products?creator_id=${creatorUuid}&brand_name=${encodeURIComponent(selectedBrand?.brand_name || "")}`,
+                );
+              }}
+              className="w-full"
+              size="lg"
+            >
+              <ShoppingBag className="w-4 h-4 mr-2" />
+              View Recommended Products
+            </Button>
 
             {/* Secondary CTA: Source Products */}
             {brandSourcingEnabled && selectedBrand?.sourcing_link ? (
