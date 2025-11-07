@@ -56,20 +56,18 @@ export const useInsightsData = (creatorUuid: string) => {
       setError(null);
       
       try {
-        // First, look up the creator by UUID to get the internal creator_id
-        const { data: creatorData, error: creatorError } = await supabase
-          .from('creators')
-          .select('creator_id, uuid, name')
-          .eq('uuid', creatorUuid)
-          .maybeSingle();
+        // Use the edge function for better reliability
+        const { data, error: functionError } = await supabase.functions.invoke('get-creator-insights', {
+          body: { creator_uuid: creatorUuid }
+        });
 
-        if (creatorError) {
-          console.error('Error fetching creator:', creatorError);
-          throw creatorError;
+        if (functionError) {
+          console.error('Error calling edge function:', functionError);
+          throw functionError;
         }
 
-        if (!creatorData) {
-          console.log('Creator not found, trying fallback data');
+        if (!data || !data.insights || data.insights.length === 0) {
+          console.log('No insights found, trying fallback data');
           // Try CSV or mock data as fallback
           if (hasInsightsData) {
             const creatorIdNum = parseInt(creatorUuid);
@@ -82,63 +80,45 @@ export const useInsightsData = (creatorUuid: string) => {
               }));
               setInsights(filteredData as any);
             }
+          } else {
+            // Fallback to mock data
+            const creatorIdNum = parseInt(creatorUuid);
+            if (!isNaN(creatorIdNum)) {
+              const filteredData = mockInsightsData.filter(row => row.creator_id === creatorIdNum);
+              setInsights(filteredData);
+            }
           }
           setLoading(false);
           return;
         }
 
-        const creator_id = creatorData.creator_id;
-        setCreatorName(creatorData.name);
-        setCreatorIdNum(creator_id);
-        console.log('Found creator_id:', creator_id, 'for UUID:', creatorUuid);
+        // Transform edge function response to InsightRow format
+        const transformedData: InsightRow[] = data.insights.map((insight: any) => ({
+          creator_id: insight.creator_id || 0,
+          theme_id: insight.theme_id,
+          brand_name: insight.brands?.brand_name || '',
+          logo_url: insight.brands?.logo_url,
+          value: insight.value,
+          website_url: insight.brands?.website_url,
+          brand_id: insight.brands?.brand_id,
+          sourcing_link: insight.brands?.sourcing_link
+        }));
 
-        // Now fetch insights using the creator_id
-        const { data: dbInsights, error: dbError } = await supabase
-          .from('creator_brand_insights')
-          .select(`
-            creator_id,
-            theme_id,
-            value,
-            updated_at,
-            brands (
-              brand_id,
-              brand_name,
-              logo_url,
-              website_url,
-              sourcing_link
-            )
-          `)
-          .eq('creator_id', creator_id);
-
-        if (dbError) {
-          console.error('Error fetching from Supabase:', dbError);
-          throw dbError;
+        // Set creator info from first insight
+        if (transformedData.length > 0) {
+          setCreatorIdNum(transformedData[0].creator_id);
         }
 
-        if (dbInsights && dbInsights.length > 0) {
-          // Transform Supabase data to InsightRow format
-          const transformedData: InsightRow[] = dbInsights.map(insight => ({
-            creator_id: insight.creator_id,
-            theme_id: insight.theme_id,
-            brand_name: (insight.brands as any)?.brand_name || '',
-            logo_url: (insight.brands as any)?.logo_url,
-            value: insight.value,
-            website_url: (insight.brands as any)?.website_url,
-            brand_id: (insight.brands as any)?.brand_id,
-            sourcing_link: (insight.brands as any)?.sourcing_link
-          }));
-          
-          // Get the most recent updated_at timestamp
-          const latestUpdate = dbInsights.reduce((latest, insight) => {
-            const currentDate = new Date(insight.updated_at);
-            return currentDate > latest ? currentDate : latest;
-          }, new Date(0));
-          
-          setLastUpdated(format(latestUpdate, 'MMMM d, yyyy'));
-          console.log('Fetched data from Supabase for creator UUID:', creatorUuid, transformedData);
-          setInsights(transformedData);
-        } else if (hasInsightsData) {
-          // Use CSV data if available
+        // Set last updated to today for now (edge function doesn't return this)
+        setLastUpdated(format(new Date(), 'MMMM d, yyyy'));
+        
+        console.log('Fetched data from edge function for creator UUID:', creatorUuid, transformedData);
+        setInsights(transformedData);
+      } catch (err) {
+        console.error('Error fetching insights:', err);
+        
+        // Try fallback data on error
+        if (hasInsightsData) {
           const creatorIdNum = parseInt(creatorUuid);
           if (!isNaN(creatorIdNum)) {
             const filteredData = csvInsights.filter(row => row.creator_id === creatorIdNum).map(row => ({
@@ -147,21 +127,24 @@ export const useInsightsData = (creatorUuid: string) => {
               logo_url: '',
               website_url: ''
             }));
-            console.log('Filtered CSV data for creator:', creatorUuid, filteredData);
             setInsights(filteredData as any);
-          }
-        } else {
-          // Fallback to mock data
-          const creatorIdNum = parseInt(creatorUuid);
-          if (!isNaN(creatorIdNum)) {
-            const filteredData = mockInsightsData.filter(row => row.creator_id === creatorIdNum);
-            console.log('Filtered mock data for creator:', creatorUuid, filteredData);
-            setInsights(filteredData);
+            setLoading(false);
+            return;
           }
         }
-      } catch (err) {
+        
+        // If all else fails, use mock data
+        const creatorIdNum = parseInt(creatorUuid);
+        if (!isNaN(creatorIdNum)) {
+          const filteredData = mockInsightsData.filter(row => row.creator_id === creatorIdNum);
+          if (filteredData.length > 0) {
+            setInsights(filteredData);
+            setLoading(false);
+            return;
+          }
+        }
+        
         setError('Failed to load insights data');
-        console.error('Error fetching insights:', err);
       } finally {
         setLoading(false);
       }
