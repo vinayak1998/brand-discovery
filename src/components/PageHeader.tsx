@@ -9,31 +9,31 @@ interface PageHeaderProps {
 
 const PageHeader = ({ lastUpdated, creatorName, pageContext = 'brands', brandName }: PageHeaderProps) => {
   return (
-    <header className="bg-primary text-primary-foreground py-8 px-6">
+    <header className="bg-primary text-primary-foreground py-4 sm:py-8 px-4 sm:px-6">
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-start gap-4 flex-1">
+        <div className="flex items-start justify-between gap-3 sm:gap-4">
+          <div className="flex items-start gap-3 sm:gap-4 flex-1">
             <div className="flex-shrink-0">
               <img 
                 src={wishLinkLogo} 
                 alt="Wishlink" 
-                className="h-12 w-auto object-contain"
+                className="h-8 sm:h-12 w-auto object-contain"
               />
             </div>
             
             <div className="flex-1">
-              <h1 className="text-3xl md:text-4xl font-bold mb-2">
+              <h1 className="text-xl sm:text-3xl md:text-4xl font-bold mb-1 sm:mb-2">
                 {pageContext === 'products' && brandName 
                   ? `${brandName} - Product Recommendations`
                   : 'Curated Brands for You!'}
               </h1>
-              <p className="text-primary-foreground/90 text-lg mb-2">
+              <p className="text-primary-foreground/90 text-sm sm:text-lg mb-1 sm:mb-2">
                 {pageContext === 'products' 
                   ? 'Products curated just for you'
                   : 'Boost your reach & earnings with data-driven brand picks'}
               </p>
               {lastUpdated && (
-                <p className="text-primary-foreground/70 text-sm">
+                <p className="text-primary-foreground/70 text-xs sm:text-sm">
                   Last updated: {lastUpdated}
                 </p>
               )}
@@ -43,7 +43,7 @@ const PageHeader = ({ lastUpdated, creatorName, pageContext = 'brands', brandNam
           {creatorName && (
             <div className="flex-shrink-0 text-right">
               <p className="text-primary-foreground/70 text-xs md:text-sm mb-1">Creator</p>
-              <p className="text-primary-foreground font-semibold text-sm md:text-base">{creatorName}</p>
+              <p className="text-primary-foreground font-semibold text-xs sm:text-sm md:text-base">{creatorName}</p>
             </div>
           )}
         </div>

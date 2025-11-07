@@ -83,10 +83,10 @@ const BrandProducts = () => {
             <h1 className="text-2xl font-bold mb-2">{brandName}</h1>
             <Skeleton className="h-4 w-24" />
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-4 md:gap-6">
             {[...Array(12)].map((_, i) => (
-              <Card key={i} className="p-2 sm:p-4">
-                <Skeleton className="w-full aspect-[3/4] sm:aspect-square mb-2 sm:mb-4 rounded" />
+              <Card key={i} className="p-3 sm:p-4">
+                <Skeleton className="w-full aspect-square mb-3 sm:mb-4 rounded" />
                 <Skeleton className="h-4 w-3/4 mb-2" />
                 <Skeleton className="h-9 w-full" />
               </Card>
@@ -149,11 +149,11 @@ const BrandProducts = () => {
             </p>
           </Card>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-4 md:gap-6">
             {products.map((product) => (
-              <Card key={product.id} className="p-2 sm:p-4 flex flex-col hover:shadow-lg transition-shadow">
+              <Card key={product.id} className="p-3 sm:p-4 flex flex-col hover:shadow-lg transition-shadow">
                 {/* Product Image */}
-                <div className="w-full aspect-[3/4] sm:aspect-square mb-2 sm:mb-4 bg-muted rounded overflow-hidden">
+                <div className="w-full aspect-square mb-3 sm:mb-4 bg-muted rounded overflow-hidden">
                   {product.thumbnail_url ? (
                     <img
                       src={product.thumbnail_url}
