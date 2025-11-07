@@ -109,6 +109,17 @@ export const useInsightsData = (creatorUuid: string) => {
           setCreatorIdNum(transformedData[0].creator_id);
         }
 
+        // Fetch creator name
+        const { data: creatorData } = await supabase
+          .from('creators')
+          .select('name')
+          .eq('uuid', creatorUuid)
+          .single();
+        
+        if (creatorData) {
+          setCreatorName(creatorData.name);
+        }
+
         // Set last updated to today for now (edge function doesn't return this)
         setLastUpdated(format(new Date(), 'MMMM d, yyyy'));
         
