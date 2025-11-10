@@ -1,12 +1,14 @@
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useInsightsData, useSurveySubmission } from '@/hooks/useInsightsData';
 import PageHeader from '@/components/PageHeader';
 import BrandInsightCard from '@/components/BrandInsightCard';
 import SurveySection from '@/components/SurveySection';
+import AllProductsView from '@/components/AllProductsView';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertCircle, Sparkles } from 'lucide-react';
 import { THEMES, getTheme } from '@/config/themes';
 import { useAnalytics, ThemeId } from '@/hooks/useAnalytics';
@@ -15,6 +17,7 @@ const Index = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const creatorUuid = searchParams.get('creator_id');
+  const [activeTab, setActiveTab] = useState('brands');
   
   // Redirect to landing if no creator_id
   useEffect(() => {
@@ -140,61 +143,77 @@ const Index = () => {
       <PageHeader lastUpdated={lastUpdated || undefined} creatorName={creatorName || undefined} />
       
       <main className="max-w-7xl mx-auto px-6 py-8">
-        {/* Brand Insight Cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
-          {themes.map((theme, index) => {
-            const themeBrands = getInsightsByTheme(theme.id);
-            
-            return (
-              <BrandInsightCard
-                key={theme.id}
-                icon={theme.icon}
-                title={theme.title}
-                tagline={theme.tagline}
-                color={theme.color}
-                themeId={theme.id as ThemeId}
-                creatorId={creatorIdNum}
-                brands={themeBrands.map((insight) => ({
-                  brand_name: insight.brand_name,
-                  logo_url: insight.logo_url,
-                  value: insight.value,
-                  website_url: insight.website_url,
-                  brand_id: insight.brand_id,
-                  sourcing_link: insight.sourcing_link,
-                }))}
-                delay={index * 100}
+        {/* Tabs for Brand Discovery vs Product Discovery */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full max-w-md mx-auto mb-8" style={{ gridTemplateColumns: '1fr 1fr' }}>
+            <TabsTrigger value="brands">Brands</TabsTrigger>
+            <TabsTrigger value="products">Products</TabsTrigger>
+          </TabsList>
+
+          {/* Brand Discovery Tab */}
+          <TabsContent value="brands" className="space-y-12">
+            {/* Brand Insight Cards */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {themes.map((theme, index) => {
+                const themeBrands = getInsightsByTheme(theme.id);
+                
+                return (
+                  <BrandInsightCard
+                    key={theme.id}
+                    icon={theme.icon}
+                    title={theme.title}
+                    tagline={theme.tagline}
+                    color={theme.color}
+                    themeId={theme.id as ThemeId}
+                    creatorId={creatorIdNum}
+                    brands={themeBrands.map((insight) => ({
+                      brand_name: insight.brand_name,
+                      logo_url: insight.logo_url,
+                      value: insight.value,
+                      website_url: insight.website_url,
+                      brand_id: insight.brand_id,
+                      sourcing_link: insight.sourcing_link,
+                    }))}
+                    delay={index * 100}
+                  />
+                );
+              })}
+            </div>
+
+            {/* CTA Section */}
+            <Card className="p-8 bg-gradient-to-br from-primary/10 via-primary/5 to-background border-primary/20">
+              <div className="text-center max-w-2xl mx-auto">
+                <Sparkles className="w-12 h-12 mx-auto mb-4 text-primary" />
+                <h2 className="text-2xl font-bold mb-3">Ready to Start Creating?</h2>
+                <p className="text-muted-foreground mb-6">
+                  Now that you've discovered the trending brands, it's time to create content and share your unique links!
+                </p>
+                <Button
+                  size="lg"
+                  onClick={() => {
+                    trackCTAClick();
+                    window.open('https://creator.wishlink.com/create-diy', '_blank');
+                  }}
+                >
+                  Start Creating Content
+                </Button>
+              </div>
+            </Card>
+
+            {/* Survey Section */}
+            <div className="max-w-2xl mx-auto">
+              <SurveySection 
+                creatorId={creatorUuid || ''} 
+                onSubmit={submitSurvey}
               />
-            );
-          })}
-        </div>
+            </div>
+          </TabsContent>
 
-        {/* CTA Section */}
-        <Card className="p-8 mb-12 bg-gradient-to-br from-primary/10 via-primary/5 to-background border-primary/20">
-          <div className="text-center max-w-2xl mx-auto">
-            <Sparkles className="w-12 h-12 mx-auto mb-4 text-primary" />
-            <h2 className="text-2xl font-bold mb-3">Ready to Start Creating?</h2>
-            <p className="text-muted-foreground mb-6">
-              Now that you've discovered the trending brands, it's time to create content and share your unique links!
-            </p>
-            <Button
-              size="lg"
-              onClick={() => {
-                trackCTAClick();
-                window.open('https://creator.wishlink.com/create-diy', '_blank');
-              }}
-            >
-              Start Creating Content
-            </Button>
-          </div>
-        </Card>
-
-        {/* Survey Section */}
-        <div className="max-w-2xl mx-auto">
-          <SurveySection 
-            creatorId={creatorUuid || ''} 
-            onSubmit={submitSurvey}
-          />
-        </div>
+          {/* Product Discovery Tab */}
+          <TabsContent value="products">
+            <AllProductsView creatorUuid={creatorUuid || ''} />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
