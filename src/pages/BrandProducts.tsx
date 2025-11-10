@@ -14,6 +14,8 @@ interface Product {
   thumbnail_url: string | null;
   purchase_url: string | null;
   sim_score: number;
+  short_code: string | null;
+  price: number | null;
 }
 
 const BrandProducts = () => {
@@ -26,6 +28,7 @@ const BrandProducts = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [creatorName, setCreatorName] = useState<string | null>(null);
+  const [creatorNumericId, setCreatorNumericId] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -49,11 +52,12 @@ const BrandProducts = () => {
         if (!creatorData) throw new Error('Creator not found');
         
         setCreatorName(creatorData.name);
+        setCreatorNumericId(creatorData.creator_id);
 
         // Fetch products for this creator x brand
         const { data, error: productsError } = await supabase
           .from('creator_x_product_recommendations')
-          .select('id, name, brand, thumbnail_url, purchase_url, sim_score')
+          .select('id, name, brand, thumbnail_url, purchase_url, sim_score, short_code, price')
           .eq('creator_id', creatorData.creator_id)
           .eq('brand', brandName)
           .order('sim_score', { ascending: false })
@@ -173,15 +177,25 @@ const BrandProducts = () => {
                   {product.name}
                 </h3>
 
+                {/* Price */}
+                {product.price && (
+                  <p className="text-sm font-bold text-foreground mb-2">
+                    ₹{product.price.toLocaleString('en-IN')}
+                  </p>
+                )}
+
                 {/* Match Score - hidden on mobile */}
                 <p className="hidden sm:block text-xs text-muted-foreground mb-2">
                   Match Score: {(product.sim_score * 100).toFixed(0)}%
                 </p>
 
                 {/* Purchase CTA */}
-                {product.purchase_url ? (
+                {product.short_code ? (
                   <Button
-                    onClick={() => window.open(product.purchase_url!, '_blank')}
+                    onClick={() => {
+                      const url = `https://www.wishlink.com/share/${product.short_code}?source=brand_discovery&creator=${creatorNumericId}`;
+                      window.open(url, '_blank');
+                    }}
                     className="w-full text-xs sm:text-sm"
                     size="sm"
                   >
