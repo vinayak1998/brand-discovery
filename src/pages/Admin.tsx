@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { parseInsightsCSV, parseCreatorsCSV, parseBrandsCSV } from "@/utils/csvParser";
-import { Upload, Database, Users, Building2, BarChart3, PackageCheck } from "lucide-react";
+import { Upload, Database, Users, Building2, BarChart3, PackageCheck, Download } from "lucide-react";
 import wishLinkLogo from "@/assets/wishlink-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -275,6 +275,77 @@ const AdminContent = () => {
     }
   };
 
+  const handleDownloadProductRecommendations = async () => {
+    setLoading(true);
+    try {
+      toast({
+        title: "Downloading...",
+        description: "Fetching product recommendations data",
+      });
+
+      const { data, error } = await supabase
+        .from('creator_x_product_recommendations')
+        .select('*')
+        .order('id', { ascending: true });
+
+      if (error) {
+        throw error;
+      }
+
+      if (!data || data.length === 0) {
+        toast({
+          title: "No data found",
+          description: "The product recommendations table is empty",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Convert to CSV
+      const headers = Object.keys(data[0]);
+      const csvRows = [
+        headers.join(','),
+        ...data.map(row => 
+          headers.map(header => {
+            const value = row[header as keyof typeof row];
+            // Escape values containing commas or quotes
+            if (value === null || value === undefined) return '';
+            const stringValue = String(value);
+            if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+              return `"${stringValue.replace(/"/g, '""')}"`;
+            }
+            return stringValue;
+          }).join(',')
+        )
+      ];
+      const csvContent = csvRows.join('\n');
+
+      // Create and download file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `product_recommendations_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Success!",
+        description: `Downloaded ${data.length} product recommendations`,
+      });
+    } catch (error) {
+      toast({
+        title: "Download failed",
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-8">
       <div className="max-w-6xl mx-auto space-y-8">
@@ -435,42 +506,75 @@ const AdminContent = () => {
           </Card>
         </div>
 
-        {/* Brand Sourcing Section */}
-        <Card className="border-accent/30">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <PackageCheck className="h-5 w-5" />
-              Enable Brand Sourcing
-            </CardTitle>
-            <CardDescription>
-              Enable brand sourcing for specific creators by entering their IDs
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Textarea
-              placeholder="Enter creator IDs (comma or newline separated)&#10;Example: 123456, 789012&#10;Or:&#10;123456&#10;789012"
-              value={sourcingCreatorIds}
-              onChange={(e) => setSourcingCreatorIds(e.target.value)}
-              className="min-h-[120px] font-mono text-sm"
-            />
-            <Button 
-              onClick={handleSourcingUpload}
-              disabled={loading || !sourcingCreatorIds.trim()}
-              className="w-full"
-            >
-              <PackageCheck className="mr-2 h-4 w-4" />
-              Enable Sourcing for Creators
-            </Button>
-            {uploadProgress.type === 'sourcing' && uploadProgress.total > 0 && (
-              <div className="space-y-2">
-                <Progress value={(uploadProgress.current / uploadProgress.total) * 100} />
-                <p className="text-xs text-muted-foreground text-center">
-                  {uploadProgress.current} / {uploadProgress.total} creators updated
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* Brand Sourcing Section */}
+          <Card className="border-accent/30">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <PackageCheck className="h-5 w-5" />
+                Enable Brand Sourcing
+              </CardTitle>
+              <CardDescription>
+                Enable brand sourcing for specific creators by entering their IDs
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Textarea
+                placeholder="Enter creator IDs (comma or newline separated)&#10;Example: 123456, 789012&#10;Or:&#10;123456&#10;789012"
+                value={sourcingCreatorIds}
+                onChange={(e) => setSourcingCreatorIds(e.target.value)}
+                className="min-h-[120px] font-mono text-sm"
+              />
+              <Button 
+                onClick={handleSourcingUpload}
+                disabled={loading || !sourcingCreatorIds.trim()}
+                className="w-full"
+              >
+                <PackageCheck className="mr-2 h-4 w-4" />
+                Enable Sourcing for Creators
+              </Button>
+              {uploadProgress.type === 'sourcing' && uploadProgress.total > 0 && (
+                <div className="space-y-2">
+                  <Progress value={(uploadProgress.current / uploadProgress.total) * 100} />
+                  <p className="text-xs text-muted-foreground text-center">
+                    {uploadProgress.current} / {uploadProgress.total} creators updated
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Download Product Recommendations */}
+          <Card className="border-primary/30">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Download className="h-5 w-5" />
+                Export Product Recommendations
+              </CardTitle>
+              <CardDescription>
+                Download current snapshot of all product recommendations
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
+                <p className="text-sm text-muted-foreground mb-2">
+                  Click below to export all product recommendations as CSV
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Includes all fields: ID, creator, product, scores, clicks, etc.
                 </p>
               </div>
-            )}
-          </CardContent>
-        </Card>
+              <Button 
+                onClick={handleDownloadProductRecommendations}
+                disabled={loading}
+                className="w-full"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Download CSV
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
 
         <Card className="border-primary/20 bg-primary/5">
           <CardHeader>
