@@ -5,7 +5,6 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
-import PageHeader from '@/components/PageHeader';
 
 interface Product {
   id: number;
@@ -96,7 +95,6 @@ const BrandProducts = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <PageHeader creatorName={creatorName || undefined} pageContext="products" brandName={brandName || undefined} />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
           <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b mb-6 pb-4">
             <Skeleton className="h-8 w-32 mb-2" />
@@ -120,7 +118,6 @@ const BrandProducts = () => {
   if (error) {
     return (
       <div className="min-h-screen bg-background">
-        <PageHeader creatorName={creatorName || undefined} pageContext="products" brandName={brandName || undefined} />
         <main className="max-w-7xl mx-auto px-6 py-8">
           <Card className="p-8 text-center">
             <div className="text-6xl mb-4">⚠️</div>
@@ -137,8 +134,6 @@ const BrandProducts = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <PageHeader creatorName={creatorName || undefined} pageContext="products" brandName={brandName || undefined} />
-      
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Sticky Back Button & Header */}
         <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b mb-6 pb-4">
@@ -184,7 +179,16 @@ const BrandProducts = () => {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-4 md:gap-6">
             {products.map((product) => (
-              <Card key={product.id} className="p-3 sm:p-4 flex flex-col hover:shadow-lg transition-shadow">
+              <Card 
+                key={product.id} 
+                className="p-3 sm:p-4 flex flex-col hover:shadow-lg transition-shadow cursor-pointer active:scale-[0.98]"
+                onClick={() => {
+                  if (product.short_code) {
+                    const url = `https://www.wishlink.com/share/${product.short_code}?source=brand_discovery&creator=${creatorNumericId}`;
+                    window.open(url, '_blank');
+                  }
+                }}
+              >
                 {/* Product Image */}
                 <div className="w-full aspect-square mb-3 sm:mb-4 bg-muted rounded overflow-hidden">
                   {product.thumbnail_url ? (
@@ -213,30 +217,10 @@ const BrandProducts = () => {
                   </p>
                 )}
 
-                {/* Match Score - hidden on mobile */}
-                <p className="hidden sm:block text-xs text-muted-foreground mb-2">
+                {/* Match Score - now visible on mobile */}
+                <p className="text-xs text-muted-foreground">
                   Match Score: {(product.sim_score * 100).toFixed(0)}%
                 </p>
-
-                {/* Purchase CTA */}
-                {product.short_code ? (
-                  <Button
-                    onClick={() => {
-                      const url = `https://www.wishlink.com/share/${product.short_code}?source=brand_discovery&creator=${creatorNumericId}`;
-                      window.open(url, '_blank');
-                    }}
-                    className="w-full text-xs sm:text-sm"
-                    size="sm"
-                  >
-                    <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                    <span className="hidden sm:inline">View Product</span>
-                    <span className="sm:hidden">View</span>
-                  </Button>
-                ) : (
-                  <Button disabled className="w-full text-xs sm:text-sm" size="sm">
-                    Unavailable
-                  </Button>
-                )}
               </Card>
             ))}
           </div>
