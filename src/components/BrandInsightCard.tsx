@@ -106,7 +106,7 @@ const BrandInsightCard = ({
               {/* Metric Header */}
               <div className="flex justify-end mb-3">
                 <p className="text-xs text-muted-foreground font-medium">
-                  {title === "Top Trending Brands" && "Brands recently shared by similar creators!"}
+                  {title === "Top Trending Brands" && "Recent shares by similar creators!"}
                   {title === "Best Reach Brands" && "Views per recent posts"}
                   {title === "Fastest Selling Products" && "Sales per link"}
                 </p>
@@ -133,7 +133,7 @@ const BrandInsightCard = ({
                               trackBrandClick(brand.brand_id, themeId);
                             }
                             navigate(
-                              `/brand/products?creator_id=${creatorUuid}&brand_name=${encodeURIComponent(brand.brand_name)}`
+                              `/brand/products?creator_id=${creatorUuid}&brand_name=${encodeURIComponent(brand.brand_name)}`,
                             );
                           }}
                           role="button"
