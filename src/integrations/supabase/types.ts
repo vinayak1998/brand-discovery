@@ -129,6 +129,7 @@ export type Database = {
         Row: {
           brand: string | null
           brand_id: number | null
+          category: string | null
           commission_pct: number | null
           count_90_days: number
           created_at: string
@@ -143,12 +144,14 @@ export type Database = {
           purchase_url: string | null
           short_code: string | null
           sim_score: number
+          subcategory: string | null
           thumbnail_url: string | null
           updated_at: string
         }
         Insert: {
           brand?: string | null
           brand_id?: number | null
+          category?: string | null
           commission_pct?: number | null
           count_90_days?: number
           created_at?: string
@@ -163,12 +166,14 @@ export type Database = {
           purchase_url?: string | null
           short_code?: string | null
           sim_score: number
+          subcategory?: string | null
           thumbnail_url?: string | null
           updated_at?: string
         }
         Update: {
           brand?: string | null
           brand_id?: number | null
+          category?: string | null
           commission_pct?: number | null
           count_90_days?: number
           created_at?: string
@@ -183,6 +188,7 @@ export type Database = {
           purchase_url?: string | null
           short_code?: string | null
           sim_score?: number
+          subcategory?: string | null
           thumbnail_url?: string | null
           updated_at?: string
         }
