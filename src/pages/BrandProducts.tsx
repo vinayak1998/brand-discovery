@@ -29,6 +29,9 @@ const BrandProducts = () => {
   const [error, setError] = useState<string | null>(null);
   const [creatorName, setCreatorName] = useState<string | null>(null);
   const [creatorNumericId, setCreatorNumericId] = useState<number | null>(null);
+  const [brandSourcingEnabled, setBrandSourcingEnabled] = useState<boolean>(false);
+  const [sourcingLink, setSourcingLink] = useState<string | null>(null);
+  const [brandId, setBrandId] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -41,10 +44,10 @@ const BrandProducts = () => {
       try {
         setLoading(true);
         
-        // First get the creator's internal ID and name
+        // First get the creator's internal ID, name, and brand sourcing status
         const { data: creatorData, error: creatorError } = await supabase
           .from('creators')
-          .select('creator_id, name')
+          .select('creator_id, name, brand_sourcing')
           .eq('uuid', creatorId)
           .single();
 
@@ -53,6 +56,19 @@ const BrandProducts = () => {
         
         setCreatorName(creatorData.name);
         setCreatorNumericId(creatorData.creator_id);
+        setBrandSourcingEnabled(creatorData.brand_sourcing ?? false);
+
+        // Fetch brand data for sourcing link
+        const { data: brandData, error: brandError } = await supabase
+          .from('brands')
+          .select('sourcing_link, brand_id')
+          .eq('brand_name', brandName)
+          .maybeSingle();
+
+        if (brandData) {
+          setSourcingLink(brandData.sourcing_link);
+          setBrandId(brandData.brand_id);
+        }
 
         // Fetch products for this creator x brand
         const { data, error: productsError } = await supabase
@@ -126,15 +142,28 @@ const BrandProducts = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Sticky Back Button & Header */}
         <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b mb-6 pb-4">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(`/insights?creator_id=${creatorId}`)}
-            className="mb-3 -ml-2"
-            size="sm"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Insights
-          </Button>
+          <div className="flex items-start justify-between gap-4 mb-3">
+            <Button
+              variant="ghost"
+              onClick={() => navigate(`/insights?creator_id=${creatorId}`)}
+              className="-ml-2"
+              size="sm"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Insights
+            </Button>
+            
+            {brandSourcingEnabled && sourcingLink && (
+              <Button
+                onClick={() => window.open(sourcingLink, '_blank')}
+                variant="default"
+                size="sm"
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                Source Products
+              </Button>
+            )}
+          </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
             {brandName}
           </h1>

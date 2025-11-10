@@ -1,9 +1,7 @@
 import { Card } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ExternalLink, ShoppingBag, ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useAnalytics, ThemeId } from "@/hooks/useAnalytics";
@@ -59,9 +57,7 @@ const BrandInsightCard = ({
   delay = 0,
 }: BrandInsightCardProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedBrand, setSelectedBrand] = useState<BrandData | null>(null);
-  const [brandSourcingEnabled, setBrandSourcingEnabled] = useState<boolean>(false);
-  const { trackThemeView, trackBrandClick, trackBrandWebsiteClick } = useAnalytics(creatorId);
+  const { trackThemeView, trackBrandClick } = useAnalytics(creatorId);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const creatorUuid = searchParams.get("creator_id");
@@ -70,23 +66,6 @@ const BrandInsightCard = ({
   useEffect(() => {
     trackThemeView(themeId);
   }, [themeId, trackThemeView]);
-
-  // Fetch creator's brand sourcing status
-  useEffect(() => {
-    const fetchCreatorSourcingStatus = async () => {
-      if (creatorId) {
-        const { data } = await supabase
-          .from("creators")
-          .select("brand_sourcing")
-          .eq("creator_id", creatorId)
-          .maybeSingle();
-
-        setBrandSourcingEnabled(data?.brand_sourcing ?? false);
-      }
-    };
-
-    fetchCreatorSourcingStatus();
-  }, [creatorId]);
 
   // Calculate max value for proper bar scaling using rounded values
   const maxValue = brands.length > 0 ? Math.max(...brands.map((b) => Math.ceil(b.value))) : 0;
@@ -153,7 +132,9 @@ const BrandInsightCard = ({
                             if (brand.brand_id) {
                               trackBrandClick(brand.brand_id, themeId);
                             }
-                            setSelectedBrand(brand);
+                            navigate(
+                              `/brand/products?creator_id=${creatorUuid}&brand_name=${encodeURIComponent(brand.brand_name)}`
+                            );
                           }}
                           role="button"
                           tabIndex={0}
@@ -190,70 +171,6 @@ const BrandInsightCard = ({
           </CollapsibleContent>
         </Card>
       </Collapsible>
-
-      <Dialog open={!!selectedBrand} onOpenChange={() => setSelectedBrand(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-3">
-              {selectedBrand && (
-                <>
-                  <BrandAvatar logoUrl={selectedBrand.logo_url} brandName={selectedBrand.brand_name} />
-                  <span>{selectedBrand.brand_name}</span>
-                </>
-              )}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            {/* Primary CTA: View Recommended Products */}
-            <Button
-              onClick={() => {
-                if (selectedBrand?.brand_id) {
-                  trackBrandClick(selectedBrand.brand_id, themeId);
-                }
-                navigate(
-                  `/brand/products?creator_id=${creatorUuid}&brand_name=${encodeURIComponent(selectedBrand?.brand_name || "")}`,
-                );
-              }}
-              className="w-full"
-              size="lg"
-            >
-              <ShoppingBag className="w-4 h-4 mr-2" />
-              View Recommended Products
-            </Button>
-
-            {/* Secondary CTA: Source Products */}
-            {brandSourcingEnabled && selectedBrand?.sourcing_link ? (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  window.open(selectedBrand.sourcing_link, "_blank");
-                }}
-                className="w-full"
-              >
-                <ExternalLink className="w-4 h-4 mr-2" />
-                Source Products
-              </Button>
-            ) : null}
-
-            {/* Tertiary CTA: Go to Brand Website */}
-            {selectedBrand?.website_url ? (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  if (selectedBrand.brand_id) {
-                    trackBrandWebsiteClick(selectedBrand.brand_id, themeId);
-                  }
-                  window.open(selectedBrand.website_url, "_blank");
-                }}
-                className="w-full"
-              >
-                <ExternalLink className="w-4 h-4 mr-2" />
-                Visit Brand Website
-              </Button>
-            ) : null}
-          </div>
-        </DialogContent>
-      </Dialog>
     </>
   );
 };
