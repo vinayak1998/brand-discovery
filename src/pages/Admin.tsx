@@ -328,6 +328,59 @@ const AdminContent = () => {
     }
   };
 
+  const handleDownloadBrandInsights = async () => {
+    setLoading(true);
+    try {
+      toast({
+        title: "Downloading...",
+        description: "Fetching distinct brand IDs from insights",
+      });
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to download data",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Call the edge function to download brand insights
+      const { data, error } = await supabase.functions.invoke('admin-download-brand-insights', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (error) throw error;
+
+      // The edge function returns CSV text directly
+      const blob = new Blob([data], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `brand_insights_brand_ids_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Success!",
+        description: "Downloaded distinct brand IDs",
+      });
+    } catch (error) {
+      toast({
+        title: "Download failed",
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-8">
       <div className="max-w-6xl mx-auto space-y-8">
@@ -553,6 +606,39 @@ const AdminContent = () => {
               >
                 <Download className="mr-2 h-4 w-4" />
                 Download CSV
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid md:grid-cols-1 gap-6">
+          {/* Download Brand Insights */}
+          <Card className="border-primary/30">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Download className="h-5 w-5" />
+                Export Brand Insights Brand IDs
+              </CardTitle>
+              <CardDescription>
+                Download distinct brand IDs from creator_brand_insights table
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
+                <p className="text-sm text-muted-foreground mb-2">
+                  Export all unique brand IDs that have creator insights
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  CSV contains: brand_id column only
+                </p>
+              </div>
+              <Button 
+                onClick={handleDownloadBrandInsights}
+                disabled={loading}
+                className="w-full"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Download Brand IDs CSV
               </Button>
             </CardContent>
           </Card>

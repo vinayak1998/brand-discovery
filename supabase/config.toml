@@ -8,3 +8,6 @@ verify_jwt = true
 
 [functions.admin-download-products]
 verify_jwt = true
+
+[functions.admin-download-brand-insights]
+verify_jwt = true
