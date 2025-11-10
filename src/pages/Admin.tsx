@@ -280,60 +280,42 @@ const AdminContent = () => {
     try {
       toast({
         title: "Downloading...",
-        description: "Fetching product recommendations data",
+        description: "Fetching all product recommendations",
       });
 
-      const { data, error } = await supabase
-        .from('creator_x_product_recommendations')
-        .select('*')
-        .order('id', { ascending: true });
-
-      if (error) {
-        throw error;
-      }
-
-      if (!data || data.length === 0) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
         toast({
-          title: "No data found",
-          description: "The product recommendations table is empty",
+          title: "Authentication Required",
+          description: "Please log in to download data",
           variant: "destructive",
         });
         return;
       }
 
-      // Convert to CSV
-      const headers = Object.keys(data[0]);
-      const csvRows = [
-        headers.join(','),
-        ...data.map(row => 
-          headers.map(header => {
-            const value = row[header as keyof typeof row];
-            // Escape values containing commas or quotes
-            if (value === null || value === undefined) return '';
-            const stringValue = String(value);
-            if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
-              return `"${stringValue.replace(/"/g, '""')}"`;
-            }
-            return stringValue;
-          }).join(',')
-        )
-      ];
-      const csvContent = csvRows.join('\n');
+      // Call the edge function to download all data
+      const { data, error } = await supabase.functions.invoke('admin-download-products', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
 
-      // Create and download file
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `product_recommendations_${new Date().toISOString().split('T')[0]}.csv`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      if (error) throw error;
+
+      // The edge function returns CSV text directly
+      const blob = new Blob([data], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `product_recommendations_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
 
       toast({
         title: "Success!",
-        description: `Downloaded ${data.length} product recommendations`,
+        description: "Downloaded all product recommendations",
       });
     } catch (error) {
       toast({
