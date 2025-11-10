@@ -32,17 +32,11 @@ const PageHeader = ({ lastUpdated, creatorName, pageContext = 'brands', brandNam
                   ? 'Products curated just for you'
                   : 'Boost your reach & earnings with data-driven brand picks'}
               </p>
-              {lastUpdated && (
-                <p className="text-primary-foreground/70 text-xs sm:text-sm">
-                  Last updated: {lastUpdated}
-                </p>
-              )}
             </div>
           </div>
 
           {creatorName && (
             <div className="flex-shrink-0 text-right">
-              <p className="text-primary-foreground/70 text-xs md:text-sm mb-1">Creator</p>
               <p className="text-primary-foreground font-semibold text-xs sm:text-sm md:text-base">{creatorName}</p>
             </div>
           )}
