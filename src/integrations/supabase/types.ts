@@ -136,6 +136,8 @@ export type Database = {
           creator_id: number | null
           header: string | null
           id: number
+          median_reach: number | null
+          median_sales: number | null
           name: string
           platform: string | null
           post_clicks: number
@@ -146,6 +148,7 @@ export type Database = {
           sim_score: number
           subcategory: string | null
           thumbnail_url: string | null
+          top_3_posts_by_views: Json | null
           updated_at: string
         }
         Insert: {
@@ -158,6 +161,8 @@ export type Database = {
           creator_id?: number | null
           header?: string | null
           id?: never
+          median_reach?: number | null
+          median_sales?: number | null
           name: string
           platform?: string | null
           post_clicks?: number
@@ -168,6 +173,7 @@ export type Database = {
           sim_score: number
           subcategory?: string | null
           thumbnail_url?: string | null
+          top_3_posts_by_views?: Json | null
           updated_at?: string
         }
         Update: {
@@ -180,6 +186,8 @@ export type Database = {
           creator_id?: number | null
           header?: string | null
           id?: never
+          median_reach?: number | null
+          median_sales?: number | null
           name?: string
           platform?: string | null
           post_clicks?: number
@@ -190,6 +198,7 @@ export type Database = {
           sim_score?: number
           subcategory?: string | null
           thumbnail_url?: string | null
+          top_3_posts_by_views?: Json | null
           updated_at?: string
         }
         Relationships: [
