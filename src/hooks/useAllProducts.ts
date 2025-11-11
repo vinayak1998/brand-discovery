@@ -11,8 +11,8 @@ export interface ProductWithBrand {
   sim_score: number;
   short_code: string | null;
   price: number | null;
-  category: string | null;
-  subcategory: string | null;
+  cat: string | null;
+  sscat: string | null;
   logo_url: string | null;
   theme_id: string | null;
 }
@@ -58,8 +58,8 @@ export const useAllProducts = (creatorUuid: string | null) => {
             sim_score, 
             short_code, 
             price,
-            category,
-            subcategory
+            cat,
+            sscat
           `)
           .eq('creator_id', creatorData.creator_id)
           .order('sim_score', { ascending: false });

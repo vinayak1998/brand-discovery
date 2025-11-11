@@ -129,12 +129,12 @@ export type Database = {
         Row: {
           brand: string | null
           brand_id: number | null
-          category: string | null
+          cat: string | null
           commission_pct: number | null
           count_90_days: number
           created_at: string
           creator_id: number | null
-          header: string | null
+          gender: string | null
           id: number
           median_reach: number | null
           median_sales: number | null
@@ -146,7 +146,7 @@ export type Database = {
           purchase_url: string | null
           short_code: string | null
           sim_score: number
-          subcategory: string | null
+          sscat: string | null
           thumbnail_url: string | null
           top_3_posts_by_views: Json | null
           updated_at: string
@@ -154,12 +154,12 @@ export type Database = {
         Insert: {
           brand?: string | null
           brand_id?: number | null
-          category?: string | null
+          cat?: string | null
           commission_pct?: number | null
           count_90_days?: number
           created_at?: string
           creator_id?: number | null
-          header?: string | null
+          gender?: string | null
           id?: never
           median_reach?: number | null
           median_sales?: number | null
@@ -171,7 +171,7 @@ export type Database = {
           purchase_url?: string | null
           short_code?: string | null
           sim_score: number
-          subcategory?: string | null
+          sscat?: string | null
           thumbnail_url?: string | null
           top_3_posts_by_views?: Json | null
           updated_at?: string
@@ -179,12 +179,12 @@ export type Database = {
         Update: {
           brand?: string | null
           brand_id?: number | null
-          category?: string | null
+          cat?: string | null
           commission_pct?: number | null
           count_90_days?: number
           created_at?: string
           creator_id?: number | null
-          header?: string | null
+          gender?: string | null
           id?: never
           median_reach?: number | null
           median_sales?: number | null
@@ -196,7 +196,7 @@ export type Database = {
           purchase_url?: string | null
           short_code?: string | null
           sim_score?: number
-          subcategory?: string | null
+          sscat?: string | null
           thumbnail_url?: string | null
           top_3_posts_by_views?: Json | null
           updated_at?: string

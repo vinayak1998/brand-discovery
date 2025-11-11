@@ -18,11 +18,11 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
 
   // Extract unique categories and subcategories
-  // Only show filters if ALL products have category AND subcategory
+  // Only show filters if ALL products have cat AND sscat
   const { categories, subcategories, showFilters } = useMemo(() => {
-    // Check if all products have both category and subcategory
+    // Check if all products have both cat and sscat
     const allHaveCategoryAndSubcategory = products.every(
-      product => product.category && product.subcategory
+      product => product.cat && product.sscat
     );
     
     if (!allHaveCategoryAndSubcategory) {
@@ -33,8 +33,8 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
     const subcats = new Set<string>();
     
     products.forEach(product => {
-      if (product.category) cats.add(product.category);
-      if (product.subcategory) subcats.add(product.subcategory);
+      if (product.cat) cats.add(product.cat);
+      if (product.sscat) subcats.add(product.sscat);
     });
     
     return {
@@ -47,8 +47,8 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
   // Filter products based on selections
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
-      if (selectedCategory && product.category !== selectedCategory) return false;
-      if (selectedSubcategory && product.subcategory !== selectedSubcategory) return false;
+      if (selectedCategory && product.cat !== selectedCategory) return false;
+      if (selectedSubcategory && product.sscat !== selectedSubcategory) return false;
       return true;
     });
   }, [products, selectedCategory, selectedSubcategory]);
@@ -98,7 +98,7 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
 
   return (
     <div className="space-y-4">
-      {/* Filter Bar - Only show if all products have category and subcategory */}
+      {/* Filter Bar - Only show if all products have cat and sscat */}
       {showFilters && (
         <div className="flex items-center gap-2 flex-wrap">
           <Popover>
