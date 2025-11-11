@@ -213,30 +213,30 @@ const SurveySection = ({ creatorId, onSubmit }: SurveySectionProps) => {
 
   if (isSubmitted) {
     return (
-      <Card className="p-6 text-center bg-card border-border">
-        <div className="py-8">
-          <div className="text-4xl mb-4">🙏</div>
-          <h3 className="text-lg font-semibold text-foreground mb-2">Thank you for your feedback!</h3>
-          <p className="text-muted-foreground">Your input helps us improve your recommendations.</p>
+      <Card className="p-4 text-center bg-card border-border">
+        <div className="py-6">
+          <div className="text-3xl mb-3">🙏</div>
+          <h3 className="text-base font-semibold text-foreground mb-1.5">Thank you for your feedback!</h3>
+          <p className="text-xs text-muted-foreground">Your input helps us improve your recommendations.</p>
         </div>
       </Card>
     );
   }
 
   return (
-    <Card className="p-6 bg-card border-border">
-      <div className="space-y-6">
+    <Card className="p-4 bg-card border-border">
+      <div className="space-y-4">
         <div>
-          <h3 className="text-base font-semibold text-foreground mb-2">Share Your Feedback</h3>
-          <p className="text-sm text-muted-foreground">Help us improve your brand recommendations (5-6 questions)</p>
+          <h3 className="text-sm font-semibold text-foreground mb-1.5">Share Your Feedback</h3>
+          <p className="text-xs text-muted-foreground">Help us improve your brand recommendations (5-6 questions)</p>
         </div>
 
         {/* Question 1: Value Rating */}
-        <div className="space-y-3">
-          <Label className="text-sm font-medium">
+        <div className="space-y-2">
+          <Label className="text-xs font-medium">
             1. How valuable were these brand insights for your content strategy? *
           </Label>
-          <div className="flex gap-2">
+          <div className="flex gap-1.5">
             {[1, 2, 3, 4, 5].map((rating) => (
               <button
                 key={rating}
@@ -247,7 +247,7 @@ const SurveySection = ({ creatorId, onSubmit }: SurveySectionProps) => {
                 className="transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-primary rounded"
               >
                 <Star
-                  className={`w-8 h-8 ${
+                  className={`w-6 h-6 ${
                     rating <= (q1Hover || q1Rating)
                       ? "fill-primary text-primary"
                       : "text-muted-foreground"
@@ -256,7 +256,7 @@ const SurveySection = ({ creatorId, onSubmit }: SurveySectionProps) => {
               </button>
             ))}
             {q1Rating > 0 && (
-              <span className="ml-2 text-sm text-muted-foreground self-center">
+              <span className="ml-2 text-xs text-muted-foreground self-center">
                 {q1Rating === 1 && "Not valuable"}
                 {q1Rating === 2 && "Slightly valuable"}
                 {q1Rating === 3 && "Moderately valuable"}
@@ -268,42 +268,42 @@ const SurveySection = ({ creatorId, onSubmit }: SurveySectionProps) => {
         </div>
 
         {/* Question 2: Actionability */}
-        <div className="space-y-3">
-          <Label className="text-sm font-medium">
+        <div className="space-y-2">
+          <Label className="text-xs font-medium">
             2. How likely are you to take action on these recommendations? *
           </Label>
           <RadioGroup value={q2Answer} onValueChange={setQ2Answer}>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1.5">
               <RadioGroupItem value="Very Likely" id="q2-very-likely" />
-              <Label htmlFor="q2-very-likely">Very Likely</Label>
+              <Label htmlFor="q2-very-likely" className="text-xs">Very Likely</Label>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1.5">
               <RadioGroupItem value="Likely" id="q2-likely" />
-              <Label htmlFor="q2-likely">Likely</Label>
+              <Label htmlFor="q2-likely" className="text-xs">Likely</Label>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1.5">
               <RadioGroupItem value="Neutral" id="q2-neutral" />
-              <Label htmlFor="q2-neutral">Neutral</Label>
+              <Label htmlFor="q2-neutral" className="text-xs">Neutral</Label>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1.5">
               <RadioGroupItem value="Unlikely" id="q2-unlikely" />
-              <Label htmlFor="q2-unlikely">Unlikely</Label>
+              <Label htmlFor="q2-unlikely" className="text-xs">Unlikely</Label>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1.5">
               <RadioGroupItem value="Very Unlikely" id="q2-very-unlikely" />
-              <Label htmlFor="q2-very-unlikely">Very Unlikely</Label>
+              <Label htmlFor="q2-very-unlikely" className="text-xs">Very Unlikely</Label>
             </div>
           </RadioGroup>
         </div>
 
         {/* Question 3: Feature Preference */}
-        <div className="space-y-3">
-          <Label className="text-sm font-medium">
+        <div className="space-y-2">
+          <Label className="text-xs font-medium">
             3. Which insight themes were most valuable? (Select up to 3) *
           </Label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {themeOptions.map((option) => (
-              <div key={option.id} className="flex items-center space-x-2">
+              <div key={option.id} className="flex items-center space-x-1.5">
                 <Checkbox
                   id={`q3-${option.id}`}
                   checked={q3Answers.includes(option.id)}
@@ -312,7 +312,7 @@ const SurveySection = ({ creatorId, onSubmit }: SurveySectionProps) => {
                 />
                 <Label 
                   htmlFor={`q3-${option.id}`} 
-                  className="flex items-center gap-2 cursor-pointer"
+                  className="flex items-center gap-1.5 cursor-pointer text-xs"
                 >
                   <span>{option.icon}</span>
                   <span>{option.label}</span>
@@ -321,27 +321,27 @@ const SurveySection = ({ creatorId, onSubmit }: SurveySectionProps) => {
             ))}
           </div>
           {q3Answers.length > 0 && q3Answers.length < 3 && !q3Answers.includes("none") && (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               You can select {3 - q3Answers.length} more
             </p>
           )}
         </div>
 
         {/* Question 4: Missing Information */}
-        <div className="space-y-3">
-          <Label className="text-sm font-medium">
+        <div className="space-y-2">
+          <Label className="text-xs font-medium">
             4. What additional information would help you decide which brands to promote? *
           </Label>
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {missingInfoOptions.map((option) => (
               <div key={option.id}>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-1.5">
                   <Checkbox
                     id={`q4-${option.id}`}
                     checked={q4Answers.includes(option.id)}
                     onCheckedChange={(checked) => handleQ4Change(option.id, checked as boolean)}
                   />
-                  <Label htmlFor={`q4-${option.id}`} className="cursor-pointer">
+                  <Label htmlFor={`q4-${option.id}`} className="cursor-pointer text-xs">
                     {option.label}
                   </Label>
                 </div>
@@ -350,7 +350,7 @@ const SurveySection = ({ creatorId, onSubmit }: SurveySectionProps) => {
                     placeholder="Please specify..."
                     value={q4Other}
                     onChange={(e) => setQ4Other(e.target.value)}
-                    className="mt-2 ml-6"
+                    className="mt-2 ml-6 min-h-[70px] text-xs"
                     maxLength={200}
                   />
                 )}
@@ -361,20 +361,20 @@ const SurveySection = ({ creatorId, onSubmit }: SurveySectionProps) => {
 
         {/* Question 5: Barriers (Conditional) */}
         {showQ5 && (
-          <div className="space-y-3 p-4 bg-muted/50 rounded-lg">
-            <Label className="text-sm font-medium">
+          <div className="space-y-2 p-3 bg-muted/50 rounded-lg">
+            <Label className="text-xs font-medium">
               5. What's holding you back from creating content for these brands? *
             </Label>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {barrierOptions.map((option) => (
                 <div key={option.id}>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-1.5">
                     <Checkbox
                       id={`q5-${option.id}`}
                       checked={q5Answers.includes(option.id)}
                       onCheckedChange={(checked) => handleQ5Change(option.id, checked as boolean)}
                     />
-                    <Label htmlFor={`q5-${option.id}`} className="cursor-pointer">
+                    <Label htmlFor={`q5-${option.id}`} className="cursor-pointer text-xs">
                       {option.label}
                     </Label>
                   </div>
@@ -383,7 +383,7 @@ const SurveySection = ({ creatorId, onSubmit }: SurveySectionProps) => {
                       placeholder="Please specify..."
                       value={q5Other}
                       onChange={(e) => setQ5Other(e.target.value)}
-                      className="mt-2 ml-6"
+                      className="mt-2 ml-6 min-h-[70px] text-xs"
                       maxLength={200}
                     />
                   )}
@@ -394,15 +394,15 @@ const SurveySection = ({ creatorId, onSubmit }: SurveySectionProps) => {
         )}
 
         {/* Question 6: Open Feedback */}
-        <div className="space-y-3">
-          <Label className="text-sm font-medium">
+        <div className="space-y-2">
+          <Label className="text-xs font-medium">
             {showQ5 ? "6" : "5"}. Any other feedback or suggestions? (Optional)
           </Label>
           <Textarea
             placeholder="Share any additional thoughts..."
             value={q6Feedback}
             onChange={(e) => setQ6Feedback(e.target.value)}
-            className="min-h-[100px]"
+            className="min-h-[70px] text-xs"
             maxLength={500}
           />
           <p className="text-xs text-muted-foreground">
@@ -414,7 +414,7 @@ const SurveySection = ({ creatorId, onSubmit }: SurveySectionProps) => {
         <Button 
           onClick={handleSubmit}
           disabled={isSubmitting}
-          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-full py-3"
+          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-full py-2 text-sm"
         >
           {isSubmitting ? "Submitting..." : "Submit Feedback"}
         </Button>
