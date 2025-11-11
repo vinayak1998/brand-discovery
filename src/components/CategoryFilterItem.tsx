@@ -6,21 +6,23 @@ import { ChevronRight } from 'lucide-react';
 interface CategoryFilterItemProps {
   category: string;
   subcategories: string[];
-  selectedCategory: string | null;
-  selectedSubcategory: string | null;
-  onCategorySelect: (category: string) => void;
-  onSubcategorySelect: (category: string, subcategory: string) => void;
+  selectedSubcategories: Set<string>;
+  onCategoryClick: (category: string) => void;
+  onSubcategoryClick: (subcategory: string) => void;
 }
 
 export const CategoryFilterItem = ({
   category,
   subcategories,
-  selectedCategory,
-  selectedSubcategory,
-  onCategorySelect,
-  onSubcategorySelect,
+  selectedSubcategories,
+  onCategoryClick,
+  onSubcategoryClick,
 }: CategoryFilterItemProps) => {
   const [isOpen, setIsOpen] = useState(false);
+
+  // Check if all subcategories are selected
+  const allSubcategoriesSelected = subcategories.every(sc => selectedSubcategories.has(sc));
+  const someSubcategoriesSelected = subcategories.some(sc => selectedSubcategories.has(sc));
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -32,10 +34,10 @@ export const CategoryFilterItem = ({
             </Button>
           </CollapsibleTrigger>
           <Button
-            variant={selectedCategory === category && !selectedSubcategory ? "secondary" : "ghost"}
+            variant={allSubcategoriesSelected ? "secondary" : someSubcategoriesSelected ? "outline" : "ghost"}
             size="sm"
             className="flex-1 justify-start text-left"
-            onClick={() => onCategorySelect(category)}
+            onClick={() => onCategoryClick(category)}
           >
             {category}
           </Button>
@@ -45,10 +47,10 @@ export const CategoryFilterItem = ({
           {subcategories.map(subcategory => (
             <Button
               key={subcategory}
-              variant={selectedSubcategory === subcategory ? "secondary" : "ghost"}
+              variant={selectedSubcategories.has(subcategory) ? "secondary" : "ghost"}
               size="sm"
               className="w-full justify-start text-left text-xs"
-              onClick={() => onSubcategorySelect(category, subcategory)}
+              onClick={() => onSubcategoryClick(subcategory)}
             >
               {subcategory}
             </Button>

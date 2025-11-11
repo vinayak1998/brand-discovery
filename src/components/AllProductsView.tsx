@@ -15,19 +15,22 @@ interface AllProductsViewProps {
 
 const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
   const { products, loading, error, creatorNumericId } = useAllProducts(creatorUuid);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
+  const [selectedSubcategories, setSelectedSubcategories] = useState<Set<string>>(new Set());
 
-  // Build hierarchical category structure
+  // Build hierarchical category structure and category-to-subcategories mapping
   // Only show filters if ALL products have cat AND sscat
-  const { categoryHierarchy, showFilters } = useMemo(() => {
+  const { categoryHierarchy, categoryToSubcategories, showFilters } = useMemo(() => {
     // Check if all products have both cat and sscat
     const allHaveCategoryAndSubcategory = products.every(
       product => product.cat && product.sscat
     );
     
     if (!allHaveCategoryAndSubcategory) {
-      return { categoryHierarchy: new Map<string, string[]>(), showFilters: false };
+      return { 
+        categoryHierarchy: new Map<string, string[]>(), 
+        categoryToSubcategories: new Map<string, string[]>(),
+        showFilters: false 
+      };
     }
     
     const hierarchy = new Map<string, Set<string>>();
@@ -43,30 +46,94 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
     
     // Convert to sorted arrays
     const sortedHierarchy = new Map<string, string[]>();
+    const catToSubcats = new Map<string, string[]>();
+    
     Array.from(hierarchy.keys()).sort().forEach(cat => {
-      sortedHierarchy.set(cat, Array.from(hierarchy.get(cat)!).sort());
+      const subcats = Array.from(hierarchy.get(cat)!).sort();
+      sortedHierarchy.set(cat, subcats);
+      catToSubcats.set(cat, subcats);
     });
     
     return {
       categoryHierarchy: sortedHierarchy,
+      categoryToSubcategories: catToSubcats,
       showFilters: true,
     };
   }, [products]);
 
-  // Filter products based on selections
+  // Filter products based on selected subcategories
   const filteredProducts = useMemo(() => {
-    return products.filter(product => {
-      if (selectedCategory && product.cat !== selectedCategory) return false;
-      if (selectedSubcategory && product.sscat !== selectedSubcategory) return false;
-      return true;
-    });
-  }, [products, selectedCategory, selectedSubcategory]);
+    if (selectedSubcategories.size === 0) return products;
+    
+    return products.filter(product => 
+      product.sscat && selectedSubcategories.has(product.sscat)
+    );
+  }, [products, selectedSubcategories]);
 
-  const hasActiveFilters = selectedCategory || selectedSubcategory;
+  const hasActiveFilters = selectedSubcategories.size > 0;
 
   const clearFilters = () => {
-    setSelectedCategory(null);
-    setSelectedSubcategory(null);
+    setSelectedSubcategories(new Set());
+  };
+
+  // Handle category click - toggle all subcategories
+  const handleCategoryClick = (category: string) => {
+    const subcats = categoryToSubcategories.get(category) || [];
+    const allSelected = subcats.every(sc => selectedSubcategories.has(sc));
+    
+    const newSelection = new Set(selectedSubcategories);
+    
+    if (allSelected) {
+      // Deselect all subcategories of this category
+      subcats.forEach(sc => newSelection.delete(sc));
+    } else {
+      // Select all subcategories of this category
+      subcats.forEach(sc => newSelection.add(sc));
+    }
+    
+    setSelectedSubcategories(newSelection);
+  };
+
+  // Handle subcategory click - toggle individual subcategory
+  const handleSubcategoryClick = (subcategory: string) => {
+    const newSelection = new Set(selectedSubcategories);
+    
+    if (newSelection.has(subcategory)) {
+      newSelection.delete(subcategory);
+    } else {
+      newSelection.add(subcategory);
+    }
+    
+    setSelectedSubcategories(newSelection);
+  };
+
+  // Get active filter chips with smart grouping
+  const getActiveFilterChips = () => {
+    const chips: { label: string; subcategories: string[] }[] = [];
+    
+    categoryHierarchy.forEach((subcats, category) => {
+      const selectedInCategory = subcats.filter(sc => selectedSubcategories.has(sc));
+      
+      if (selectedInCategory.length === 0) return;
+      
+      if (selectedInCategory.length === subcats.length) {
+        // All subcategories selected - show just category name
+        chips.push({
+          label: category,
+          subcategories: selectedInCategory
+        });
+      } else {
+        // Partial selection - show individual subcategories
+        selectedInCategory.forEach(sc => {
+          chips.push({
+            label: `${category} → ${sc}`,
+            subcategories: [sc]
+          });
+        });
+      }
+    });
+    
+    return chips;
   };
 
   if (loading) {
@@ -117,7 +184,7 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
                 Filters
                 {hasActiveFilters && (
                   <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs">
-                    {(selectedCategory ? 1 : 0) + (selectedSubcategory ? 1 : 0)}
+                    {selectedSubcategories.size}
                   </Badge>
                 )}
               </Button>
@@ -130,20 +197,9 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
                     key={category}
                     category={category}
                     subcategories={categoryHierarchy.get(category) || []}
-                    selectedCategory={selectedCategory}
-                    selectedSubcategory={selectedSubcategory}
-                    onCategorySelect={(cat) => {
-                      if (selectedCategory === cat && !selectedSubcategory) {
-                        setSelectedCategory(null);
-                      } else {
-                        setSelectedCategory(cat);
-                        setSelectedSubcategory(null);
-                      }
-                    }}
-                    onSubcategorySelect={(cat, subcat) => {
-                      setSelectedCategory(cat);
-                      setSelectedSubcategory(selectedSubcategory === subcat ? null : subcat);
-                    }}
+                    selectedSubcategories={selectedSubcategories}
+                    onCategoryClick={handleCategoryClick}
+                    onSubcategoryClick={handleSubcategoryClick}
                   />
                 ))}
               </div>
@@ -166,40 +222,27 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
       {/* Active Filters Display - Always visible when filters applied */}
       {hasActiveFilters && (
         <div className="flex items-center gap-2 flex-wrap px-1">
-          {selectedSubcategory ? (
+          {getActiveFilterChips().map((chip, idx) => (
             <Badge 
+              key={idx}
               variant="secondary" 
               className="gap-2 pr-1 py-1.5 text-xs"
             >
-              <span>{selectedCategory} → {selectedSubcategory}</span>
+              <span>{chip.label}</span>
               <Button
                 variant="ghost"
                 size="sm"
                 className="h-4 w-4 p-0 hover:bg-transparent"
                 onClick={() => {
-                  setSelectedCategory(null);
-                  setSelectedSubcategory(null);
+                  const newSelection = new Set(selectedSubcategories);
+                  chip.subcategories.forEach(sc => newSelection.delete(sc));
+                  setSelectedSubcategories(newSelection);
                 }}
               >
                 <X className="h-3 w-3" />
               </Button>
             </Badge>
-          ) : selectedCategory ? (
-            <Badge 
-              variant="secondary" 
-              className="gap-2 pr-1 py-1.5 text-xs"
-            >
-              <span>{selectedCategory}</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-4 w-4 p-0 hover:bg-transparent"
-                onClick={() => setSelectedCategory(null)}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </Badge>
-          ) : null}
+          ))}
         </div>
       )}
 
