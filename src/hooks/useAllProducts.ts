@@ -66,40 +66,32 @@ export const useAllProducts = (creatorUuid: string | null) => {
 
         if (productsError) throw productsError;
 
-        // For each product, get brand logo and theme
-        const productsWithBrandInfo = await Promise.all(
-          (data || []).map(async (product) => {
-            let logo_url = null;
-            let theme_id = null;
+        // Batch fetch brand logos and themes to avoid N+1 queries
+        const uniqueBrandIds = [...new Set(data.map(p => p.brand_id).filter(Boolean))] as number[];
+        
+        // Fetch all brand logos in one query
+        const { data: brandsData } = await supabase
+          .from('brands')
+          .select('brand_id, logo_url')
+          .in('brand_id', uniqueBrandIds);
 
-            if (product.brand_id) {
-              // Get brand logo
-              const { data: brandData } = await supabase
-                .from('brands')
-                .select('logo_url')
-                .eq('brand_id', product.brand_id)
-                .maybeSingle();
+        // Fetch all themes in one query
+        const { data: insightsData } = await supabase
+          .from('creator_brand_insights')
+          .select('brand_id, theme_id')
+          .eq('creator_id', creatorData.creator_id)
+          .in('brand_id', uniqueBrandIds);
 
-              logo_url = brandData?.logo_url || null;
+        // Create lookup maps for O(1) access
+        const brandLogoMap = new Map(brandsData?.map(b => [b.brand_id, b.logo_url]) || []);
+        const themeMap = new Map(insightsData?.map(i => [i.brand_id, i.theme_id]) || []);
 
-              // Get theme for this brand
-              const { data: insightData } = await supabase
-                .from('creator_brand_insights')
-                .select('theme_id')
-                .eq('creator_id', creatorData.creator_id)
-                .eq('brand_id', product.brand_id)
-                .maybeSingle();
-
-              theme_id = insightData?.theme_id || null;
-            }
-
-            return {
-              ...product,
-              logo_url,
-              theme_id,
-            };
-          })
-        );
+        // Map data back to products
+        const productsWithBrandInfo = data.map(product => ({
+          ...product,
+          logo_url: product.brand_id ? (brandLogoMap.get(product.brand_id) || null) : null,
+          theme_id: product.brand_id ? (themeMap.get(product.brand_id) || null) : null,
+        }));
 
         setProducts(productsWithBrandInfo);
       } catch (err) {

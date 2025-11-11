@@ -71,6 +71,16 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
                   alt={product.name}
                   className="w-full h-full object-cover"
                   loading="lazy"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    const parent = e.currentTarget.parentElement;
+                    if (parent) {
+                      const fallback = document.createElement('div');
+                      fallback.className = 'w-full h-full flex items-center justify-center text-muted-foreground text-xs';
+                      fallback.textContent = 'Image unavailable';
+                      parent.appendChild(fallback);
+                    }
+                  }}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
@@ -85,6 +95,9 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
                     src={product.logo_url}
                     alt={product.brand}
                     className="w-full h-full object-contain p-0.5"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
                   />
                 </div>
               )}
