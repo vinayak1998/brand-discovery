@@ -216,6 +216,7 @@ export type Database = {
           brand_sourcing: boolean
           created_at: string | null
           creator_id: number
+          gender: string | null
           name: string
           updated_at: string | null
           uuid: string
@@ -224,6 +225,7 @@ export type Database = {
           brand_sourcing?: boolean
           created_at?: string | null
           creator_id: number
+          gender?: string | null
           name: string
           updated_at?: string | null
           uuid?: string
@@ -232,6 +234,7 @@ export type Database = {
           brand_sourcing?: boolean
           created_at?: string | null
           creator_id?: number
+          gender?: string | null
           name?: string
           updated_at?: string | null
           uuid?: string
