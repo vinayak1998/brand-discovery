@@ -218,7 +218,7 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
               
               {/* Brand Logo Badge - Top Left */}
               {product.logo_url && (
-                <div className="absolute top-2 left-2 w-8 h-8 rounded-full bg-background shadow-md overflow-hidden border">
+                <div className="absolute top-2 left-2 w-8 h-8 rounded-full bg-background shadow-md overflow-hidden border z-10">
                   <img
                     src={product.logo_url}
                     alt={product.brand}
@@ -229,18 +229,20 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
                   />
                 </div>
               )}
-            </div>
 
-            {/* Theme Badge */}
-            {theme && (
-              <Badge 
-                variant="secondary" 
-                className="mb-2 text-xs w-fit"
-                style={{ backgroundColor: `${theme.color}15`, color: theme.color }}
-              >
-                {theme.title.replace(' Brands', '').replace(' Products', '')}
-              </Badge>
-            )}
+              {/* Theme Badge - Overlaid on Top Right */}
+              {theme && (
+                <div className="absolute top-2 right-2 z-20">
+                  <Badge 
+                    variant="secondary" 
+                    className="text-[10px] sm:text-xs px-2 py-0.5 bg-background/90 backdrop-blur-sm shadow-lg border"
+                    style={{ borderColor: `${theme.color}40`, color: theme.color }}
+                  >
+                    {theme.title.replace(' Brands', '').replace(' Products', '')}
+                  </Badge>
+                </div>
+              )}
+            </div>
 
             {/* Product Name */}
             <h3 className="text-xs sm:text-sm font-semibold text-foreground mb-1 sm:mb-2 line-clamp-2 flex-1">

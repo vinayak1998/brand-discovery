@@ -22,12 +22,12 @@ const PageHeader = ({ lastUpdated, creatorName, pageContext = 'brands', brandNam
             </div>
             
             <div className="flex-1">
-              <h1 className="text-xl sm:text-3xl md:text-4xl font-bold mb-1 sm:mb-2">
-                {pageContext === 'products' && brandName 
-                  ? `${brandName} - Product Recommendations`
-                  : 'Curated Brands for You!'}
-              </h1>
-              <p className="text-primary-foreground/90 text-sm sm:text-lg mb-1 sm:mb-2">
+              {pageContext === 'products' && brandName && (
+                <h1 className="text-xl sm:text-3xl md:text-4xl font-bold mb-1 sm:mb-2">
+                  {brandName} - Product Recommendations
+                </h1>
+              )}
+              <p className={`text-primary-foreground/90 ${pageContext === 'products' ? 'text-sm sm:text-lg' : 'text-base sm:text-xl'} mb-1 sm:mb-2`}>
                 {pageContext === 'products' 
                   ? 'Products curated just for you'
                   : 'Boost your reach & earnings with data-driven brand picks'}

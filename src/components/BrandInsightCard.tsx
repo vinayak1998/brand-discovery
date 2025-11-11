@@ -26,13 +26,15 @@ interface BrandInsightCardProps {
   creatorId: number | null;
   brands: BrandData[];
   delay?: number;
+  isOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
 }
 
 const BrandAvatar = ({ logoUrl, brandName }: { logoUrl?: string; brandName: string }) => {
   return (
-    <Avatar className="w-10 h-10">
+    <Avatar className="w-8 h-8">
       {logoUrl && <AvatarImage src={logoUrl} alt={`${brandName} logo`} />}
-      <AvatarFallback className="brand-avatar">{getInitials(brandName)}</AvatarFallback>
+      <AvatarFallback className="brand-avatar-small">{getInitials(brandName)}</AvatarFallback>
     </Avatar>
   );
 };
@@ -55,8 +57,9 @@ const BrandInsightCard = ({
   creatorId,
   brands,
   delay = 0,
+  isOpen,
+  onOpenChange,
 }: BrandInsightCardProps) => {
-  const [isOpen, setIsOpen] = useState(false);
   const { trackThemeView, trackBrandClick } = useAnalytics(creatorId);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -72,19 +75,22 @@ const BrandInsightCard = ({
 
   return (
     <>
-      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <Collapsible open={isOpen} onOpenChange={onOpenChange}>
         <Card
-          className="insight-card animate-fade-in bg-card border-border overflow-hidden"
+          className={cn(
+            "insight-card animate-fade-in bg-card border-border overflow-hidden transition-all duration-300",
+            isOpen && "ring-2 ring-primary/20 shadow-lg"
+          )}
           style={{ animationDelay: `${delay}ms` }}
         >
           {/* Collapsible Header */}
-          <CollapsibleTrigger className="w-full p-6 text-left hover:bg-accent/30 transition-colors">
+          <CollapsibleTrigger className="w-full p-4 sm:p-5 text-left hover:bg-accent/30 transition-all duration-200 group">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3 flex-1">
-                <Icon className="w-6 h-6 flex-shrink-0" style={{ color }} />
+              <div className="flex items-center gap-2 sm:gap-3 flex-1">
+                <Icon className="w-5 h-5 flex-shrink-0 transition-transform group-hover:scale-110" style={{ color }} />
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-lg font-semibold text-foreground mb-1">{title}</h3>
-                  <p className="text-sm text-muted-foreground">
+                  <h3 className="text-base font-semibold text-foreground mb-0.5">{title}</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground leading-tight">
                     {title === "Top Trending Brands"
                       ? "What other creators similar to you are talking about most"
                       : tagline}
@@ -93,7 +99,7 @@ const BrandInsightCard = ({
               </div>
               <ChevronDown
                 className={cn(
-                  "w-5 h-5 text-muted-foreground transition-transform duration-200 flex-shrink-0 ml-2",
+                  "w-5 h-5 text-muted-foreground transition-all duration-300 flex-shrink-0 ml-2 group-hover:text-primary",
                   isOpen && "rotate-180",
                 )}
               />
@@ -101,11 +107,11 @@ const BrandInsightCard = ({
           </CollapsibleTrigger>
 
           {/* Collapsible Content */}
-          <CollapsibleContent>
-            <div className="px-6 pb-6 pt-2">
+          <CollapsibleContent className="accordion-content">
+            <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-1">
               {/* Metric Header */}
-              <div className="flex justify-end mb-3">
-                <p className="text-xs text-muted-foreground font-medium">
+              <div className="flex justify-end mb-2">
+                <p className="text-[10px] sm:text-xs text-muted-foreground font-medium">
                   {title === "Top Trending Brands" && "Recent shares by similar creators"}
                   {title === "Best Reach Brands" && "Views per recent posts"}
                   {title === "Fastest Selling Products" && "Sales per link"}
@@ -113,7 +119,7 @@ const BrandInsightCard = ({
               </div>
 
               {/* Brand List */}
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {brands.length === 0 ? (
                   <div className="py-8 text-center">
                     <p className="text-muted-foreground">No brands available for this category</p>
@@ -124,10 +130,14 @@ const BrandInsightCard = ({
                     const barWidth = maxValue > 0 ? (roundedValue / maxValue) * 100 : 0;
 
                     return (
-                      <div key={`${brand.brand_name}-${index}`} className="space-y-3">
+                      <div 
+                        key={`${brand.brand_name}-${index}`} 
+                        className="space-y-2 brand-tile-stagger"
+                        style={{ '--stagger-index': index } as any}
+                      >
                         {/* Brand Info Row */}
                         <div
-                          className="group flex items-center justify-between cursor-pointer hover:bg-accent/70 active:bg-accent p-3 rounded-lg transition-all ring-offset-background focus-visible:outline-none focus-visible:ring-2 border border-border hover:border-primary/40 hover:shadow-sm"
+                          className="group flex items-center justify-between cursor-pointer hover:bg-accent/70 active:bg-accent active:scale-[0.98] p-2 rounded-lg transition-all duration-200 ring-offset-background focus-visible:outline-none focus-visible:ring-2 border border-border hover:border-primary/40 hover:shadow-sm"
                           onClick={() => {
                             if (brand.brand_id) {
                               trackBrandClick(brand.brand_id, themeId);
@@ -139,26 +149,26 @@ const BrandInsightCard = ({
                           role="button"
                           tabIndex={0}
                         >
-                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
                             <BrandAvatar logoUrl={brand.logo_url} brandName={brand.brand_name} />
                             <div className="flex-1 min-w-0">
-                              <p className="font-semibold text-foreground truncate">{brand.brand_name}</p>
+                              <p className="text-sm font-semibold text-foreground truncate">{brand.brand_name}</p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <p className="font-semibold text-foreground">{Math.ceil(brand.value).toLocaleString()}</p>
-                            <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-sm font-semibold text-foreground">{Math.ceil(brand.value).toLocaleString()}</p>
+                            <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
                           </div>
                         </div>
 
                         {/* Progress Bar */}
-                        <div className="w-full bg-border rounded-full h-3 overflow-hidden">
+                        <div className="w-full bg-border rounded-full h-2.5 overflow-hidden">
                           <div
-                            className="h-full bg-primary rounded-full bar-fill"
+                            className="h-full rounded-full bar-fill progress-gradient"
                             style={{
                               width: `${barWidth}%`,
                               backgroundColor: color,
-                              animationDelay: `${delay + index * 100}ms`,
+                              animationDelay: `${delay + index * 50}ms`,
                             }}
                           />
                         </div>

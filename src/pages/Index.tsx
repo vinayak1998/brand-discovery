@@ -18,6 +18,7 @@ const Index = () => {
   const navigate = useNavigate();
   const creatorUuid = searchParams.get('creator_id');
   const [activeTab, setActiveTab] = useState('brands');
+  const [openAccordion, setOpenAccordion] = useState<string | null>('trending'); // Ensure at least one is always open
   
   // Redirect to landing if no creator_id
   useEffect(() => {
@@ -175,30 +176,20 @@ const Index = () => {
                       sourcing_link: insight.sourcing_link,
                     }))}
                     delay={index * 100}
+                    isOpen={openAccordion === theme.id}
+                    onOpenChange={(isOpen) => {
+                      if (isOpen) {
+                        setOpenAccordion(theme.id);
+                      } else if (openAccordion === theme.id) {
+                        // If closing the current one, open the first one that isn't this
+                        const otherTheme = themes.find(t => t.id !== theme.id);
+                        if (otherTheme) setOpenAccordion(otherTheme.id);
+                      }
+                    }}
                   />
                 );
               })}
             </div>
-
-            {/* CTA Section */}
-            <Card className="p-8 bg-gradient-to-br from-primary/10 via-primary/5 to-background border-primary/20">
-              <div className="text-center max-w-2xl mx-auto">
-                <Sparkles className="w-12 h-12 mx-auto mb-4 text-primary" />
-                <h2 className="text-2xl font-bold mb-3">Ready to Start Creating?</h2>
-                <p className="text-muted-foreground mb-6">
-                  Now that you've discovered the trending brands, it's time to create content and share your unique links!
-                </p>
-                <Button
-                  size="lg"
-                  onClick={() => {
-                    trackCTAClick();
-                    window.open('https://creator.wishlink.com/create-diy', '_blank');
-                  }}
-                >
-                  Start Creating Content
-                </Button>
-              </div>
-            </Card>
 
             {/* Survey Section */}
             <div className="max-w-2xl mx-auto">
