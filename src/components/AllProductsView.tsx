@@ -463,7 +463,10 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
                     className="text-[10px] sm:text-xs px-2 py-0.5 bg-background/90 backdrop-blur-sm shadow-lg border"
                     style={{ borderColor: `${theme.color}40`, color: theme.color }}
                   >
-                    {theme.title.replace(' Brands', '').replace(' Products', '')}
+                    {theme.id === 'top_trending' ? 'Trending' : 
+                     theme.id === 'best_reach' ? 'High Reach' : 
+                     theme.id === 'fastest_selling' ? 'Fast Selling' : 
+                     theme.title.replace(' Brands', '').replace(' Products', '')}
                   </Badge>
                 </div>
               )}
