@@ -19,6 +19,8 @@ const Index = () => {
   const creatorUuid = searchParams.get('creator_id');
   const [activeTab, setActiveTab] = useState('brands');
   const [openAccordion, setOpenAccordion] = useState<string | null>('trending'); // Ensure at least one is always open
+  const [timeSpent, setTimeSpent] = useState(0);
+  const [hasInteracted, setHasInteracted] = useState(false);
   
   // Redirect to landing if no creator_id
   useEffect(() => {
@@ -39,6 +41,18 @@ const Index = () => {
       trackPageView();
     }
   }, [creatorIdNum, hasData, trackPageView]);
+
+  // Timer for 30 seconds
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeSpent(prev => prev + 1);
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, []);
+
+  // Check if survey should be shown (30 seconds OR 1+ interactions)
+  const showSurvey = timeSpent >= 30 || hasInteracted;
 
   // Check if this is an invalid creator ID (no data exists)
   const isInvalidCreator = !loading && !error && !hasData && creatorUuid && creatorUuid !== '0000000000';
@@ -147,8 +161,8 @@ const Index = () => {
         {/* Tabs for Brand Discovery vs Product Discovery */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full max-w-md mx-auto mb-8" style={{ gridTemplateColumns: '1fr 1fr' }}>
-            <TabsTrigger value="brands">Brands</TabsTrigger>
-            <TabsTrigger value="products">Products</TabsTrigger>
+            <TabsTrigger value="brands" onClick={() => setHasInteracted(true)}>Brands</TabsTrigger>
+            <TabsTrigger value="products" onClick={() => setHasInteracted(true)}>Products</TabsTrigger>
           </TabsList>
 
           {/* Brand Discovery Tab */}
@@ -178,6 +192,7 @@ const Index = () => {
                     delay={index * 100}
                     isOpen={openAccordion === theme.id}
                     onOpenChange={(isOpen) => {
+                      setHasInteracted(true);
                       if (isOpen) {
                         setOpenAccordion(theme.id);
                       } else if (openAccordion === theme.id) {
@@ -191,13 +206,15 @@ const Index = () => {
               })}
             </div>
 
-            {/* Survey Section */}
-            <div className="max-w-2xl mx-auto">
-              <SurveySection 
-                creatorId={creatorUuid || ''} 
-                onSubmit={submitSurvey}
-              />
-            </div>
+            {/* Survey Section - Only show after 30s or 1+ interactions */}
+            {showSurvey && (
+              <div className="max-w-2xl mx-auto">
+                <SurveySection 
+                  creatorId={creatorUuid || ''} 
+                  onSubmit={submitSurvey}
+                />
+              </div>
+            )}
           </TabsContent>
 
           {/* Product Discovery Tab */}

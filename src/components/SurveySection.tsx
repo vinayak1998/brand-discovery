@@ -227,13 +227,13 @@ const SurveySection = ({ creatorId, onSubmit }: SurveySectionProps) => {
     <Card className="p-6 bg-card border-border">
       <div className="space-y-6">
         <div>
-          <h3 className="text-lg font-semibold text-foreground mb-2">Share Your Feedback</h3>
-          <p className="text-muted-foreground">Help us improve your brand recommendations (5-6 questions)</p>
+          <h3 className="text-base font-semibold text-foreground mb-2">Share Your Feedback</h3>
+          <p className="text-sm text-muted-foreground">Help us improve your brand recommendations (5-6 questions)</p>
         </div>
 
         {/* Question 1: Value Rating */}
         <div className="space-y-3">
-          <Label className="text-base font-medium">
+          <Label className="text-sm font-medium">
             1. How valuable were these brand insights for your content strategy? *
           </Label>
           <div className="flex gap-2">
@@ -269,7 +269,7 @@ const SurveySection = ({ creatorId, onSubmit }: SurveySectionProps) => {
 
         {/* Question 2: Actionability */}
         <div className="space-y-3">
-          <Label className="text-base font-medium">
+          <Label className="text-sm font-medium">
             2. How likely are you to take action on these recommendations? *
           </Label>
           <RadioGroup value={q2Answer} onValueChange={setQ2Answer}>
@@ -298,7 +298,7 @@ const SurveySection = ({ creatorId, onSubmit }: SurveySectionProps) => {
 
         {/* Question 3: Feature Preference */}
         <div className="space-y-3">
-          <Label className="text-base font-medium">
+          <Label className="text-sm font-medium">
             3. Which insight themes were most valuable? (Select up to 3) *
           </Label>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -329,7 +329,7 @@ const SurveySection = ({ creatorId, onSubmit }: SurveySectionProps) => {
 
         {/* Question 4: Missing Information */}
         <div className="space-y-3">
-          <Label className="text-base font-medium">
+          <Label className="text-sm font-medium">
             4. What additional information would help you decide which brands to promote? *
           </Label>
           <div className="space-y-2">
@@ -362,7 +362,7 @@ const SurveySection = ({ creatorId, onSubmit }: SurveySectionProps) => {
         {/* Question 5: Barriers (Conditional) */}
         {showQ5 && (
           <div className="space-y-3 p-4 bg-muted/50 rounded-lg">
-            <Label className="text-base font-medium">
+            <Label className="text-sm font-medium">
               5. What's holding you back from creating content for these brands? *
             </Label>
             <div className="space-y-2">
@@ -395,7 +395,7 @@ const SurveySection = ({ creatorId, onSubmit }: SurveySectionProps) => {
 
         {/* Question 6: Open Feedback */}
         <div className="space-y-3">
-          <Label className="text-base font-medium">
+          <Label className="text-sm font-medium">
             {showQ5 ? "6" : "5"}. Any other feedback or suggestions? (Optional)
           </Label>
           <Textarea
