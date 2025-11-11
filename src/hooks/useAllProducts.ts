@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 export interface ProductWithBrand {
   id: number;
   name: string;
-  brand: string;
+  brand_name: string;
   brand_id: number | null;
   thumbnail_url: string | null;
   purchase_url: string | null;
@@ -53,7 +53,6 @@ export const useAllProducts = (creatorUuid: string | null) => {
           .select(`
             id, 
             name, 
-            brand, 
             brand_id,
             thumbnail_url, 
             purchase_url, 
@@ -73,10 +72,10 @@ export const useAllProducts = (creatorUuid: string | null) => {
         // Batch fetch brand logos and themes to avoid N+1 queries
         const uniqueBrandIds = [...new Set(data.map(p => p.brand_id).filter(Boolean))] as number[];
         
-        // Fetch all brand logos in one query
+        // Fetch all brand logos and names in one query
         const { data: brandsData } = await supabase
           .from('brands')
-          .select('brand_id, logo_url')
+          .select('brand_id, logo_url, brand_name, display_name')
           .in('brand_id', uniqueBrandIds);
 
         // Fetch all themes in one query
@@ -95,6 +94,7 @@ export const useAllProducts = (creatorUuid: string | null) => {
 
         // Create lookup maps for O(1) access
         const brandLogoMap = new Map(brandsData?.map(b => [b.brand_id, b.logo_url]) || []);
+        const brandNameMap = new Map(brandsData?.map(b => [b.brand_id, b.display_name || b.brand_name]) || []);
         const themeMap = new Map<number, string>();
         
         // Apply priority logic when multiple themes exist for a brand
@@ -112,6 +112,7 @@ export const useAllProducts = (creatorUuid: string | null) => {
         // Map data back to products
         const productsWithBrandInfo = data.map(product => ({
           ...product,
+          brand_name: product.brand_id ? (brandNameMap.get(product.brand_id) || 'Unknown') : 'Unknown',
           logo_url: product.brand_id ? (brandLogoMap.get(product.brand_id) || null) : null,
           theme_id: product.brand_id ? (themeMap.get(product.brand_id) || null) : null,
         }));

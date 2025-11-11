@@ -71,8 +71,8 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
   const brandList = useMemo(() => {
     const brands = new Set<string>();
     products.forEach(product => {
-      if (product.brand) {
-        brands.add(product.brand);
+      if (product.brand_name) {
+        brands.add(product.brand_name);
       }
     });
     return Array.from(brands).sort();
@@ -85,7 +85,7 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
       const matchesCategory = selectedSubcategories.size === 0 || 
                              (product.sscat && selectedSubcategories.has(product.sscat));
       const matchesBrand = selectedBrands.size === 0 || 
-                          (product.brand && selectedBrands.has(product.brand));
+                          (product.brand_name && selectedBrands.has(product.brand_name));
       return matchesCategory && matchesBrand;
     });
     
@@ -440,7 +440,7 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
                       >
                         <img
                           src={product.logo_url}
-                          alt={product.brand}
+                          alt={product.brand_name}
                           className="w-full h-full object-contain p-0.5"
                           onError={(e) => {
                             e.currentTarget.style.display = 'none';
@@ -449,7 +449,7 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
                       </div>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p className="text-xs">{product.brand}</p>
+                      <p className="text-xs">{product.brand_name}</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>

@@ -31,6 +31,7 @@ const BrandProducts = () => {
   const [brandSourcingEnabled, setBrandSourcingEnabled] = useState<boolean>(false);
   const [sourcingLink, setSourcingLink] = useState<string | null>(null);
   const [brandId, setBrandId] = useState<number | null>(null);
+  const [displayBrandName, setDisplayBrandName] = useState<string>('');
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -57,24 +58,28 @@ const BrandProducts = () => {
         setCreatorNumericId(creatorData.creator_id);
         setBrandSourcingEnabled(creatorData.brand_sourcing ?? false);
 
-        // Fetch brand data for sourcing link
+        // Fetch brand data for sourcing link AND display name
         const { data: brandData, error: brandError } = await supabase
           .from('brands')
-          .select('sourcing_link, brand_id')
+          .select('sourcing_link, brand_id, brand_name, display_name')
           .eq('brand_name', brandName)
           .maybeSingle();
 
-        if (brandData) {
-          setSourcingLink(brandData.sourcing_link);
-          setBrandId(brandData.brand_id);
+        if (!brandData) {
+          throw new Error('Brand not found');
         }
 
-        // Fetch products for this creator x brand
+        setSourcingLink(brandData.sourcing_link);
+        setBrandId(brandData.brand_id);
+        const brandDisplayName = brandData.display_name || brandData.brand_name;
+        setDisplayBrandName(brandDisplayName);
+
+        // Fetch products for this creator x brand using brand_id for consistency
         const { data, error: productsError } = await supabase
           .from('creator_x_product_recommendations')
           .select('id, name, brand, thumbnail_url, purchase_url, sim_score, short_code, price')
           .eq('creator_id', creatorData.creator_id)
-          .eq('brand', brandName)
+          .eq('brand_id', brandData.brand_id)
           .order('sim_score', { ascending: false })
           .limit(50);
 
@@ -160,7 +165,7 @@ const BrandProducts = () => {
             )}
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-            {brandName}
+            {displayBrandName || brandName}
           </h1>
           <p className="text-sm sm:text-base text-muted-foreground mt-1">
             {products.length} products curated for you
