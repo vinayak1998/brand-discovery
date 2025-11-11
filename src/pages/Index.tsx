@@ -18,7 +18,8 @@ const Index = () => {
   const navigate = useNavigate();
   const creatorUuid = searchParams.get('creator_id');
   const [activeTab, setActiveTab] = useState('brands');
-  const [openAccordion, setOpenAccordion] = useState<string | null>('trending'); // Ensure at least one is always open
+  const initialOpenId = Object.values(THEMES)[0]?.id ?? null;
+  const [openAccordion, setOpenAccordion] = useState<string | null>(initialOpenId); // Ensure at least one is always open
   const [timeSpent, setTimeSpent] = useState(0);
   const [hasInteracted, setHasInteracted] = useState(false);
   
@@ -58,6 +59,15 @@ const Index = () => {
   const isInvalidCreator = !loading && !error && !hasData && creatorUuid && creatorUuid !== '0000000000';
 
   const themes = Object.values(THEMES);
+
+  // Ensure at least one accordion is always open
+  useEffect(() => {
+    if (!openAccordion || !themes.some(t => t.id === openAccordion)) {
+      if (themes[0]) {
+        setOpenAccordion(themes[0].id);
+      }
+    }
+  }, [openAccordion, themes]);
 
   if (loading) {
     return (
@@ -196,9 +206,10 @@ const Index = () => {
                       if (isOpen) {
                         setOpenAccordion(theme.id);
                       } else if (openAccordion === theme.id) {
-                        // If closing the current one, open the first one that isn't this
-                        const otherTheme = themes.find(t => t.id !== theme.id);
-                        if (otherTheme) setOpenAccordion(otherTheme.id);
+                        // Open next theme in cyclic order
+                        const currentIndex = themes.findIndex(t => t.id === theme.id);
+                        const nextIndex = (currentIndex + 1) % themes.length;
+                        setOpenAccordion(themes[nextIndex].id);
                       }
                     }}
                   />
