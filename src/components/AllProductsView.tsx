@@ -3,11 +3,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useAllProducts } from '@/hooks/useAllProducts';
 import { getTheme } from '@/config/themes';
-import { Filter, X, ChevronRight } from 'lucide-react';
+import { Filter, X } from 'lucide-react';
 import { useState, useMemo } from 'react';
+import { CategoryFilterItem } from './CategoryFilterItem';
 
 interface AllProductsViewProps {
   creatorUuid: string;
@@ -125,60 +125,27 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
             <PopoverContent className="w-80 max-h-[500px] overflow-y-auto" align="start">
               <div className="space-y-2">
                 <label className="text-sm font-medium mb-2 block">Filter by Category</label>
-                {Array.from(categoryHierarchy.keys()).map(category => {
-                  const subcategories = categoryHierarchy.get(category) || [];
-                  const [isOpen, setIsOpen] = useState(false);
-                  
-                  return (
-                    <Collapsible key={category} open={isOpen} onOpenChange={setIsOpen}>
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-1">
-                          <CollapsibleTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="w-6 h-6 p-0"
-                            >
-                              <ChevronRight className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
-                            </Button>
-                          </CollapsibleTrigger>
-                          <Button
-                            variant={selectedCategory === category && !selectedSubcategory ? "secondary" : "ghost"}
-                            size="sm"
-                            className="flex-1 justify-start text-left"
-                            onClick={() => {
-                              if (selectedCategory === category && !selectedSubcategory) {
-                                setSelectedCategory(null);
-                              } else {
-                                setSelectedCategory(category);
-                                setSelectedSubcategory(null);
-                              }
-                            }}
-                          >
-                            {category}
-                          </Button>
-                        </div>
-                        
-                        <CollapsibleContent className="ml-6 space-y-1">
-                          {subcategories.map(subcategory => (
-                            <Button
-                              key={subcategory}
-                              variant={selectedSubcategory === subcategory ? "secondary" : "ghost"}
-                              size="sm"
-                              className="w-full justify-start text-left text-xs"
-                              onClick={() => {
-                                setSelectedCategory(category);
-                                setSelectedSubcategory(selectedSubcategory === subcategory ? null : subcategory);
-                              }}
-                            >
-                              {subcategory}
-                            </Button>
-                          ))}
-                        </CollapsibleContent>
-                      </div>
-                    </Collapsible>
-                  );
-                })}
+                {Array.from(categoryHierarchy.keys()).map(category => (
+                  <CategoryFilterItem
+                    key={category}
+                    category={category}
+                    subcategories={categoryHierarchy.get(category) || []}
+                    selectedCategory={selectedCategory}
+                    selectedSubcategory={selectedSubcategory}
+                    onCategorySelect={(cat) => {
+                      if (selectedCategory === cat && !selectedSubcategory) {
+                        setSelectedCategory(null);
+                      } else {
+                        setSelectedCategory(cat);
+                        setSelectedSubcategory(null);
+                      }
+                    }}
+                    onSubcategorySelect={(cat, subcat) => {
+                      setSelectedCategory(cat);
+                      setSelectedSubcategory(selectedSubcategory === subcat ? null : subcat);
+                    }}
+                  />
+                ))}
               </div>
             </PopoverContent>
           </Popover>
