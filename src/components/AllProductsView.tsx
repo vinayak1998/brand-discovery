@@ -18,7 +18,17 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
 
   // Extract unique categories and subcategories
-  const { categories, subcategories } = useMemo(() => {
+  // Only show filters if ALL products have category AND subcategory
+  const { categories, subcategories, showFilters } = useMemo(() => {
+    // Check if all products have both category and subcategory
+    const allHaveCategoryAndSubcategory = products.every(
+      product => product.category && product.subcategory
+    );
+    
+    if (!allHaveCategoryAndSubcategory) {
+      return { categories: [], subcategories: [], showFilters: false };
+    }
+    
     const cats = new Set<string>();
     const subcats = new Set<string>();
     
@@ -30,6 +40,7 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
     return {
       categories: Array.from(cats).sort(),
       subcategories: Array.from(subcats).sort(),
+      showFilters: true,
     };
   }, [products]);
 
@@ -87,70 +98,72 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
 
   return (
     <div className="space-y-4">
-      {/* Filter Bar */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-2">
-              <Filter className="h-4 w-4" />
-              Filters
-              {hasActiveFilters && (
-                <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs">
-                  {(selectedCategory ? 1 : 0) + (selectedSubcategory ? 1 : 0)}
-                </Badge>
-              )}
+      {/* Filter Bar - Only show if all products have category and subcategory */}
+      {showFilters && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2">
+                <Filter className="h-4 w-4" />
+                Filters
+                {hasActiveFilters && (
+                  <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs">
+                    {(selectedCategory ? 1 : 0) + (selectedSubcategory ? 1 : 0)}
+                  </Badge>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-72" align="start">
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Category</label>
+                  <div className="space-y-1 max-h-48 overflow-y-auto">
+                    {categories.map(category => (
+                      <Button
+                        key={category}
+                        variant={selectedCategory === category ? "secondary" : "ghost"}
+                        size="sm"
+                        className="w-full justify-start text-left"
+                        onClick={() => setSelectedCategory(selectedCategory === category ? null : category)}
+                      >
+                        {category}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Subcategory</label>
+                  <div className="space-y-1 max-h-48 overflow-y-auto">
+                    {subcategories.map(subcategory => (
+                      <Button
+                        key={subcategory}
+                        variant={selectedSubcategory === subcategory ? "secondary" : "ghost"}
+                        size="sm"
+                        className="w-full justify-start text-left"
+                        onClick={() => setSelectedSubcategory(selectedSubcategory === subcategory ? null : subcategory)}
+                      >
+                        {subcategory}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          {hasActiveFilters && (
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-2">
+              <X className="h-4 w-4" />
+              Clear filters
             </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-72" align="start">
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium mb-2 block">Category</label>
-                <div className="space-y-1 max-h-48 overflow-y-auto">
-                  {categories.map(category => (
-                    <Button
-                      key={category}
-                      variant={selectedCategory === category ? "secondary" : "ghost"}
-                      size="sm"
-                      className="w-full justify-start text-left"
-                      onClick={() => setSelectedCategory(selectedCategory === category ? null : category)}
-                    >
-                      {category}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium mb-2 block">Subcategory</label>
-                <div className="space-y-1 max-h-48 overflow-y-auto">
-                  {subcategories.map(subcategory => (
-                    <Button
-                      key={subcategory}
-                      variant={selectedSubcategory === subcategory ? "secondary" : "ghost"}
-                      size="sm"
-                      className="w-full justify-start text-left"
-                      onClick={() => setSelectedSubcategory(selectedSubcategory === subcategory ? null : subcategory)}
-                    >
-                      {subcategory}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </PopoverContent>
-        </Popover>
+          )}
 
-        {hasActiveFilters && (
-          <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-2">
-            <X className="h-4 w-4" />
-            Clear filters
-          </Button>
-        )}
-
-        <span className="text-sm text-muted-foreground ml-auto">
-          {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
-        </span>
-      </div>
+          <span className="text-sm text-muted-foreground ml-auto">
+            {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
+          </span>
+        </div>
+      )}
 
       {/* Products Grid */}
       {filteredProducts.length === 0 ? (
@@ -246,10 +259,12 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
               </p>
             )}
 
-            {/* Match Score */}
-            <p className="text-xs text-muted-foreground">
-              Match: {(product.sim_score * 100).toFixed(0)}%
-            </p>
+            {/* Match Score - Only show if > 60% */}
+            {product.sim_score > 0.6 && (
+              <p className="text-xs text-muted-foreground">
+                Match: {(product.sim_score * 100).toFixed(0)}%
+              </p>
+            )}
           </Card>
             );
           })}
