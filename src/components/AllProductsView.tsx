@@ -237,71 +237,72 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
     <div className="space-y-4">
       {/* Filter Bar - Only show if all products have cat and sscat */}
       {showFilters && (
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 flex-wrap">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Filter className="h-4 w-4" />
-                  Filters
-                  {hasActiveFilters && (
-                    <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs">
-                      {selectedSubcategories.size + selectedBrands.size}
-                    </Badge>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80 max-h-[500px] overflow-y-auto" align="start">
-                <div className="space-y-4">
-                  {/* Brand Filter Section */}
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Filter by Brand</label>
-                    <div className="space-y-1 max-h-[150px] overflow-y-auto">
-                      {brandList.map(brand => (
-                        <Button
-                          key={brand}
-                          variant={selectedBrands.has(brand) ? "secondary" : "ghost"}
-                          size="sm"
-                          className="w-full justify-start text-xs"
-                          onClick={() => handleBrandClick(brand)}
-                        >
-                          {brand}
-                        </Button>
+        <div className="space-y-3">
+          {/* Row 1: Filter and Sort Controls */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Filter className="h-4 w-4" />
+                    Filters
+                    {hasActiveFilters && (
+                      <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs">
+                        {selectedSubcategories.size + selectedBrands.size}
+                      </Badge>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 max-h-[500px] overflow-y-auto" align="start">
+                  <div className="space-y-4">
+                    {/* Brand Filter Section */}
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Filter by Brand</label>
+                      <div className="space-y-1 max-h-[150px] overflow-y-auto">
+                        {brandList.map(brand => (
+                          <Button
+                            key={brand}
+                            variant={selectedBrands.has(brand) ? "secondary" : "ghost"}
+                            size="sm"
+                            className="w-full justify-start text-xs"
+                            onClick={() => handleBrandClick(brand)}
+                          >
+                            {brand}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Separator */}
+                    <div className="border-t" />
+                    
+                    {/* Category Filter Section */}
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Filter by Category</label>
+                      {Array.from(categoryHierarchy.keys()).map(category => (
+                        <CategoryFilterItem
+                          key={category}
+                          category={category}
+                          subcategories={categoryHierarchy.get(category) || []}
+                          selectedSubcategories={selectedSubcategories}
+                          onCategoryClick={handleCategoryClick}
+                          onSubcategoryClick={handleSubcategoryClick}
+                        />
                       ))}
                     </div>
                   </div>
-                  
-                  {/* Separator */}
-                  <div className="border-t" />
-                  
-                  {/* Category Filter Section */}
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Filter by Category</label>
-                    {Array.from(categoryHierarchy.keys()).map(category => (
-                      <CategoryFilterItem
-                        key={category}
-                        category={category}
-                        subcategories={categoryHierarchy.get(category) || []}
-                        selectedSubcategories={selectedSubcategories}
-                        onCategoryClick={handleCategoryClick}
-                        onSubcategoryClick={handleSubcategoryClick}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
+                </PopoverContent>
+              </Popover>
 
-            {hasActiveFilters && (
-              <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-2">
-                <X className="h-4 w-4" />
-                Clear filters
-              </Button>
-            )}
-          </div>
+              {hasActiveFilters && (
+                <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-2">
+                  <X className="h-4 w-4" />
+                  Clear filters
+                </Button>
+              )}
+            </div>
 
-          {/* Sort Control - Right aligned */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Sort Control - Right aligned */}
             <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
               <SelectTrigger className="w-[180px] h-9">
                 <ArrowUpDown className="h-4 w-4 mr-2" />
@@ -315,8 +316,11 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
                 <SelectItem value="price-high">Price: High to Low</SelectItem>
               </SelectContent>
             </Select>
-            
-            <span className="text-sm text-muted-foreground whitespace-nowrap">
+          </div>
+          
+          {/* Row 2: Product Count */}
+          <div className="px-1">
+            <span className="text-sm text-muted-foreground">
               {filteredAndSortedProducts.length} {filteredAndSortedProducts.length === 1 ? 'product' : 'products'}
             </span>
           </div>
