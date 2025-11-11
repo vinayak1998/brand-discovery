@@ -1,8 +1,12 @@
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useAllProducts } from '@/hooks/useAllProducts';
 import { getTheme } from '@/config/themes';
+import { Filter, X } from 'lucide-react';
+import { useState, useMemo } from 'react';
 
 interface AllProductsViewProps {
   creatorUuid: string;
@@ -10,6 +14,40 @@ interface AllProductsViewProps {
 
 const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
   const { products, loading, error, creatorNumericId } = useAllProducts(creatorUuid);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
+
+  // Extract unique categories and subcategories
+  const { categories, subcategories } = useMemo(() => {
+    const cats = new Set<string>();
+    const subcats = new Set<string>();
+    
+    products.forEach(product => {
+      if (product.category) cats.add(product.category);
+      if (product.subcategory) subcats.add(product.subcategory);
+    });
+    
+    return {
+      categories: Array.from(cats).sort(),
+      subcategories: Array.from(subcats).sort(),
+    };
+  }, [products]);
+
+  // Filter products based on selections
+  const filteredProducts = useMemo(() => {
+    return products.filter(product => {
+      if (selectedCategory && product.category !== selectedCategory) return false;
+      if (selectedSubcategory && product.subcategory !== selectedSubcategory) return false;
+      return true;
+    });
+  }, [products, selectedCategory, selectedSubcategory]);
+
+  const hasActiveFilters = selectedCategory || selectedSubcategory;
+
+  const clearFilters = () => {
+    setSelectedCategory(null);
+    setSelectedSubcategory(null);
+  };
 
   if (loading) {
     return (
@@ -48,8 +86,85 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-4 md:gap-6">
-      {products.map((product) => {
+    <div className="space-y-4">
+      {/* Filter Bar */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-2">
+              <Filter className="h-4 w-4" />
+              Filters
+              {hasActiveFilters && (
+                <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs">
+                  {(selectedCategory ? 1 : 0) + (selectedSubcategory ? 1 : 0)}
+                </Badge>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-72" align="start">
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">Category</label>
+                <div className="space-y-1 max-h-48 overflow-y-auto">
+                  {categories.map(category => (
+                    <Button
+                      key={category}
+                      variant={selectedCategory === category ? "secondary" : "ghost"}
+                      size="sm"
+                      className="w-full justify-start text-left"
+                      onClick={() => setSelectedCategory(selectedCategory === category ? null : category)}
+                    >
+                      {category}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium mb-2 block">Subcategory</label>
+                <div className="space-y-1 max-h-48 overflow-y-auto">
+                  {subcategories.map(subcategory => (
+                    <Button
+                      key={subcategory}
+                      variant={selectedSubcategory === subcategory ? "secondary" : "ghost"}
+                      size="sm"
+                      className="w-full justify-start text-left"
+                      onClick={() => setSelectedSubcategory(selectedSubcategory === subcategory ? null : subcategory)}
+                    >
+                      {subcategory}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+
+        {hasActiveFilters && (
+          <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-2">
+            <X className="h-4 w-4" />
+            Clear filters
+          </Button>
+        )}
+
+        <span className="text-sm text-muted-foreground ml-auto">
+          {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
+        </span>
+      </div>
+
+      {/* Products Grid */}
+      {filteredProducts.length === 0 ? (
+        <Card className="p-8 text-center">
+          <div className="text-6xl mb-4">🔍</div>
+          <h2 className="text-xl font-semibold mb-2">No Products Match Filters</h2>
+          <p className="text-muted-foreground mb-4">
+            Try adjusting your filter selections.
+          </p>
+          <Button variant="outline" onClick={clearFilters}>Clear Filters</Button>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-4 md:gap-6">
+      {filteredProducts.map((product) => {
         const theme = product.theme_id ? getTheme(product.theme_id) : null;
         
         return (
@@ -136,8 +251,10 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
               Match: {(product.sim_score * 100).toFixed(0)}%
             </p>
           </Card>
-        );
-      })}
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };
