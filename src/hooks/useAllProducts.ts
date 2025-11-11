@@ -82,9 +82,28 @@ export const useAllProducts = (creatorUuid: string | null) => {
           .eq('creator_id', creatorData.creator_id)
           .in('brand_id', uniqueBrandIds);
 
+        // Theme priority: top_trending > best_reach > fastest_selling
+        const themePriority: Record<string, number> = {
+          'top_trending': 1,
+          'best_reach': 2,
+          'fastest_selling': 3,
+        };
+
         // Create lookup maps for O(1) access
         const brandLogoMap = new Map(brandsData?.map(b => [b.brand_id, b.logo_url]) || []);
-        const themeMap = new Map(insightsData?.map(i => [i.brand_id, i.theme_id]) || []);
+        const themeMap = new Map<number, string>();
+        
+        // Apply priority logic when multiple themes exist for a brand
+        insightsData?.forEach(insight => {
+          const currentTheme = themeMap.get(insight.brand_id);
+          const currentPriority = currentTheme ? (themePriority[currentTheme] || 999) : 999;
+          const newPriority = themePriority[insight.theme_id] || 999;
+          
+          // Only update if new theme has higher priority (lower number)
+          if (newPriority < currentPriority) {
+            themeMap.set(insight.brand_id, insight.theme_id);
+          }
+        });
 
         // Map data back to products
         const productsWithBrandInfo = data.map(product => ({

@@ -3,9 +3,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useAllProducts } from '@/hooks/useAllProducts';
 import { getTheme } from '@/config/themes';
-import { Filter, X } from 'lucide-react';
+import { Filter, X, ChevronRight } from 'lucide-react';
 import { useState, useMemo } from 'react';
 
 interface AllProductsViewProps {
@@ -17,29 +18,37 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
 
-  // Extract unique categories and subcategories
+  // Build hierarchical category structure
   // Only show filters if ALL products have cat AND sscat
-  const { categories, subcategories, showFilters } = useMemo(() => {
+  const { categoryHierarchy, showFilters } = useMemo(() => {
     // Check if all products have both cat and sscat
     const allHaveCategoryAndSubcategory = products.every(
       product => product.cat && product.sscat
     );
     
     if (!allHaveCategoryAndSubcategory) {
-      return { categories: [], subcategories: [], showFilters: false };
+      return { categoryHierarchy: new Map<string, string[]>(), showFilters: false };
     }
     
-    const cats = new Set<string>();
-    const subcats = new Set<string>();
+    const hierarchy = new Map<string, Set<string>>();
     
     products.forEach(product => {
-      if (product.cat) cats.add(product.cat);
-      if (product.sscat) subcats.add(product.sscat);
+      if (product.cat && product.sscat) {
+        if (!hierarchy.has(product.cat)) {
+          hierarchy.set(product.cat, new Set());
+        }
+        hierarchy.get(product.cat)!.add(product.sscat);
+      }
+    });
+    
+    // Convert to sorted arrays
+    const sortedHierarchy = new Map<string, string[]>();
+    Array.from(hierarchy.keys()).sort().forEach(cat => {
+      sortedHierarchy.set(cat, Array.from(hierarchy.get(cat)!).sort());
     });
     
     return {
-      categories: Array.from(cats).sort(),
-      subcategories: Array.from(subcats).sort(),
+      categoryHierarchy: sortedHierarchy,
       showFilters: true,
     };
   }, [products]);
@@ -113,41 +122,63 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-72" align="start">
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Category</label>
-                  <div className="space-y-1 max-h-48 overflow-y-auto">
-                    {categories.map(category => (
-                      <Button
-                        key={category}
-                        variant={selectedCategory === category ? "secondary" : "ghost"}
-                        size="sm"
-                        className="w-full justify-start text-left"
-                        onClick={() => setSelectedCategory(selectedCategory === category ? null : category)}
-                      >
-                        {category}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Subcategory</label>
-                  <div className="space-y-1 max-h-48 overflow-y-auto">
-                    {subcategories.map(subcategory => (
-                      <Button
-                        key={subcategory}
-                        variant={selectedSubcategory === subcategory ? "secondary" : "ghost"}
-                        size="sm"
-                        className="w-full justify-start text-left"
-                        onClick={() => setSelectedSubcategory(selectedSubcategory === subcategory ? null : subcategory)}
-                      >
-                        {subcategory}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
+            <PopoverContent className="w-80 max-h-[500px] overflow-y-auto" align="start">
+              <div className="space-y-2">
+                <label className="text-sm font-medium mb-2 block">Filter by Category</label>
+                {Array.from(categoryHierarchy.keys()).map(category => {
+                  const subcategories = categoryHierarchy.get(category) || [];
+                  const [isOpen, setIsOpen] = useState(false);
+                  
+                  return (
+                    <Collapsible key={category} open={isOpen} onOpenChange={setIsOpen}>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1">
+                          <CollapsibleTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="w-6 h-6 p-0"
+                            >
+                              <ChevronRight className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
+                            </Button>
+                          </CollapsibleTrigger>
+                          <Button
+                            variant={selectedCategory === category && !selectedSubcategory ? "secondary" : "ghost"}
+                            size="sm"
+                            className="flex-1 justify-start text-left"
+                            onClick={() => {
+                              if (selectedCategory === category && !selectedSubcategory) {
+                                setSelectedCategory(null);
+                              } else {
+                                setSelectedCategory(category);
+                                setSelectedSubcategory(null);
+                              }
+                            }}
+                          >
+                            {category}
+                          </Button>
+                        </div>
+                        
+                        <CollapsibleContent className="ml-6 space-y-1">
+                          {subcategories.map(subcategory => (
+                            <Button
+                              key={subcategory}
+                              variant={selectedSubcategory === subcategory ? "secondary" : "ghost"}
+                              size="sm"
+                              className="w-full justify-start text-left text-xs"
+                              onClick={() => {
+                                setSelectedCategory(category);
+                                setSelectedSubcategory(selectedSubcategory === subcategory ? null : subcategory);
+                              }}
+                            >
+                              {subcategory}
+                            </Button>
+                          ))}
+                        </CollapsibleContent>
+                      </div>
+                    </Collapsible>
+                  );
+                })}
               </div>
             </PopoverContent>
           </Popover>
@@ -216,9 +247,9 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
                 </div>
               )}
               
-              {/* Brand Logo Badge - Top Left */}
+              {/* Brand Logo Badge - Top Left - Square */}
               {product.logo_url && (
-                <div className="absolute top-2 left-2 w-8 h-8 rounded-full bg-background shadow-md overflow-hidden border z-10">
+                <div className="absolute top-2 left-2 w-8 h-8 rounded bg-background shadow-md overflow-hidden border z-10">
                   <img
                     src={product.logo_url}
                     alt={product.brand}
@@ -230,9 +261,9 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
                 </div>
               )}
 
-              {/* Theme Badge - Overlaid on Top Right */}
+              {/* Theme Badge - Overlaid on Bottom Right */}
               {theme && (
-                <div className="absolute top-2 right-2 z-20">
+                <div className="absolute bottom-2 right-2 z-20">
                   <Badge 
                     variant="secondary" 
                     className="text-[10px] sm:text-xs px-2 py-0.5 bg-background/90 backdrop-blur-sm shadow-lg border"
