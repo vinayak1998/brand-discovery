@@ -15,6 +15,8 @@ export interface ProductWithBrand {
   sscat: string | null;
   logo_url: string | null;
   theme_id: string | null;
+  median_reach: number | null;
+  median_sales: number | null;
 }
 
 export const useAllProducts = (creatorUuid: string | null) => {
@@ -59,7 +61,9 @@ export const useAllProducts = (creatorUuid: string | null) => {
             short_code, 
             price,
             cat,
-            sscat
+            sscat,
+            median_reach,
+            median_sales
           `)
           .eq('creator_id', creatorData.creator_id)
           .order('sim_score', { ascending: false });

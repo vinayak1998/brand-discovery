@@ -3,9 +3,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAllProducts } from '@/hooks/useAllProducts';
 import { getTheme } from '@/config/themes';
-import { Filter, X } from 'lucide-react';
+import { Filter, X, ArrowUpDown } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { CategoryFilterItem } from './CategoryFilterItem';
 
@@ -13,9 +15,13 @@ interface AllProductsViewProps {
   creatorUuid: string;
 }
 
+type SortOption = 'match' | 'reach-high' | 'sales-high' | 'price-low' | 'price-high';
+
 const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
   const { products, loading, error, creatorNumericId } = useAllProducts(creatorUuid);
   const [selectedSubcategories, setSelectedSubcategories] = useState<Set<string>>(new Set());
+  const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set());
+  const [sortBy, setSortBy] = useState<SortOption>('match');
 
   // Build hierarchical category structure and category-to-subcategories mapping
   // Only show filters if ALL products have cat AND sscat
@@ -61,19 +67,63 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
     };
   }, [products]);
 
-  // Filter products based on selected subcategories
-  const filteredProducts = useMemo(() => {
-    if (selectedSubcategories.size === 0) return products;
-    
-    return products.filter(product => 
-      product.sscat && selectedSubcategories.has(product.sscat)
-    );
-  }, [products, selectedSubcategories]);
+  // Get unique brands sorted alphabetically
+  const brandList = useMemo(() => {
+    const brands = new Set<string>();
+    products.forEach(product => {
+      if (product.brand) {
+        brands.add(product.brand);
+      }
+    });
+    return Array.from(brands).sort();
+  }, [products]);
 
-  const hasActiveFilters = selectedSubcategories.size > 0;
+  // Filter and sort products
+  const filteredAndSortedProducts = useMemo(() => {
+    // First, filter
+    let result = products.filter(product => {
+      const matchesCategory = selectedSubcategories.size === 0 || 
+                             (product.sscat && selectedSubcategories.has(product.sscat));
+      const matchesBrand = selectedBrands.size === 0 || 
+                          (product.brand && selectedBrands.has(product.brand));
+      return matchesCategory && matchesBrand;
+    });
+    
+    // Then, sort
+    result.sort((a, b) => {
+      switch (sortBy) {
+        case 'match':
+          return (b.sim_score || 0) - (a.sim_score || 0);
+        
+        case 'reach-high':
+          return (b.median_reach || 0) - (a.median_reach || 0);
+        
+        case 'sales-high':
+          return (b.median_sales || 0) - (a.median_sales || 0);
+        
+        case 'price-low':
+          if (!a.price) return 1;
+          if (!b.price) return -1;
+          return a.price - b.price;
+        
+        case 'price-high':
+          if (!a.price) return 1;
+          if (!b.price) return -1;
+          return b.price - a.price;
+        
+        default:
+          return 0;
+      }
+    });
+    
+    return result;
+  }, [products, selectedSubcategories, selectedBrands, sortBy]);
+
+  const hasActiveFilters = selectedSubcategories.size > 0 || selectedBrands.size > 0;
 
   const clearFilters = () => {
     setSelectedSubcategories(new Set());
+    setSelectedBrands(new Set());
   };
 
   // Handle category click - toggle all subcategories
@@ -105,6 +155,17 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
     }
     
     setSelectedSubcategories(newSelection);
+  };
+
+  // Handle brand click - toggle brand selection
+  const handleBrandClick = (brand: string) => {
+    const newSelection = new Set(selectedBrands);
+    if (newSelection.has(brand)) {
+      newSelection.delete(brand);
+    } else {
+      newSelection.add(brand);
+    }
+    setSelectedBrands(newSelection);
   };
 
   // Get active filter chips with smart grouping
@@ -184,24 +245,48 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
                 Filters
                 {hasActiveFilters && (
                   <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs">
-                    {selectedSubcategories.size}
+                    {selectedSubcategories.size + selectedBrands.size}
                   </Badge>
                 )}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-80 max-h-[500px] overflow-y-auto" align="start">
-              <div className="space-y-2">
-                <label className="text-sm font-medium mb-2 block">Filter by Category</label>
-                {Array.from(categoryHierarchy.keys()).map(category => (
-                  <CategoryFilterItem
-                    key={category}
-                    category={category}
-                    subcategories={categoryHierarchy.get(category) || []}
-                    selectedSubcategories={selectedSubcategories}
-                    onCategoryClick={handleCategoryClick}
-                    onSubcategoryClick={handleSubcategoryClick}
-                  />
-                ))}
+              <div className="space-y-4">
+                {/* Brand Filter Section */}
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Filter by Brand</label>
+                  <div className="space-y-1 max-h-[150px] overflow-y-auto">
+                    {brandList.map(brand => (
+                      <Button
+                        key={brand}
+                        variant={selectedBrands.has(brand) ? "secondary" : "ghost"}
+                        size="sm"
+                        className="w-full justify-start text-xs"
+                        onClick={() => handleBrandClick(brand)}
+                      >
+                        {brand}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Separator */}
+                <div className="border-t" />
+                
+                {/* Category Filter Section */}
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Filter by Category</label>
+                  {Array.from(categoryHierarchy.keys()).map(category => (
+                    <CategoryFilterItem
+                      key={category}
+                      category={category}
+                      subcategories={categoryHierarchy.get(category) || []}
+                      selectedSubcategories={selectedSubcategories}
+                      onCategoryClick={handleCategoryClick}
+                      onSubcategoryClick={handleSubcategoryClick}
+                    />
+                  ))}
+                </div>
               </div>
             </PopoverContent>
           </Popover>
@@ -213,15 +298,56 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
             </Button>
           )}
 
-          <span className="text-sm text-muted-foreground ml-auto">
-            {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
-          </span>
+          {/* Sort Control - Right aligned */}
+          <div className="ml-auto flex items-center gap-2">
+            <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
+              <SelectTrigger className="w-[180px] h-9">
+                <ArrowUpDown className="h-4 w-4 mr-2" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="match">Best Match</SelectItem>
+                <SelectItem value="reach-high">Highest Reach</SelectItem>
+                <SelectItem value="sales-high">Highest Sales</SelectItem>
+                <SelectItem value="price-low">Price: Low to High</SelectItem>
+                <SelectItem value="price-high">Price: High to Low</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <span className="text-sm text-muted-foreground">
+              {filteredAndSortedProducts.length} {filteredAndSortedProducts.length === 1 ? 'product' : 'products'}
+            </span>
+          </div>
         </div>
       )}
 
       {/* Active Filters Display - Always visible when filters applied */}
       {hasActiveFilters && (
         <div className="flex items-center gap-2 flex-wrap px-1">
+          {/* Brand Filter Chips */}
+          {Array.from(selectedBrands).map(brand => (
+            <Badge 
+              key={`brand-${brand}`}
+              variant="secondary" 
+              className="gap-2 pr-1 py-1.5 text-xs"
+            >
+              <span>Brand: {brand}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-4 w-4 p-0 hover:bg-transparent"
+                onClick={() => {
+                  const newSelection = new Set(selectedBrands);
+                  newSelection.delete(brand);
+                  setSelectedBrands(newSelection);
+                }}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </Badge>
+          ))}
+          
+          {/* Category Filter Chips */}
           {getActiveFilterChips().map((chip, idx) => (
             <Badge 
               key={idx}
@@ -247,7 +373,7 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
       )}
 
       {/* Products Grid */}
-      {filteredProducts.length === 0 ? (
+      {filteredAndSortedProducts.length === 0 ? (
         <Card className="p-8 text-center">
           <div className="text-6xl mb-4">🔍</div>
           <h2 className="text-xl font-semibold mb-2">No Products Match Filters</h2>
@@ -258,7 +384,7 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
         </Card>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-4 md:gap-6">
-      {filteredProducts.map((product) => {
+      {filteredAndSortedProducts.map((product) => {
         const theme = product.theme_id ? getTheme(product.theme_id) : null;
         
         return (
@@ -297,18 +423,30 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
                 </div>
               )}
               
-              {/* Brand Logo Badge - Top Left - Square */}
+              {/* Brand Logo Badge with Tooltip - Top Left - Square */}
               {product.logo_url && (
-                <div className="absolute top-2 left-2 w-8 h-8 rounded bg-background shadow-md overflow-hidden border z-10">
-                  <img
-                    src={product.logo_url}
-                    alt={product.brand}
-                    className="w-full h-full object-contain p-0.5"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                    }}
-                  />
-                </div>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div 
+                        className="absolute top-2 left-2 w-8 h-8 rounded bg-background shadow-md overflow-hidden border z-10 cursor-help"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <img
+                          src={product.logo_url}
+                          alt={product.brand}
+                          className="w-full h-full object-contain p-0.5"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-xs">{product.brand}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
 
               {/* Theme Badge - Overlaid on Bottom Right */}
@@ -329,11 +467,6 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
             <h3 className="text-xs sm:text-sm font-semibold text-foreground mb-1 sm:mb-2 line-clamp-2 flex-1">
               {product.name}
             </h3>
-
-            {/* Brand Name */}
-            <p className="text-xs text-muted-foreground mb-2">
-              {product.brand}
-            </p>
 
             {/* Price */}
             {product.price && (
