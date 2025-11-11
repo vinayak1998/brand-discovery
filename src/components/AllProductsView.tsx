@@ -163,6 +163,46 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
         </div>
       )}
 
+      {/* Active Filters Display - Always visible when filters applied */}
+      {hasActiveFilters && (
+        <div className="flex items-center gap-2 flex-wrap px-1">
+          {selectedSubcategory ? (
+            <Badge 
+              variant="secondary" 
+              className="gap-2 pr-1 py-1.5 text-xs"
+            >
+              <span>{selectedCategory} → {selectedSubcategory}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-4 w-4 p-0 hover:bg-transparent"
+                onClick={() => {
+                  setSelectedCategory(null);
+                  setSelectedSubcategory(null);
+                }}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </Badge>
+          ) : selectedCategory ? (
+            <Badge 
+              variant="secondary" 
+              className="gap-2 pr-1 py-1.5 text-xs"
+            >
+              <span>{selectedCategory}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-4 w-4 p-0 hover:bg-transparent"
+                onClick={() => setSelectedCategory(null)}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </Badge>
+          ) : null}
+        </div>
+      )}
+
       {/* Products Grid */}
       {filteredProducts.length === 0 ? (
         <Card className="p-8 text-center">
