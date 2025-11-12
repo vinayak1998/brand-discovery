@@ -79,7 +79,7 @@ const BrandInsightCard = ({
         <Card
           className={cn(
             "insight-card animate-fade-in bg-card border-border overflow-hidden transition-all duration-300",
-            isOpen && "ring-2 ring-primary/20 shadow-lg"
+            isOpen && "ring-2 ring-primary/20 shadow-lg",
           )}
           style={{ animationDelay: `${delay}ms` }}
         >
@@ -114,7 +114,7 @@ const BrandInsightCard = ({
                 <p className="text-[10px] sm:text-xs text-muted-foreground font-medium">
                   {title === "Top Trending Brands" && "Recent shares by similar creators"}
                   {title === "Best Reach Brands" && "Views per recent posts"}
-                  {title === "Fastest Selling Products" && "Sales per link"}
+                  {title === "Fastest Selling Products" && "Sales per link(₹)"}
                 </p>
               </div>
 
@@ -130,10 +130,10 @@ const BrandInsightCard = ({
                     const barWidth = maxValue > 0 ? (roundedValue / maxValue) * 100 : 0;
 
                     return (
-                      <div 
-                        key={`${brand.brand_name}-${index}`} 
+                      <div
+                        key={`${brand.brand_name}-${index}`}
                         className="space-y-2 brand-tile-stagger"
-                        style={{ '--stagger-index': index } as any}
+                        style={{ "--stagger-index": index } as any}
                       >
                         {/* Brand Info Row */}
                         <div
@@ -156,7 +156,9 @@ const BrandInsightCard = ({
                             </div>
                           </div>
                           <div className="flex items-center gap-1.5">
-                            <p className="text-sm font-semibold text-foreground">{Math.ceil(brand.value).toLocaleString()}</p>
+                            <p className="text-sm font-semibold text-foreground">
+                              {Math.ceil(brand.value).toLocaleString()}
+                            </p>
                             <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
                           </div>
                         </div>
