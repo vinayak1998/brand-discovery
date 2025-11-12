@@ -91,7 +91,7 @@ async function processCreators(supabase: any, rows: CreatorRow[]) {
       creator_id: r.creator_id,
       name: r.name,
       gender: r.gender,
-      brand_sourcing: r.brand_sourcing,
+      brand_sourcing: r.brand_sourcing ?? false,
     }));
 
     const { error } = await supabase

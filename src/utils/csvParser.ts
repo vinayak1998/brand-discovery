@@ -8,6 +8,8 @@ export interface InsightRow {
 export interface CreatorRow {
   creator_id: number;
   name: string;
+  gender?: string;
+  brand_sourcing?: boolean;
 }
 
 export interface BrandRow {
@@ -15,6 +17,9 @@ export interface BrandRow {
   brand_name: string;
   logo_url?: string;
   website_url?: string;
+  sourcing_link?: string;
+  display_name?: string;
+  creator_commission?: number;
 }
 
 export interface SurveyResponse {
@@ -185,9 +190,16 @@ class CSVParser {
         }
 
         try {
+          const genderValue = row[headerMap['gender']]?.trim();
+          const brandSourcingValue = row[headerMap['brand_sourcing']]?.trim().toLowerCase();
+          
           const creator: CreatorRow = {
             creator_id: parseInt(row[headerMap['creator_id']]) || 0,
-            name: row[headerMap['name']] || ''
+            name: row[headerMap['name']] || '',
+            gender: genderValue || undefined,
+            brand_sourcing: brandSourcingValue === 'true' ? true : 
+                           brandSourcingValue === 'false' ? false : 
+                           undefined
           };
 
           if (!creator.creator_id || !creator.name) {
@@ -251,11 +263,16 @@ class CSVParser {
         }
 
         try {
+          const commissionValue = row[headerMap['creator_commission']]?.trim();
+          
           const brand: BrandRow = {
             brand_id: parseInt(row[headerMap['brand_id']]) || 0,
             brand_name: row[headerMap['brand_name']] || '',
             logo_url: row[headerMap['logo_url']] || undefined,
-            website_url: row[headerMap['website_url']] || undefined
+            website_url: row[headerMap['website_url']] || undefined,
+            sourcing_link: row[headerMap['sourcing_link']] || undefined,
+            display_name: row[headerMap['display_name']] || undefined,
+            creator_commission: commissionValue ? parseFloat(commissionValue) : undefined
           };
 
           if (!brand.brand_id || !brand.brand_name) {
