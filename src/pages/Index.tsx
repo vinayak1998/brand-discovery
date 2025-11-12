@@ -178,13 +178,13 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <PageHeader lastUpdated={lastUpdated || undefined} creatorName={creatorName || undefined} />
       
-      <main className="max-w-7xl mx-auto px-6 py-8">
+      <main className="max-w-7xl mx-auto px-6 py-4">
         {/* Tabs for Brand Discovery vs Product Discovery */}
         <Tabs value={activeTab} onValueChange={(tab) => {
           setHasInteracted(true);
           navigate(`/insights/${tab}?creator_id=${creatorUuid}`);
         }} className="w-full">
-          <TabsList className="grid w-full max-w-md mx-auto mb-8" style={{ gridTemplateColumns: '1fr 1fr' }}>
+          <TabsList className="grid w-full max-w-md mx-auto mb-4" style={{ gridTemplateColumns: '1fr 1fr' }}>
             <TabsTrigger value="brands">Brands</TabsTrigger>
             <TabsTrigger value="products">Products</TabsTrigger>
           </TabsList>
@@ -243,7 +243,7 @@ const Index = () => {
           </TabsContent>
 
           {/* Product Discovery Tab */}
-          <TabsContent value="products">
+          <TabsContent value="products" className="pt-2">
             <AllProductsView creatorUuid={creatorUuid || ''} />
           </TabsContent>
         </Tabs>

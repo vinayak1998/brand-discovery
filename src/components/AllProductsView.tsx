@@ -237,15 +237,18 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
     <div className="space-y-4">
       {/* Filter Bar - Only show if all products have cat and sscat */}
       {showFilters && (
-        <div className="space-y-3">
-          {/* Row 1: Filter and Sort Controls - Horizontally aligned */}
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Filters Popover */}
+        <div className="space-y-4">
+          {/* Row 1: Filter and Sort Controls - Connected with divider */}
+          <div className="flex items-center border rounded-lg overflow-hidden bg-background shadow-sm">
+            {/* Filters Section */}
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
+                <Button 
+                  variant="ghost" 
+                  className="flex-1 gap-2 rounded-none border-0 h-11 justify-start px-4"
+                >
                   <Filter className="h-4 w-4" />
-                  Filters
+                  <span>Filters</span>
                   {hasActiveFilters && (
                     <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs">
                       {selectedSubcategories.size + selectedBrands.size}
@@ -294,11 +297,14 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
               </PopoverContent>
             </Popover>
 
-            {/* Sort Control */}
+            {/* Vertical Divider */}
+            <div className="w-px h-8 bg-border" />
+
+            {/* Sort Section */}
             <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
-              <SelectTrigger className="w-[160px] sm:w-[180px] h-9">
-                <ArrowUpDown className="h-4 w-4 mr-2" />
-                <SelectValue />
+              <SelectTrigger className="flex-1 border-0 rounded-none h-11 gap-2">
+                <ArrowUpDown className="h-4 w-4" />
+                <span className="text-sm">Sort</span>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="match">Best Match</SelectItem>
@@ -309,39 +315,30 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
               </SelectContent>
             </Select>
           </div>
-          
-          {/* Row 2: Product Count */}
-          <div className="px-1">
-            <span className="text-sm text-muted-foreground">
-              {filteredAndSortedProducts.length} {filteredAndSortedProducts.length === 1 ? 'product' : 'products'}
-            </span>
-          </div>
         </div>
       )}
 
       {/* Active Filters Display - Wraps both horizontally and vertically */}
       {hasActiveFilters && (
-        <div className="flex items-start gap-2 flex-wrap px-1">
+        <div className="flex items-center gap-2 flex-wrap px-1">
           {/* Brand Filter Chips */}
           {Array.from(selectedBrands).map(brand => (
             <Badge 
               key={`brand-${brand}`}
               variant="secondary" 
-              className="gap-2 pr-1 py-1.5 text-xs"
+              className="gap-1.5 pr-1 pl-2.5 py-1"
             >
-              <span>Brand: {brand}</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-4 w-4 p-0 hover:bg-transparent"
+              <span className="text-xs">Brand: {brand}</span>
+              <button
                 onClick={() => {
                   const newSelection = new Set(selectedBrands);
                   newSelection.delete(brand);
                   setSelectedBrands(newSelection);
                 }}
+                className="hover:bg-secondary-foreground/20 rounded-full p-0.5 transition-colors"
               >
                 <X className="h-3 w-3" />
-              </Button>
+              </button>
             </Badge>
           ))}
           
@@ -350,29 +347,38 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
             <Badge 
               key={idx}
               variant="secondary" 
-              className="gap-2 pr-1 py-1.5 text-xs"
+              className="gap-1.5 pr-1 pl-2.5 py-1"
             >
-              <span>{chip.label}</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-4 w-4 p-0 hover:bg-transparent"
+              <span className="text-xs">{chip.label}</span>
+              <button
                 onClick={() => {
                   const newSelection = new Set(selectedSubcategories);
                   chip.subcategories.forEach(sc => newSelection.delete(sc));
                   setSelectedSubcategories(newSelection);
                 }}
+                className="hover:bg-secondary-foreground/20 rounded-full p-0.5 transition-colors"
               >
                 <X className="h-3 w-3" />
-              </Button>
+              </button>
             </Badge>
           ))}
           
-          {/* Clear All Filters Button - Positioned at end */}
-          <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-2 ml-auto">
-            <X className="h-4 w-4" />
-            Clear all
-          </Button>
+          {/* Clear All as plain text - flows with chips */}
+          <span 
+            onClick={clearFilters}
+            className="text-xs underline cursor-pointer text-muted-foreground hover:text-foreground transition-colors"
+          >
+            clear all
+          </span>
+        </div>
+      )}
+
+      {/* Product Count - Right above product grid */}
+      {showFilters && (
+        <div className="px-1">
+          <span className="text-sm text-muted-foreground">
+            {filteredAndSortedProducts.length} {filteredAndSortedProducts.length === 1 ? 'product' : 'products'}
+          </span>
         </div>
       )}
 
