@@ -12,8 +12,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertCircle, Sparkles } from 'lucide-react';
 import { THEMES, getTheme } from '@/config/themes';
 import { useAnalytics, ThemeId } from '@/hooks/useAnalytics';
-import { OnboardingTour } from '@/components/OnboardingTour';
-import { useTour } from '@/hooks/useTour';
 
 const Index = () => {
   const [searchParams] = useSearchParams();
@@ -37,9 +35,6 @@ const Index = () => {
   
   // Initialize analytics tracking
   const { trackPageView, trackCTAClick } = useAnalytics(creatorIdNum);
-  
-  // Initialize tour
-  const { isTourActive, currentStep, nextStep, previousStep, skipTour, completeTour } = useTour();
   
   // Track page view on mount
   useEffect(() => {
@@ -177,13 +172,13 @@ const Index = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full max-w-md mx-auto mb-8" style={{ gridTemplateColumns: '1fr 1fr' }}>
             <TabsTrigger value="brands" onClick={() => setHasInteracted(true)}>Brands</TabsTrigger>
-            <TabsTrigger value="products" data-tour="products-tab" onClick={() => setHasInteracted(true)}>Products</TabsTrigger>
+            <TabsTrigger value="products" onClick={() => setHasInteracted(true)}>Products</TabsTrigger>
           </TabsList>
 
           {/* Brand Discovery Tab */}
           <TabsContent value="brands" className="space-y-12">
             {/* Brand Insight Cards */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" data-tour="brand-themes">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {themes.map((theme, index) => {
                 const themeBrands = getInsightsByTheme(theme.id);
                 
@@ -239,16 +234,6 @@ const Index = () => {
           </TabsContent>
         </Tabs>
       </main>
-
-      {/* Onboarding Tour */}
-      <OnboardingTour
-        currentStep={currentStep}
-        isActive={isTourActive}
-        onNext={nextStep}
-        onPrevious={previousStep}
-        onSkip={skipTour}
-        onComplete={completeTour}
-      />
     </div>
   );
 };
