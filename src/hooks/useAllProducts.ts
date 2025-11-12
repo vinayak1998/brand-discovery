@@ -17,6 +17,7 @@ export interface ProductWithBrand {
   theme_id: string | null;
   median_reach: number | null;
   median_sales: number | null;
+  count_90_days: number | null;
 }
 
 export const useAllProducts = (creatorUuid: string | null) => {
@@ -62,7 +63,8 @@ export const useAllProducts = (creatorUuid: string | null) => {
             cat,
             sscat,
             median_reach,
-            median_sales
+            median_sales,
+            count_90_days
           `)
           .eq('creator_id', creatorData.creator_id)
           .order('sim_score', { ascending: false });

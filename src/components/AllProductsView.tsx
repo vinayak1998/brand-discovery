@@ -15,7 +15,7 @@ interface AllProductsViewProps {
   creatorUuid: string;
 }
 
-type SortOption = 'match' | 'reach-high' | 'sales-high' | 'price-low' | 'price-high';
+type SortOption = 'match' | 'reach-high' | 'sales-high' | 'link-shares' | 'price-low' | 'price-high';
 
 const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
   const { products, loading, error, creatorNumericId } = useAllProducts(creatorUuid);
@@ -100,6 +100,9 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
         
         case 'sales-high':
           return (b.median_sales || 0) - (a.median_sales || 0);
+        
+        case 'link-shares':
+          return (b.count_90_days || 0) - (a.count_90_days || 0);
         
         case 'price-low':
           if (!a.price) return 1;
@@ -310,6 +313,7 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
                 <SelectItem value="match">Best Match</SelectItem>
                 <SelectItem value="reach-high">Highest Reach</SelectItem>
                 <SelectItem value="sales-high">Highest Sales</SelectItem>
+                <SelectItem value="link-shares">Link Shares</SelectItem>
                 <SelectItem value="price-low">Price: Low to High</SelectItem>
                 <SelectItem value="price-high">Price: High to Low</SelectItem>
               </SelectContent>
