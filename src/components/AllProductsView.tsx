@@ -243,7 +243,7 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
             <div className="flex items-center gap-2 flex-wrap">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2">
+                  <Button variant="outline" size="sm" className="gap-2" data-tour="filters">
                     <Filter className="h-4 w-4" />
                     Filters
                     {hasActiveFilters && (
@@ -304,7 +304,7 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
 
             {/* Sort Control - Right aligned */}
             <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
-              <SelectTrigger className="w-[180px] h-9">
+              <SelectTrigger className="w-[180px] h-9" data-tour="sorting">
                 <ArrowUpDown className="h-4 w-4 mr-2" />
                 <SelectValue />
               </SelectTrigger>
@@ -390,13 +390,14 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
         </Card>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-4 md:gap-6">
-      {filteredAndSortedProducts.map((product) => {
+      {filteredAndSortedProducts.map((product, idx) => {
         const theme = product.theme_id ? getTheme(product.theme_id) : null;
         
         return (
           <Card 
             key={product.id} 
             className="p-3 sm:p-4 flex flex-col hover:shadow-lg transition-shadow cursor-pointer active:scale-[0.98]"
+            data-tour={idx === 0 ? "product-tile" : undefined}
             onClick={() => {
               if (product.short_code) {
                 const url = `https://www.wishlink.com/share/${product.short_code}?source=brand_discovery&creator=${creatorNumericId}`;

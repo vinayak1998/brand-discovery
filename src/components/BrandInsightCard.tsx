@@ -134,6 +134,7 @@ const BrandInsightCard = ({
                         key={`${brand.brand_name}-${index}`}
                         className="space-y-2 brand-tile-stagger"
                         style={{ "--stagger-index": index } as any}
+                        data-tour={index === 0 ? "brand-card" : undefined}
                       >
                         {/* Brand Info Row */}
                         <div
