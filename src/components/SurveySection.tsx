@@ -30,7 +30,6 @@ const themeOptions = [
   { id: "top_trending", icon: "🏆", label: "Top Trending" },
   { id: "best_reach", icon: "📈", label: "Best Reach" },
   { id: "fastest_selling", icon: "⚡", label: "Fastest Selling" },
-  { id: "highest_commission", icon: "💰", label: "Highest Commission" },
   { id: "none", icon: "❌", label: "None stood out" },
 ];
 
