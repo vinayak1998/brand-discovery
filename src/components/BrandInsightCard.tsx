@@ -5,7 +5,7 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useAnalytics, ThemeId } from "@/hooks/useAnalytics";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
 interface BrandData {
@@ -61,9 +61,7 @@ const BrandInsightCard = ({
   onOpenChange,
 }: BrandInsightCardProps) => {
   const { trackThemeView, trackBrandClick } = useAnalytics(creatorId);
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const creatorUuid = searchParams.get("creator_id");
 
   // Track theme view on mount
   useEffect(() => {
@@ -143,7 +141,7 @@ const BrandInsightCard = ({
                               trackBrandClick(brand.brand_id, themeId);
                             }
                             navigate(
-                              `/brand/products?creator_id=${creatorUuid}&brand_name=${encodeURIComponent(brand.brand_name)}`,
+                              `/brand/products?brand_name=${encodeURIComponent(brand.brand_name)}`,
                             );
                           }}
                           role="button"

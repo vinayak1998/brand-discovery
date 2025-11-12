@@ -1,5 +1,6 @@
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import { useCreatorContext } from '@/contexts/CreatorContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,7 +21,7 @@ interface Product {
 const BrandProducts = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const creatorId = searchParams.get('creator_id');
+  const { creatorUuid: creatorId, isReady } = useCreatorContext();
   const brandName = searchParams.get('brand_name');
   
   const [products, setProducts] = useState<Product[]>([]);
@@ -35,6 +36,8 @@ const BrandProducts = () => {
 
   useEffect(() => {
     const fetchProducts = async () => {
+      if (!isReady) return;
+      
       if (!creatorId || !brandName) {
         setError('Missing creator ID or brand name');
         setLoading(false);
@@ -95,7 +98,7 @@ const BrandProducts = () => {
     };
 
     fetchProducts();
-  }, [creatorId, brandName]);
+  }, [creatorId, brandName, isReady]);
 
   if (loading) {
     return (
@@ -128,7 +131,7 @@ const BrandProducts = () => {
             <div className="text-6xl mb-4">⚠️</div>
             <h2 className="text-xl font-semibold mb-2">Something went wrong</h2>
             <p className="text-muted-foreground mb-4">{error}</p>
-            <Button onClick={() => navigate(`/insights?creator_id=${creatorId}`)}>
+            <Button onClick={() => navigate('/insights/brands')}>
               Go Back
             </Button>
           </Card>
@@ -145,7 +148,7 @@ const BrandProducts = () => {
           <div className="flex items-start justify-between gap-4 mb-3">
             <Button
               variant="ghost"
-              onClick={() => navigate(`/insights?creator_id=${creatorId}`)}
+              onClick={() => navigate('/insights/brands')}
               className="-ml-2"
               size="sm"
             >

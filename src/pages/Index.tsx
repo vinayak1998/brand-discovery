@@ -1,6 +1,7 @@
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useInsightsData, useSurveySubmission } from '@/hooks/useInsightsData';
+import { useCreatorContext } from '@/contexts/CreatorContext';
 import PageHeader from '@/components/PageHeader';
 import BrandInsightCard from '@/components/BrandInsightCard';
 import SurveySection from '@/components/SurveySection';
@@ -14,9 +15,8 @@ import { THEMES, getTheme } from '@/config/themes';
 import { useAnalytics, ThemeId } from '@/hooks/useAnalytics';
 
 const Index = () => {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const creatorUuid = searchParams.get('creator_id');
+  const { creatorUuid, isReady } = useCreatorContext();
   
   // Determine active tab from URL path
   const pathname = window.location.pathname;
@@ -29,17 +29,17 @@ const Index = () => {
   
   // Redirect to landing if no creator_id
   useEffect(() => {
-    if (!creatorUuid) {
+    if (isReady && !creatorUuid) {
       navigate('/');
     }
-  }, [creatorUuid, navigate]);
+  }, [isReady, creatorUuid, navigate]);
   
   // Redirect /insights to /insights/brands for backward compatibility
   useEffect(() => {
-    if (pathname === '/insights' && creatorUuid) {
-      navigate(`/insights/brands?creator_id=${creatorUuid}`, { replace: true });
+    if (pathname === '/insights' && isReady && creatorUuid) {
+      navigate('/insights/brands', { replace: true });
     }
-  }, [pathname, creatorUuid, navigate]);
+  }, [pathname, isReady, creatorUuid, navigate]);
 
   const { insights, loading, error, getInsightsByTheme, hasData, lastUpdated, creatorName, creatorIdNum } = useInsightsData(creatorUuid || '');
   const { submitSurvey } = useSurveySubmission();
@@ -182,7 +182,7 @@ const Index = () => {
         {/* Tabs for Brand Discovery vs Product Discovery */}
         <Tabs value={activeTab} onValueChange={(tab) => {
           setHasInteracted(true);
-          navigate(`/insights/${tab}?creator_id=${creatorUuid}`);
+          navigate(`/insights/${tab}`);
         }} className="w-full">
           <TabsList className="grid w-full max-w-md mx-auto mb-4" style={{ gridTemplateColumns: '1fr 1fr' }}>
             <TabsTrigger value="brands">Brands</TabsTrigger>

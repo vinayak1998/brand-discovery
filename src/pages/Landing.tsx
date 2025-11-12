@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useCreatorContext } from "@/contexts/CreatorContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,8 +8,9 @@ import { Sparkles } from "lucide-react";
 import wishLinkLogo from "@/assets/wishlink-logo.png";
 
 const Landing = () => {
-  const [creatorUuid, setCreatorUuid] = useState("");
+  const [creatorUuid, setCreatorUuidInput] = useState("");
   const navigate = useNavigate();
+  const { setCreatorUuid } = useCreatorContext();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,7 +23,8 @@ const Landing = () => {
     if (creatorUuid === "0000000000") {
       navigate("/admin");
     } else {
-      navigate(`/insights?creator_id=${creatorUuid}`);
+      setCreatorUuid(creatorUuid);
+      navigate('/insights/brands');
     }
   };
 
@@ -56,7 +59,7 @@ const Landing = () => {
                 type="text"
                 placeholder="Enter your Creator ID"
                 value={creatorUuid}
-                onChange={(e) => setCreatorUuid(e.target.value)}
+                onChange={(e) => setCreatorUuidInput(e.target.value)}
                 className="text-center text-lg tracking-wider"
               />
             </div>
