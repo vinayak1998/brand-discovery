@@ -238,73 +238,65 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
       {/* Filter Bar - Only show if all products have cat and sscat */}
       {showFilters && (
         <div className="space-y-3">
-          {/* Row 1: Filter and Sort Controls */}
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <Filter className="h-4 w-4" />
-                    Filters
-                    {hasActiveFilters && (
-                      <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs">
-                        {selectedSubcategories.size + selectedBrands.size}
-                      </Badge>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80 max-h-[500px] overflow-y-auto" align="start">
-                  <div className="space-y-4">
-                    {/* Brand Filter Section */}
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Filter by Brand</label>
-                      <div className="space-y-1 max-h-[150px] overflow-y-auto">
-                        {brandList.map(brand => (
-                          <Button
-                            key={brand}
-                            variant={selectedBrands.has(brand) ? "secondary" : "ghost"}
-                            size="sm"
-                            className="w-full justify-start text-xs"
-                            onClick={() => handleBrandClick(brand)}
-                          >
-                            {brand}
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-                    
-                    {/* Separator */}
-                    <div className="border-t" />
-                    
-                    {/* Category Filter Section */}
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Filter by Category</label>
-                      {Array.from(categoryHierarchy.keys()).map(category => (
-                        <CategoryFilterItem
-                          key={category}
-                          category={category}
-                          subcategories={categoryHierarchy.get(category) || []}
-                          selectedSubcategories={selectedSubcategories}
-                          onCategoryClick={handleCategoryClick}
-                          onSubcategoryClick={handleSubcategoryClick}
-                        />
+          {/* Row 1: Filter and Sort Controls - Horizontally aligned */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Filters Popover */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Filter className="h-4 w-4" />
+                  Filters
+                  {hasActiveFilters && (
+                    <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs">
+                      {selectedSubcategories.size + selectedBrands.size}
+                    </Badge>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 max-h-[500px] overflow-y-auto" align="start">
+                <div className="space-y-4">
+                  {/* Brand Filter Section */}
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Filter by Brand</label>
+                    <div className="space-y-1 max-h-[150px] overflow-y-auto">
+                      {brandList.map(brand => (
+                        <Button
+                          key={brand}
+                          variant={selectedBrands.has(brand) ? "secondary" : "ghost"}
+                          size="sm"
+                          className="w-full justify-start text-xs"
+                          onClick={() => handleBrandClick(brand)}
+                        >
+                          {brand}
+                        </Button>
                       ))}
                     </div>
                   </div>
-                </PopoverContent>
-              </Popover>
+                  
+                  {/* Separator */}
+                  <div className="border-t" />
+                  
+                  {/* Category Filter Section */}
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Filter by Category</label>
+                    {Array.from(categoryHierarchy.keys()).map(category => (
+                      <CategoryFilterItem
+                        key={category}
+                        category={category}
+                        subcategories={categoryHierarchy.get(category) || []}
+                        selectedSubcategories={selectedSubcategories}
+                        onCategoryClick={handleCategoryClick}
+                        onSubcategoryClick={handleSubcategoryClick}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
 
-              {hasActiveFilters && (
-                <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-2">
-                  <X className="h-4 w-4" />
-                  Clear filters
-                </Button>
-              )}
-            </div>
-
-            {/* Sort Control - Right aligned */}
+            {/* Sort Control */}
             <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
-              <SelectTrigger className="w-[180px] h-9">
+              <SelectTrigger className="w-[160px] sm:w-[180px] h-9">
                 <ArrowUpDown className="h-4 w-4 mr-2" />
                 <SelectValue />
               </SelectTrigger>
@@ -327,9 +319,9 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
         </div>
       )}
 
-      {/* Active Filters Display - Always visible when filters applied */}
+      {/* Active Filters Display - Wraps both horizontally and vertically */}
       {hasActiveFilters && (
-        <div className="flex items-center gap-2 flex-wrap px-1">
+        <div className="flex items-start gap-2 flex-wrap px-1">
           {/* Brand Filter Chips */}
           {Array.from(selectedBrands).map(brand => (
             <Badge 
@@ -375,6 +367,12 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
               </Button>
             </Badge>
           ))}
+          
+          {/* Clear All Filters Button - Positioned at end */}
+          <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-2 ml-auto">
+            <X className="h-4 w-4" />
+            Clear all
+          </Button>
         </div>
       )}
 

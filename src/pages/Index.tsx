@@ -17,7 +17,11 @@ const Index = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const creatorUuid = searchParams.get('creator_id');
-  const [activeTab, setActiveTab] = useState('brands');
+  
+  // Determine active tab from URL path
+  const pathname = window.location.pathname;
+  const activeTab = pathname.includes('/products') ? 'products' : 'brands';
+  
   const initialOpenId = Object.values(THEMES)[0]?.id ?? null;
   const [openAccordion, setOpenAccordion] = useState<string | null>(initialOpenId); // Ensure at least one is always open
   const [timeSpent, setTimeSpent] = useState(0);
@@ -29,6 +33,13 @@ const Index = () => {
       navigate('/');
     }
   }, [creatorUuid, navigate]);
+  
+  // Redirect /insights to /insights/brands for backward compatibility
+  useEffect(() => {
+    if (pathname === '/insights' && creatorUuid) {
+      navigate(`/insights/brands?creator_id=${creatorUuid}`, { replace: true });
+    }
+  }, [pathname, creatorUuid, navigate]);
 
   const { insights, loading, error, getInsightsByTheme, hasData, lastUpdated, creatorName, creatorIdNum } = useInsightsData(creatorUuid || '');
   const { submitSurvey } = useSurveySubmission();
@@ -169,10 +180,13 @@ const Index = () => {
       
       <main className="max-w-7xl mx-auto px-6 py-8">
         {/* Tabs for Brand Discovery vs Product Discovery */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={(tab) => {
+          setHasInteracted(true);
+          navigate(`/insights/${tab}?creator_id=${creatorUuid}`);
+        }} className="w-full">
           <TabsList className="grid w-full max-w-md mx-auto mb-8" style={{ gridTemplateColumns: '1fr 1fr' }}>
-            <TabsTrigger value="brands" onClick={() => setHasInteracted(true)}>Brands</TabsTrigger>
-            <TabsTrigger value="products" onClick={() => setHasInteracted(true)}>Products</TabsTrigger>
+            <TabsTrigger value="brands">Brands</TabsTrigger>
+            <TabsTrigger value="products">Products</TabsTrigger>
           </TabsList>
 
           {/* Brand Discovery Tab */}

@@ -162,18 +162,6 @@ const BrandInsightCard = ({
                             <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
                           </div>
                         </div>
-
-                        {/* Progress Bar */}
-                        <div className="w-full bg-border rounded-full h-2.5 overflow-hidden">
-                          <div
-                            className="h-full rounded-full bar-fill progress-gradient"
-                            style={{
-                              width: `${barWidth}%`,
-                              backgroundColor: color,
-                              animationDelay: `${delay + index * 50}ms`,
-                            }}
-                          />
-                        </div>
                       </div>
                     );
                   })
