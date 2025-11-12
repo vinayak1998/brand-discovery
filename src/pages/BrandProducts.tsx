@@ -1,6 +1,8 @@
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useCreatorContext } from '@/contexts/CreatorContext';
+import { useGATracking } from '@/hooks/useGATracking';
+import { useScrollTracking } from '@/hooks/useScrollTracking';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -33,6 +35,18 @@ const BrandProducts = () => {
   const [sourcingLink, setSourcingLink] = useState<string | null>(null);
   const [brandId, setBrandId] = useState<number | null>(null);
   const [displayBrandName, setDisplayBrandName] = useState<string>('');
+
+  // GA4 tracking
+  const { 
+    trackPageView, 
+    trackProductListView, 
+    trackProductInteraction, 
+    trackExternalRedirect,
+    trackConversionAction,
+    trackBrandInteraction,
+  } = useGATracking();
+  
+  const { currentDepth } = useScrollTracking();
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -100,6 +114,36 @@ const BrandProducts = () => {
     fetchProducts();
   }, [creatorId, brandName, isReady]);
 
+  // Track page view and product list view when data loads
+  useEffect(() => {
+    if (!loading && products.length >= 0 && brandId && displayBrandName) {
+      // Track page view
+      trackPageView({
+        page_path: '/brand/products',
+        page_title: `${displayBrandName} Products`,
+        screen: 'brand_products',
+      });
+
+      // Track brand products view
+      trackBrandInteraction({
+        action: 'brand_products_view',
+        brand_id: brandId,
+        brand_name: displayBrandName,
+        theme_id: '', // Not available on this page
+        product_count: products.length,
+      });
+
+      // Track product list view
+      trackProductListView({
+        list_context: products.length === 0 ? 'empty_state' : 'brand_page',
+        visible_count: products.length,
+        total_count: products.length,
+        is_empty: products.length === 0,
+        brand_name: displayBrandName,
+      });
+    }
+  }, [loading, products, brandId, displayBrandName, trackPageView, trackBrandInteraction, trackProductListView]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -158,7 +202,22 @@ const BrandProducts = () => {
             
             {brandSourcingEnabled && sourcingLink && (
               <Button
-                onClick={() => window.open(sourcingLink, '_blank')}
+                onClick={() => {
+                  // Track conversion action
+                  trackConversionAction({
+                    action: 'sourcing_click',
+                    brand_id: brandId || undefined,
+                    brand_name: displayBrandName,
+                  });
+                  // Track external redirect
+                  trackExternalRedirect({
+                    destination: 'brand_sourcing',
+                    url: sourcingLink,
+                    brand_id: brandId || undefined,
+                    brand_name: displayBrandName,
+                  });
+                  window.open(sourcingLink, '_blank');
+                }}
                 variant="default"
                 size="sm"
               >
@@ -193,6 +252,30 @@ const BrandProducts = () => {
                 onClick={() => {
                   if (product.short_code) {
                     const url = `https://www.wishlink.com/share/${product.short_code}?source=brand_discovery&creator=${creatorNumericId}`;
+                    
+                    // Track product interaction
+                    trackProductInteraction({
+                      product_id: product.id,
+                      product_name: product.name,
+                      brand_id: brandId || 0,
+                      brand_name: displayBrandName,
+                      match_score: product.sim_score,
+                      price: product.price || undefined,
+                      source_tab: 'brand_discovery',
+                      short_code: product.short_code,
+                      scroll_depth_at_click: currentDepth,
+                    });
+                    
+                    // Track external redirect
+                    trackExternalRedirect({
+                      destination: 'wishlink_product',
+                      url,
+                      product_id: product.id,
+                      brand_id: brandId || undefined,
+                      brand_name: displayBrandName,
+                      short_code: product.short_code,
+                    });
+                    
                     window.open(url, '_blank');
                   }
                 }}

@@ -1,7 +1,8 @@
 import { useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useInsightsData, useSurveySubmission } from '@/hooks/useInsightsData';
 import { useCreatorContext } from '@/contexts/CreatorContext';
+import { useGATracking } from '@/hooks/useGATracking';
 import PageHeader from '@/components/PageHeader';
 import BrandInsightCard from '@/components/BrandInsightCard';
 import SurveySection from '@/components/SurveySection';
@@ -26,6 +27,9 @@ const Index = () => {
   const [openAccordion, setOpenAccordion] = useState<string | null>(initialOpenId); // Ensure at least one is always open
   const [timeSpent, setTimeSpent] = useState(0);
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [clickCount, setClickCount] = useState(0);
+  const [scrollCount, setScrollCount] = useState(0);
+  const hasTrackedEngagement = useRef(false);
   
   // Redirect to landing if no creator_id
   useEffect(() => {
@@ -46,13 +50,20 @@ const Index = () => {
   
   // Initialize analytics tracking
   const { trackPageView, trackCTAClick } = useAnalytics(creatorIdNum);
+  const { trackPageView: trackGAPageView, trackEngagementQualified, trackConversionAction } = useGATracking();
   
-  // Track page view on mount
+  // Track page view on mount (GA4)
   useEffect(() => {
     if (creatorIdNum && hasData) {
       trackPageView();
+      trackGAPageView({
+        page_path: window.location.pathname,
+        page_title: activeTab === 'brands' ? 'Brand Discovery' : 'Product Discovery',
+        tab: activeTab,
+        screen: activeTab === 'brands' ? 'brand_discovery' : 'product_discovery',
+      });
     }
-  }, [creatorIdNum, hasData, trackPageView]);
+  }, [creatorIdNum, hasData, trackPageView, trackGAPageView, activeTab]);
 
   // Timer for 30 seconds
   useEffect(() => {
@@ -61,6 +72,40 @@ const Index = () => {
     }, 1000);
     
     return () => clearInterval(timer);
+  }, []);
+
+  // Track engagement qualified (retention criteria: 2 clicks OR 1 scroll OR 20 seconds)
+  useEffect(() => {
+    if (hasTrackedEngagement.current) return;
+    
+    const meetsRetentionCriteria = clickCount >= 2 || scrollCount >= 1 || timeSpent >= 20;
+    
+    if (meetsRetentionCriteria) {
+      const engagementType = clickCount >= 2 ? 'clicks' : scrollCount >= 1 ? 'scroll' : 'time';
+      
+      trackEngagementQualified({
+        engagement_type: engagementType,
+        time_spent: timeSpent,
+        interaction_count: clickCount,
+        scroll_depth: scrollCount,
+      });
+      
+      hasTrackedEngagement.current = true;
+    }
+  }, [clickCount, scrollCount, timeSpent, trackEngagementQualified]);
+
+  // Track scroll events
+  useEffect(() => {
+    let hasScrolled = false;
+    const handleScroll = () => {
+      if (!hasScrolled) {
+        setScrollCount(prev => prev + 1);
+        hasScrolled = true;
+      }
+    };
+    
+    window.addEventListener('scroll', handleScroll, { once: true });
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   // Check if survey should be shown (30 seconds OR 1+ interactions)
@@ -182,6 +227,7 @@ const Index = () => {
         {/* Tabs for Brand Discovery vs Product Discovery */}
         <Tabs value={activeTab} onValueChange={(tab) => {
           setHasInteracted(true);
+          setClickCount(prev => prev + 1);
           navigate(`/insights/${tab}`);
         }} className="w-full">
           <TabsList className="grid w-full max-w-md mx-auto mb-4" style={{ gridTemplateColumns: '1fr 1fr' }}>
@@ -217,6 +263,7 @@ const Index = () => {
                     isOpen={openAccordion === theme.id}
                     onOpenChange={(isOpen) => {
                       setHasInteracted(true);
+                      setClickCount(prev => prev + 1);
                       if (isOpen) {
                         setOpenAccordion(theme.id);
                       } else if (openAccordion === theme.id) {
@@ -236,7 +283,13 @@ const Index = () => {
               <div className="max-w-2xl mx-auto">
                 <SurveySection 
                   creatorId={creatorUuid || ''} 
-                  onSubmit={submitSurvey}
+                  onSubmit={(data) => {
+                    submitSurvey(data);
+                    // Track survey submit
+                    trackConversionAction({
+                      action: 'survey_submit',
+                    });
+                  }}
                 />
               </div>
             )}

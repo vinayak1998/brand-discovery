@@ -7,6 +7,10 @@ import { CSVDataProvider } from "@/contexts/CSVDataContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CreatorProvider } from "@/contexts/CreatorContext";
 import CreatorUrlInterceptor from "@/components/CreatorUrlInterceptor";
+import { useGATracking } from "@/hooks/useGATracking";
+import { useScrollTracking } from "@/hooks/useScrollTracking";
+import { trackPerformanceWhenReady } from "@/utils/performanceTracker";
+import { useEffect } from "react";
 import Landing from "./pages/Landing";
 import Index from "./pages/Index";
 import Admin from "./pages/Admin";
@@ -16,6 +20,31 @@ import BrandProducts from "./pages/BrandProducts";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
+
+// Global tracking wrapper component
+const GlobalTracking = ({ children }: { children: React.ReactNode }) => {
+  const { trackScrollMilestone, trackPerformanceReady, trackSessionStart } = useGATracking();
+
+  // Track scroll milestones
+  useScrollTracking((depth) => {
+    trackScrollMilestone({
+      scroll_depth: depth,
+      page_section: window.location.pathname,
+    });
+  });
+
+  // Track performance metrics when page loads
+  useEffect(() => {
+    trackPerformanceWhenReady((metrics) => {
+      trackPerformanceReady(metrics);
+    });
+
+    // Track session start
+    trackSessionStart();
+  }, [trackPerformanceReady, trackSessionStart]);
+
+  return <>{children}</>;
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -27,18 +56,20 @@ const App = () => (
             <Sonner />
             <BrowserRouter>
               <CreatorUrlInterceptor />
-              <Routes>
-                <Route path="/" element={<Landing />} />
-                <Route path="/insights" element={<Index />} />
-                <Route path="/insights/brands" element={<Index />} />
-                <Route path="/insights/products" element={<Index />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/admin" element={<Admin />} />
-                <Route path="/admin/analytics" element={<Analytics />} />
-                <Route path="/brand/products" element={<BrandProducts />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              <GlobalTracking>
+                <Routes>
+                  <Route path="/" element={<Landing />} />
+                  <Route path="/insights" element={<Index />} />
+                  <Route path="/insights/brands" element={<Index />} />
+                  <Route path="/insights/products" element={<Index />} />
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/admin" element={<Admin />} />
+                  <Route path="/admin/analytics" element={<Analytics />} />
+                  <Route path="/brand/products" element={<BrandProducts />} />
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </GlobalTracking>
             </BrowserRouter>
           </TooltipProvider>
         </CSVDataProvider>

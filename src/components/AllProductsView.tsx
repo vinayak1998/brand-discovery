@@ -6,9 +6,11 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAllProducts } from '@/hooks/useAllProducts';
+import { useGATracking } from '@/hooks/useGATracking';
+import { useScrollTracking } from '@/hooks/useScrollTracking';
 import { getTheme } from '@/config/themes';
 import { Filter, X, ArrowUpDown } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { CategoryFilterItem } from './CategoryFilterItem';
 
 interface AllProductsViewProps {
@@ -22,6 +24,16 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
   const [selectedSubcategories, setSelectedSubcategories] = useState<Set<string>>(new Set());
   const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set());
   const [sortBy, setSortBy] = useState<SortOption>('match');
+
+  // GA4 tracking
+  const {
+    trackProductListView,
+    trackFilterSortAction,
+    trackProductInteraction,
+    trackExternalRedirect,
+  } = useGATracking();
+  
+  const { currentDepth } = useScrollTracking();
 
   // Build hierarchical category structure and category-to-subcategories mapping
   // Only show filters if ALL products have cat AND sscat
@@ -127,6 +139,10 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
   const clearFilters = () => {
     setSelectedSubcategories(new Set());
     setSelectedBrands(new Set());
+    // Track filter clear
+    trackFilterSortAction({
+      action: 'filter_clear',
+    });
   };
 
   // Handle category click - toggle all subcategories
@@ -145,6 +161,15 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
     }
     
     setSelectedSubcategories(newSelection);
+    
+    // Track filter application
+    trackFilterSortAction({
+      action: 'filter_apply',
+      filter_type: 'category',
+      filter_count: newSelection.size + selectedBrands.size,
+      selected_categories: Array.from(newSelection),
+      selected_brands: Array.from(selectedBrands),
+    });
   };
 
   // Handle subcategory click - toggle individual subcategory
@@ -158,6 +183,15 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
     }
     
     setSelectedSubcategories(newSelection);
+    
+    // Track filter application
+    trackFilterSortAction({
+      action: 'filter_apply',
+      filter_type: 'category',
+      filter_count: newSelection.size + selectedBrands.size,
+      selected_categories: Array.from(newSelection),
+      selected_brands: Array.from(selectedBrands),
+    });
   };
 
   // Handle brand click - toggle brand selection
@@ -169,6 +203,15 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
       newSelection.add(brand);
     }
     setSelectedBrands(newSelection);
+    
+    // Track filter application
+    trackFilterSortAction({
+      action: 'filter_apply',
+      filter_type: 'brand',
+      filter_count: selectedSubcategories.size + newSelection.size,
+      selected_categories: Array.from(selectedSubcategories),
+      selected_brands: Array.from(newSelection),
+    });
   };
 
   // Get active filter chips with smart grouping
@@ -199,6 +242,25 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
     
     return chips;
   };
+
+  // Track product list view when data loads
+  useEffect(() => {
+    if (!loading && products.length >= 0) {
+      const listContext = hasActiveFilters 
+        ? 'filtered' 
+        : products.length === 0 
+          ? 'empty_state' 
+          : 'product_tab';
+      
+      trackProductListView({
+        list_context: listContext,
+        visible_count: filteredAndSortedProducts.length,
+        total_count: products.length,
+        is_empty: filteredAndSortedProducts.length === 0,
+        filter_count: selectedSubcategories.size + selectedBrands.size,
+      });
+    }
+  }, [loading, products.length, filteredAndSortedProducts.length, hasActiveFilters, selectedSubcategories.size, selectedBrands.size, trackProductListView]);
 
   if (loading) {
     return (
@@ -304,7 +366,16 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
             <div className="w-px h-8 bg-border" />
 
             {/* Sort Section */}
-            <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
+            <Select value={sortBy} onValueChange={(value) => {
+              const newSortBy = value as SortOption;
+              setSortBy(newSortBy);
+              // Track sort change
+              trackFilterSortAction({
+                action: 'sort_change',
+                sort_by: newSortBy,
+                filter_count: selectedSubcategories.size + selectedBrands.size,
+              });
+            }}>
               <SelectTrigger className="flex-1 border-0 rounded-none h-11 gap-2">
                 <ArrowUpDown className="h-4 w-4" />
                 <span className="text-sm">Sort</span>
@@ -408,6 +479,31 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
             onClick={() => {
               if (product.short_code) {
                 const url = `https://www.wishlink.com/share/${product.short_code}?source=brand_discovery&creator=${creatorNumericId}`;
+                
+                // Track product interaction
+                trackProductInteraction({
+                  product_id: product.id,
+                  product_name: product.name,
+                  brand_id: product.brand_id || 0,
+                  brand_name: product.brand_name || '',
+                  theme_id: product.theme_id,
+                  match_score: product.sim_score || 0,
+                  price: product.price || undefined,
+                  source_tab: 'product_discovery',
+                  short_code: product.short_code,
+                  scroll_depth_at_click: currentDepth,
+                });
+                
+                // Track external redirect
+                trackExternalRedirect({
+                  destination: 'wishlink_product',
+                  url,
+                  product_id: product.id,
+                  brand_id: product.brand_id || undefined,
+                  brand_name: product.brand_name || undefined,
+                  short_code: product.short_code,
+                });
+                
                 window.open(url, '_blank');
               }
             }}

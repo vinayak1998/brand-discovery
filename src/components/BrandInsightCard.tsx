@@ -2,9 +2,10 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { useAnalytics, ThemeId } from "@/hooks/useAnalytics";
+import { useGATracking } from "@/hooks/useGATracking";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -61,20 +62,65 @@ const BrandInsightCard = ({
   onOpenChange,
 }: BrandInsightCardProps) => {
   const { trackThemeView, trackBrandClick } = useAnalytics(creatorId);
+  const { trackThemeImpression, trackThemeInteraction, trackBrandInteraction } = useGATracking();
   const navigate = useNavigate();
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [hasTrackedImpression, setHasTrackedImpression] = useState(false);
 
-  // Track theme view on mount
+  // Track theme view on mount (existing Supabase analytics)
   useEffect(() => {
     trackThemeView(themeId);
   }, [themeId, trackThemeView]);
+
+  // Track theme impression when card becomes visible (GA4)
+  useEffect(() => {
+    if (!cardRef.current || hasTrackedImpression) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
+            trackThemeImpression({
+              theme_id: themeId,
+              theme_name: title,
+              brand_count: brands.length,
+              position: Array.from(document.querySelectorAll('.insight-card')).indexOf(entry.target as Element),
+            });
+            setHasTrackedImpression(true);
+          }
+        });
+      },
+      { threshold: 0.5 }
+    );
+
+    observer.observe(cardRef.current);
+
+    return () => {
+      if (cardRef.current) {
+        observer.unobserve(cardRef.current);
+      }
+    };
+  }, [themeId, title, brands.length, hasTrackedImpression, trackThemeImpression]);
 
   // Calculate max value for proper bar scaling using rounded values
   const maxValue = brands.length > 0 ? Math.max(...brands.map((b) => Math.ceil(b.value))) : 0;
 
   return (
     <>
-      <Collapsible open={isOpen} onOpenChange={onOpenChange}>
+      <Collapsible open={isOpen} onOpenChange={(open) => {
+        onOpenChange(open);
+        // Track GA4 theme interaction
+        if (open) {
+          trackThemeInteraction({
+            action: 'theme_expand',
+            theme_id: themeId,
+            theme_name: title,
+            brand_count: brands.length,
+          });
+        }
+      }}>
         <Card
+          ref={cardRef}
           className={cn(
             "insight-card animate-fade-in bg-card border-border overflow-hidden transition-all duration-300",
             isOpen && "ring-2 ring-primary/20 shadow-lg",
@@ -137,9 +183,17 @@ const BrandInsightCard = ({
                         <div
                           className="group flex items-center justify-between cursor-pointer hover:bg-accent/70 active:bg-accent active:scale-[0.98] p-2 rounded-lg transition-all duration-200 ring-offset-background focus-visible:outline-none focus-visible:ring-2 border border-border hover:border-primary/40 hover:shadow-sm"
                           onClick={() => {
+                            // Track existing Supabase analytics
                             if (brand.brand_id) {
                               trackBrandClick(brand.brand_id, themeId);
                             }
+                            // Track GA4 brand click
+                            trackBrandInteraction({
+                              action: 'brand_click',
+                              brand_id: brand.brand_id || 0,
+                              brand_name: brand.brand_name,
+                              theme_id: themeId,
+                            });
                             navigate(
                               `/brand/products?brand_name=${encodeURIComponent(brand.brand_name)}`,
                             );
