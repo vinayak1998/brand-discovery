@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useEffect, useState, useRef } from 'react';
 import { useInsightsData, useSurveySubmission } from '@/hooks/useInsightsData';
 import { useCreatorContext } from '@/contexts/CreatorContext';
@@ -18,6 +18,8 @@ import { useAnalytics, ThemeId } from '@/hooks/useAnalytics';
 const Index = () => {
   const navigate = useNavigate();
   const { creatorUuid, isReady } = useCreatorContext();
+  const [searchParams] = useSearchParams();
+  const creatorIdFromUrl = searchParams.get('creator_id');
   
   // Determine active tab from URL path
   const pathname = window.location.pathname;
@@ -31,12 +33,12 @@ const Index = () => {
   const [scrollCount, setScrollCount] = useState(0);
   const hasTrackedEngagement = useRef(false);
   
-  // Redirect to landing if no creator_id
+  // Redirect to landing if no creator_id (but wait if URL has creator_id being processed)
   useEffect(() => {
-    if (isReady && !creatorUuid) {
+    if (isReady && !creatorUuid && !creatorIdFromUrl) {
       navigate('/');
     }
-  }, [isReady, creatorUuid, navigate]);
+  }, [isReady, creatorUuid, creatorIdFromUrl, navigate]);
   
   // Redirect /insights to /insights/brands for backward compatibility
   useEffect(() => {
