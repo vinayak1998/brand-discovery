@@ -652,19 +652,19 @@ const AdminContent = () => {
             <div>
               <p className="font-semibold mb-2">Creators CSV columns:</p>
               <code className="text-xs bg-muted p-2 rounded block">
-                creator_id,name
+                creator_id,name,gender,brand_sourcing
               </code>
               <p className="text-xs text-muted-foreground mt-1">
-                (creator_id must be a long integer)
+                (creator_id must be a long integer and is required; name is required; gender (text) and brand_sourcing (boolean: true/false) are optional)
               </p>
             </div>
             <div>
               <p className="font-semibold mb-2">Brands CSV columns:</p>
               <code className="text-xs bg-muted p-2 rounded block">
-                brand_id,brand_name,logo_url,website_url
+                brand_id,brand_name,logo_url,website_url,sourcing_link,display_name,creator_commission
               </code>
               <p className="text-xs text-muted-foreground mt-1">
-                (brand_id must be a long integer; logo_url and website_url are optional)
+                (brand_id must be a long integer and is required; brand_name is required; logo_url, website_url, sourcing_link, display_name, and creator_commission (numeric) are optional)
               </p>
             </div>
             <div>
@@ -673,7 +673,7 @@ const AdminContent = () => {
                 creator_id,brand_id,theme_id,value
               </code>
               <p className="text-xs text-muted-foreground mt-1">
-                (Both creator_id and brand_id must be long integers; theme_id should be one of: top_trending, best_reach, fastest_selling, highest_commission. Make sure creators and brands exist before uploading insights)
+                (Both creator_id and brand_id must be long integers; theme_id should be one of: top_trending, best_reach, fastest_selling. Make sure creators and brands exist before uploading insights)
               </p>
             </div>
           </CardContent>
