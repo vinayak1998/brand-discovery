@@ -288,6 +288,8 @@ const BrandProducts = () => {
                       alt={product.name}
                       className="w-full h-full object-cover"
                       loading="lazy"
+                      width="320"
+                      height="320"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">

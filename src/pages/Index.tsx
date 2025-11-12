@@ -39,13 +39,6 @@ const Index = () => {
       navigate('/');
     }
   }, [isReady, creatorUuid, creatorIdFromUrl, navigate]);
-  
-  // Redirect /insights to /insights/brands for backward compatibility
-  useEffect(() => {
-    if (pathname === '/insights' && isReady && creatorUuid) {
-      navigate('/insights/brands', { replace: true });
-    }
-  }, [pathname, isReady, creatorUuid, navigate]);
 
   const { insights, loading, error, getInsightsByTheme, hasData, lastUpdated, creatorName, creatorIdNum } = useInsightsData(creatorUuid || '');
   const { submitSurvey } = useSurveySubmission();
@@ -297,9 +290,9 @@ const Index = () => {
             )}
           </TabsContent>
 
-          {/* Product Discovery Tab */}
+          {/* Product Discovery Tab - Only load data when tab is active */}
           <TabsContent value="products" className="pt-2">
-            <AllProductsView creatorUuid={creatorUuid || ''} />
+            <AllProductsView creatorUuid={creatorUuid || ''} shouldLoad={activeTab === 'products'} />
           </TabsContent>
         </Tabs>
       </main>

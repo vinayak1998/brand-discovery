@@ -15,12 +15,13 @@ import { CategoryFilterItem } from './CategoryFilterItem';
 
 interface AllProductsViewProps {
   creatorUuid: string;
+  shouldLoad?: boolean;
 }
 
 type SortOption = 'match' | 'reach-high' | 'sales-high' | 'link-shares' | 'price-low' | 'price-high';
 
-const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
-  const { products, loading, error, creatorNumericId } = useAllProducts(creatorUuid);
+const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProps) => {
+  const { products, loading, error, creatorNumericId } = useAllProducts(creatorUuid, shouldLoad);
   const [selectedSubcategories, setSelectedSubcategories] = useState<Set<string>>(new Set());
   const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set());
   const [sortBy, setSortBy] = useState<SortOption>('match');
@@ -516,6 +517,8 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
                   alt={product.name}
                   className="w-full h-full object-cover"
                   loading="lazy"
+                  width="320"
+                  height="320"
                   onError={(e) => {
                     e.currentTarget.style.display = 'none';
                     const parent = e.currentTarget.parentElement;
@@ -546,6 +549,9 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
                           src={product.logo_url}
                           alt={product.brand_name}
                           className="w-full h-full object-contain p-0.5"
+                          loading="lazy"
+                          width="32"
+                          height="32"
                           onError={(e) => {
                             e.currentTarget.style.display = 'none';
                           }}

@@ -17,15 +17,21 @@ const CreatorUrlInterceptor = () => {
       // Save to context + localStorage
       setCreatorUuid(creatorIdFromUrl);
       
-      // Remove creator_id from URL
-      const newSearchParams = new URLSearchParams(searchParams);
-      newSearchParams.delete('creator_id');
-      
-      const newSearch = newSearchParams.toString();
-      const cleanUrl = `${location.pathname}${newSearch ? `?${newSearch}` : ''}`;
-      
-      // Replace the URL without adding to history
-      navigate(cleanUrl, { replace: true });
+      // Direct redirect to /insights/brands (eliminates double redirect)
+      // Old flow: URL → /insights → /insights/brands
+      // New flow: URL → /insights/brands directly
+      if (location.pathname === '/insights' || location.pathname === '/') {
+        navigate('/insights/brands', { replace: true });
+      } else {
+        // For other paths, just clean the URL
+        const newSearchParams = new URLSearchParams(searchParams);
+        newSearchParams.delete('creator_id');
+        
+        const newSearch = newSearchParams.toString();
+        const cleanUrl = `${location.pathname}${newSearch ? `?${newSearch}` : ''}`;
+        
+        navigate(cleanUrl, { replace: true });
+      }
     }
   }, [searchParams, location.pathname, navigate, setCreatorUuid, isReady]);
 

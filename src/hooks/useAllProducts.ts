@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useGATracking } from './useGATracking';
+import { useCreatorData } from './useCreatorData';
 
 export interface ProductWithBrand {
   id: number;
@@ -21,52 +22,33 @@ export interface ProductWithBrand {
   count_90_days: number | null;
 }
 
-export const useAllProducts = (creatorUuid: string | null) => {
+export const useAllProducts = (creatorUuid: string | null, shouldLoad: boolean = true) => {
   const [products, setProducts] = useState<ProductWithBrand[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [creatorNumericId, setCreatorNumericId] = useState<number | null>(null);
   const { trackError } = useGATracking();
+  
+  // Use shared creator data hook
+  const { creatorData, loading: creatorLoading } = useCreatorData(creatorUuid);
 
   useEffect(() => {
     const fetchAllProducts = async () => {
-      if (!creatorUuid) {
+      // Only fetch if shouldLoad is true (for lazy tab loading)
+      if (!shouldLoad) {
         setLoading(false);
+        return;
+      }
+      
+      // Wait for creator data
+      if (creatorLoading || !creatorData) {
         return;
       }
 
       try {
         setLoading(true);
-        
-        // Get creator's numeric ID
-        const { data: creatorData, error: creatorError } = await supabase
-          .from('creators')
-          .select('creator_id')
-          .eq('uuid', creatorUuid)
-          .single();
 
-        if (creatorError) {
-          console.error('Error fetching creator:', creatorError);
-          trackError({
-            action: 'api_error',
-            error_message: 'Failed to fetch creator information',
-            error_context: creatorError.message,
-          });
-          setError('Failed to fetch creator information');
-          setLoading(false);
-          return;
-        }
-
-        if (!creatorData) {
-          setError('Creator not found');
-          setLoading(false);
-          return;
-        }
-        
-        setCreatorNumericId(creatorData.creator_id);
-
-        // Fetch all products for this creator with brand info and theme
-        const { data, error: productsError } = await supabase
+        // Fetch products for this creator - PARALLELIZED with brand/insight data below
+        const productsPromise = supabase
           .from('creator_x_product_recommendations')
           .select(`
             id, 
@@ -84,7 +66,10 @@ export const useAllProducts = (creatorUuid: string | null) => {
             count_90_days
           `)
           .eq('creator_id', creatorData.creator_id)
-          .order('sim_score', { ascending: false });
+          .order('sim_score', { ascending: false })
+          .limit(500); // Limit initial fetch for performance
+
+        const { data, error: productsError } = await productsPromise;
 
         if (productsError) {
           console.error('Error fetching products:', productsError);
@@ -98,21 +83,24 @@ export const useAllProducts = (creatorUuid: string | null) => {
           return;
         }
 
-        // Batch fetch brand logos and themes to avoid N+1 queries
+        // Batch fetch brand logos and themes to avoid N+1 queries - PARALLELIZE
         const uniqueBrandIds = [...new Set(data.map(p => p.brand_id).filter(Boolean))] as number[];
         
-        // Fetch all brand logos and names in one query
-        const { data: brandsData } = await supabase
-          .from('brands')
-          .select('brand_id, logo_url, brand_name, display_name')
-          .in('brand_id', uniqueBrandIds);
-
-        // Fetch all themes in one query
-        const { data: insightsData } = await supabase
-          .from('creator_brand_insights')
-          .select('brand_id, theme_id')
-          .eq('creator_id', creatorData.creator_id)
-          .in('brand_id', uniqueBrandIds);
+        // Fetch brands and insights in parallel
+        const [brandsResult, insightsResult] = await Promise.all([
+          supabase
+            .from('brands')
+            .select('brand_id, logo_url, brand_name, display_name')
+            .in('brand_id', uniqueBrandIds),
+          supabase
+            .from('creator_brand_insights')
+            .select('brand_id, theme_id')
+            .eq('creator_id', creatorData.creator_id)
+            .in('brand_id', uniqueBrandIds)
+        ]);
+        
+        const brandsData = brandsResult.data;
+        const insightsData = insightsResult.data;
 
         // Theme priority: top_trending > best_reach > fastest_selling
         const themePriority: Record<string, number> = {
@@ -161,7 +149,12 @@ export const useAllProducts = (creatorUuid: string | null) => {
     };
 
     fetchAllProducts();
-  }, [creatorUuid, trackError]);
+  }, [creatorUuid, creatorData, creatorLoading, shouldLoad, trackError]);
 
-  return { products, loading, error, creatorNumericId };
+  return { 
+    products, 
+    loading: loading || creatorLoading, 
+    error, 
+    creatorNumericId: creatorData?.creator_id || null 
+  };
 };

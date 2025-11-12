@@ -3,6 +3,7 @@ import { useCSVData } from '@/contexts/CSVDataContext';
 import { InsightRow as CSVInsightRow } from '@/utils/csvParser';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
+import { useCreatorData } from './useCreatorData';
 
 // Types for our data structure - extending CSV types for backward compatibility
 export interface InsightRow {
@@ -46,12 +47,18 @@ export const useInsightsData = (creatorUuid: string) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
-  const [creatorName, setCreatorName] = useState<string | null>(null);
-  const [creatorIdNum, setCreatorIdNum] = useState<number | null>(null);
   const { insights: csvInsights, hasInsightsData } = useCSVData();
+  
+  // Use shared creator data hook
+  const { creatorData, loading: creatorLoading } = useCreatorData(creatorUuid);
 
   useEffect(() => {
     const fetchInsights = async () => {
+      // Wait for creator data to load
+      if (creatorLoading || !creatorData) {
+        return;
+      }
+      
       setLoading(true);
       setError(null);
       
@@ -70,23 +77,17 @@ export const useInsightsData = (creatorUuid: string) => {
           console.log('No insights found, trying fallback data');
           // Try CSV or mock data as fallback
           if (hasInsightsData) {
-            const creatorIdNum = parseInt(creatorUuid);
-            if (!isNaN(creatorIdNum)) {
-              const filteredData = csvInsights.filter(row => row.creator_id === creatorIdNum).map(row => ({
-                ...row,
-                brand_name: '',
-                logo_url: '',
-                website_url: ''
-              }));
-              setInsights(filteredData as any);
-            }
+            const filteredData = csvInsights.filter(row => row.creator_id === creatorData.creator_id).map(row => ({
+              ...row,
+              brand_name: '',
+              logo_url: '',
+              website_url: ''
+            }));
+            setInsights(filteredData as any);
           } else {
             // Fallback to mock data
-            const creatorIdNum = parseInt(creatorUuid);
-            if (!isNaN(creatorIdNum)) {
-              const filteredData = mockInsightsData.filter(row => row.creator_id === creatorIdNum);
-              setInsights(filteredData);
-            }
+            const filteredData = mockInsightsData.filter(row => row.creator_id === creatorData.creator_id);
+            setInsights(filteredData);
           }
           setLoading(false);
           return;
@@ -104,22 +105,6 @@ export const useInsightsData = (creatorUuid: string) => {
           sourcing_link: insight.brands?.sourcing_link
         }));
 
-        // Set creator info from first insight
-        if (transformedData.length > 0) {
-          setCreatorIdNum(transformedData[0].creator_id);
-        }
-
-        // Fetch creator name
-        const { data: creatorData } = await supabase
-          .from('creators')
-          .select('name')
-          .eq('uuid', creatorUuid)
-          .single();
-        
-        if (creatorData) {
-          setCreatorName(creatorData.name);
-        }
-
         // Set last updated to today for now (edge function doesn't return this)
         setLastUpdated(format(new Date(), 'MMMM d, yyyy'));
         
@@ -129,25 +114,21 @@ export const useInsightsData = (creatorUuid: string) => {
         console.error('Error fetching insights:', err);
         
         // Try fallback data on error
-        if (hasInsightsData) {
-          const creatorIdNum = parseInt(creatorUuid);
-          if (!isNaN(creatorIdNum)) {
-            const filteredData = csvInsights.filter(row => row.creator_id === creatorIdNum).map(row => ({
-              ...row,
-              brand_name: '',
-              logo_url: '',
-              website_url: ''
-            }));
-            setInsights(filteredData as any);
-            setLoading(false);
-            return;
-          }
+        if (hasInsightsData && creatorData) {
+          const filteredData = csvInsights.filter(row => row.creator_id === creatorData.creator_id).map(row => ({
+            ...row,
+            brand_name: '',
+            logo_url: '',
+            website_url: ''
+          }));
+          setInsights(filteredData as any);
+          setLoading(false);
+          return;
         }
         
         // If all else fails, use mock data
-        const creatorIdNum = parseInt(creatorUuid);
-        if (!isNaN(creatorIdNum)) {
-          const filteredData = mockInsightsData.filter(row => row.creator_id === creatorIdNum);
+        if (creatorData) {
+          const filteredData = mockInsightsData.filter(row => row.creator_id === creatorData.creator_id);
           if (filteredData.length > 0) {
             setInsights(filteredData);
             setLoading(false);
@@ -161,10 +142,10 @@ export const useInsightsData = (creatorUuid: string) => {
       }
     };
 
-    if (creatorUuid) {
+    if (creatorUuid && !creatorLoading) {
       fetchInsights();
     }
-  }, [creatorUuid, csvInsights, hasInsightsData]);
+  }, [creatorUuid, creatorData, creatorLoading, csvInsights, hasInsightsData]);
 
   // Group insights by theme and sort by value (descending)
   const getInsightsByTheme = (themeId: InsightRow['theme_id']) => {
@@ -176,13 +157,13 @@ export const useInsightsData = (creatorUuid: string) => {
 
   return {
     insights,
-    loading,
+    loading: loading || creatorLoading,
     error,
     getInsightsByTheme,
     hasData: insights.length > 0,
     lastUpdated,
-    creatorName,
-    creatorIdNum
+    creatorName: creatorData?.name || null,
+    creatorIdNum: creatorData?.creator_id || null
   };
 };
 
