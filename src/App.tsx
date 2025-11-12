@@ -50,10 +50,10 @@ const GlobalTracking = ({ children }: { children: React.ReactNode }) => {
 };
 
 const App = () => (
-  <ErrorBoundaryWithTracking>
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <CreatorProvider>
+  <QueryClientProvider client={queryClient}>
+    <AuthProvider>
+      <CreatorProvider>
+        <ErrorBoundaryWithTracking>
           <CSVDataProvider>
             <TooltipProvider>
               <Toaster />
@@ -77,10 +77,10 @@ const App = () => (
               </BrowserRouter>
             </TooltipProvider>
           </CSVDataProvider>
-        </CreatorProvider>
-      </AuthProvider>
-    </QueryClientProvider>
-  </ErrorBoundaryWithTracking>
+        </ErrorBoundaryWithTracking>
+      </CreatorProvider>
+    </AuthProvider>
+  </QueryClientProvider>
 );
 
 export default App;
