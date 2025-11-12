@@ -478,7 +478,7 @@ const AllProductsView = ({ creatorUuid }: AllProductsViewProps) => {
             className="p-3 sm:p-4 flex flex-col hover:shadow-lg transition-shadow cursor-pointer active:scale-[0.98]"
             onClick={() => {
               if (product.short_code) {
-                const url = `https://www.wishlink.com/share/${product.short_code}?source=brand_discovery&creator=${creatorNumericId}`;
+                const url = `https://www.wishlink.com/share/${product.short_code}?source=product_discovery&creator=${creatorNumericId}`;
                 
                 // Track product interaction
                 trackProductInteraction({

@@ -7,6 +7,7 @@ import { CSVDataProvider } from "@/contexts/CSVDataContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CreatorProvider } from "@/contexts/CreatorContext";
 import CreatorUrlInterceptor from "@/components/CreatorUrlInterceptor";
+import { ErrorBoundaryWithTracking } from "@/components/ErrorBoundary";
 import { useGATracking } from "@/hooks/useGATracking";
 import { useScrollTracking } from "@/hooks/useScrollTracking";
 import { trackPerformanceWhenReady } from "@/utils/performanceTracker";
@@ -49,35 +50,37 @@ const GlobalTracking = ({ children }: { children: React.ReactNode }) => {
 };
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <CreatorProvider>
-        <CSVDataProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <CreatorUrlInterceptor />
-              <GlobalTracking>
-                <Routes>
-                  <Route path="/" element={<Landing />} />
-                  <Route path="/insights" element={<Index />} />
-                  <Route path="/insights/brands" element={<Index />} />
-                  <Route path="/insights/products" element={<Index />} />
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/admin" element={<Admin />} />
-                  <Route path="/admin/analytics" element={<Analytics />} />
-                  <Route path="/brand/products" element={<BrandProducts />} />
-                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </GlobalTracking>
-            </BrowserRouter>
-          </TooltipProvider>
-        </CSVDataProvider>
-      </CreatorProvider>
-    </AuthProvider>
-  </QueryClientProvider>
+  <ErrorBoundaryWithTracking>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <CreatorProvider>
+          <CSVDataProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <CreatorUrlInterceptor />
+                <GlobalTracking>
+                  <Routes>
+                    <Route path="/" element={<Landing />} />
+                    <Route path="/insights" element={<Index />} />
+                    <Route path="/insights/brands" element={<Index />} />
+                    <Route path="/insights/products" element={<Index />} />
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/admin" element={<Admin />} />
+                    <Route path="/admin/analytics" element={<Analytics />} />
+                    <Route path="/brand/products" element={<BrandProducts />} />
+                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </GlobalTracking>
+              </BrowserRouter>
+            </TooltipProvider>
+          </CSVDataProvider>
+        </CreatorProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  </ErrorBoundaryWithTracking>
 );
 
 export default App;

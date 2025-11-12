@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useGATracking } from './useGATracking';
 
 export interface ProductWithBrand {
   id: number;
@@ -25,6 +26,7 @@ export const useAllProducts = (creatorUuid: string | null) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [creatorNumericId, setCreatorNumericId] = useState<number | null>(null);
+  const { trackError } = useGATracking();
 
   useEffect(() => {
     const fetchAllProducts = async () => {
@@ -43,8 +45,23 @@ export const useAllProducts = (creatorUuid: string | null) => {
           .eq('uuid', creatorUuid)
           .single();
 
-        if (creatorError) throw creatorError;
-        if (!creatorData) throw new Error('Creator not found');
+        if (creatorError) {
+          console.error('Error fetching creator:', creatorError);
+          trackError({
+            action: 'api_error',
+            error_message: 'Failed to fetch creator information',
+            error_context: creatorError.message,
+          });
+          setError('Failed to fetch creator information');
+          setLoading(false);
+          return;
+        }
+
+        if (!creatorData) {
+          setError('Creator not found');
+          setLoading(false);
+          return;
+        }
         
         setCreatorNumericId(creatorData.creator_id);
 
@@ -69,7 +86,17 @@ export const useAllProducts = (creatorUuid: string | null) => {
           .eq('creator_id', creatorData.creator_id)
           .order('sim_score', { ascending: false });
 
-        if (productsError) throw productsError;
+        if (productsError) {
+          console.error('Error fetching products:', productsError);
+          trackError({
+            action: 'api_error',
+            error_message: 'Failed to fetch products',
+            error_context: productsError.message,
+          });
+          setError('Failed to fetch products');
+          setLoading(false);
+          return;
+        }
 
         // Batch fetch brand logos and themes to avoid N+1 queries
         const uniqueBrandIds = [...new Set(data.map(p => p.brand_id).filter(Boolean))] as number[];
@@ -120,16 +147,21 @@ export const useAllProducts = (creatorUuid: string | null) => {
         }));
 
         setProducts(productsWithBrandInfo);
+        setLoading(false);
       } catch (err) {
-        console.error('Error fetching all products:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load products');
-      } finally {
+        console.error('Error in useAllProducts:', err);
+        trackError({
+          action: 'load_error',
+          error_message: err instanceof Error ? err.message : 'An unexpected error occurred',
+          error_context: 'useAllProducts hook',
+        });
+        setError('An unexpected error occurred');
         setLoading(false);
       }
     };
 
     fetchAllProducts();
-  }, [creatorUuid]);
+  }, [creatorUuid, trackError]);
 
   return { products, loading, error, creatorNumericId };
 };
