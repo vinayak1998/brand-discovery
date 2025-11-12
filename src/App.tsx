@@ -10,7 +10,7 @@ import CreatorUrlInterceptor from "@/components/CreatorUrlInterceptor";
 import { useGATracking } from "@/hooks/useGATracking";
 import { useScrollTracking } from "@/hooks/useScrollTracking";
 import { trackPerformanceWhenReady } from "@/utils/performanceTracker";
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import Landing from "./pages/Landing";
 import Index from "./pages/Index";
 import Admin from "./pages/Admin";
@@ -25,13 +25,15 @@ const queryClient = new QueryClient();
 const GlobalTracking = ({ children }: { children: React.ReactNode }) => {
   const { trackScrollMilestone, trackPerformanceReady, trackSessionStart } = useGATracking();
 
-  // Track scroll milestones
-  useScrollTracking((depth) => {
+  // Track scroll milestones - memoized callback to prevent infinite loop
+  const handleScrollMilestone = useCallback((depth: number) => {
     trackScrollMilestone({
       scroll_depth: depth,
       page_section: window.location.pathname,
     });
-  });
+  }, [trackScrollMilestone]);
+
+  useScrollTracking(handleScrollMilestone);
 
   // Track performance metrics when page loads
   useEffect(() => {

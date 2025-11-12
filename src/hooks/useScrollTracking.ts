@@ -32,6 +32,13 @@ export const useScrollTracking = (
     return Math.min(100, Math.max(0, depth));
   }, []);
 
+  // Memoize milestone callback to prevent dependency changes
+  const stableOnMilestone = useCallback((milestone: number) => {
+    if (onMilestone) {
+      onMilestone(milestone);
+    }
+  }, [onMilestone]);
+
   useEffect(() => {
     const handleScroll = () => {
       const currentDepth = calculateScrollDepth();
@@ -45,9 +52,7 @@ export const useScrollTracking = (
         milestones.forEach(milestone => {
           if (currentDepth >= milestone && !prev.milestonesReached.has(milestone)) {
             newMilestones.add(milestone);
-            if (onMilestone) {
-              onMilestone(milestone);
-            }
+            stableOnMilestone(milestone);
           }
         });
 
@@ -79,7 +84,7 @@ export const useScrollTracking = (
     return () => {
       window.removeEventListener('scroll', throttledScroll);
     };
-  }, [calculateScrollDepth, onMilestone]);
+  }, [calculateScrollDepth, stableOnMilestone]);
 
   return scrollState;
 };
