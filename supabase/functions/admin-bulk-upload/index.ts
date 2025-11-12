@@ -15,6 +15,8 @@ interface InsightRow {
 interface CreatorRow {
   creator_id: number;
   name: string;
+  gender?: string;
+  brand_sourcing?: boolean;
 }
 
 interface BrandRow {
@@ -22,6 +24,9 @@ interface BrandRow {
   brand_name: string;
   logo_url?: string;
   website_url?: string;
+  sourcing_link?: string;
+  display_name?: string;
+  creator_commission?: number;
 }
 
 const BATCH_SIZE = 1000;
@@ -85,6 +90,8 @@ async function processCreators(supabase: any, rows: CreatorRow[]) {
     const batch = rows.slice(i, i + BATCH_SIZE).map((r) => ({
       creator_id: r.creator_id,
       name: r.name,
+      gender: r.gender,
+      brand_sourcing: r.brand_sourcing,
     }));
 
     const { error } = await supabase
@@ -111,6 +118,9 @@ async function processBrands(supabase: any, rows: BrandRow[]) {
       brand_name: r.brand_name,
       logo_url: r.logo_url,
       website_url: r.website_url,
+      sourcing_link: r.sourcing_link,
+      display_name: r.display_name,
+      creator_commission: r.creator_commission,
     }));
 
     const { error } = await supabase

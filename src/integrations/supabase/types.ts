@@ -19,6 +19,7 @@ export type Database = {
           brand_id: number
           brand_name: string
           created_at: string | null
+          creator_commission: number | null
           display_name: string | null
           logo_url: string | null
           sourcing_link: string | null
@@ -30,6 +31,7 @@ export type Database = {
           brand_id: number
           brand_name: string
           created_at?: string | null
+          creator_commission?: number | null
           display_name?: string | null
           logo_url?: string | null
           sourcing_link?: string | null
@@ -41,6 +43,7 @@ export type Database = {
           brand_id?: number
           brand_name?: string
           created_at?: string | null
+          creator_commission?: number | null
           display_name?: string | null
           logo_url?: string | null
           sourcing_link?: string | null
