@@ -1,15 +1,8 @@
 import { useEffect, useState } from 'react';
-import { tourSteps } from '@/config/tourSteps';
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { tourSteps } from '@/config/tourSteps';
+import { X, ArrowLeft, ArrowRight } from 'lucide-react';
 
 interface OnboardingTourProps {
   currentStep: number;
@@ -29,171 +22,212 @@ export const OnboardingTour = ({
   onComplete,
 }: OnboardingTourProps) => {
   const [targetElement, setTargetElement] = useState<HTMLElement | null>(null);
-  const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
+  const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0, position: 'bottom' as 'top' | 'bottom' });
 
   const step = tourSteps[currentStep];
-  const isFirstStep = currentStep === 0;
-  const isLastStep = currentStep === tourSteps.length - 1;
   const isModalStep = step?.action === 'modal';
 
   useEffect(() => {
-    if (!isActive || !step || isModalStep) {
-      setTargetElement(null);
-      return;
-    }
+    if (!step || !isActive || isModalStep) return;
 
-    // Find target element
-    const element = document.querySelector(step.target) as HTMLElement;
-    if (!element) {
-      console.warn(`Tour target not found: ${step.target}`);
-      return;
-    }
+    const findAndPositionTarget = () => {
+      const element = document.querySelector(step.target) as HTMLElement;
+      if (element) {
+        setTargetElement(element);
+        
+        const rect = element.getBoundingClientRect();
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+        
+        const viewportHeight = window.innerHeight;
+        const viewportWidth = window.innerWidth;
+        
+        // Default positioning
+        let top = rect.top + scrollTop;
+        let left = rect.left + scrollLeft;
+        let position: 'top' | 'bottom' = 'bottom';
+        
+        // Smart positioning: prefer top on mobile for large elements
+        const isMobile = viewportWidth < 768;
+        const elementTooTall = rect.height > viewportHeight * 0.4;
+        
+        if (isMobile && elementTooTall) {
+          // Position at top of viewport for tall elements on mobile
+          position = 'top';
+          top = rect.top + scrollTop + 60; // Small offset from top
+          left = viewportWidth / 2;
+        } else {
+          // Check if there's space below
+          const spaceBelow = viewportHeight - rect.bottom;
+          const spaceAbove = rect.top;
+          
+          if (spaceBelow < 200 && spaceAbove > spaceBelow) {
+            position = 'top';
+            top = rect.top + scrollTop - 10;
+          } else {
+            position = 'bottom';
+            top = rect.bottom + scrollTop + 10;
+          }
+          left = rect.left + scrollLeft + rect.width / 2;
+        }
+        
+        setTooltipPosition({ top, left, position });
+        
+        // Scroll element into view
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    };
 
-    setTargetElement(element);
-
-    // Calculate tooltip position
-    const rect = element.getBoundingClientRect();
-    const padding = step.spotlightPadding || 8;
-
-    let top = 0;
-    let left = 0;
-
-    switch (step.position) {
-      case 'bottom':
-        top = rect.bottom + padding + window.scrollY;
-        left = rect.left + rect.width / 2;
-        break;
-      case 'top':
-        top = rect.top - padding + window.scrollY;
-        left = rect.left + rect.width / 2;
-        break;
-      case 'right':
-        top = rect.top + rect.height / 2 + window.scrollY;
-        left = rect.right + padding;
-        break;
-      case 'left':
-        top = rect.top + rect.height / 2 + window.scrollY;
-        left = rect.left - padding;
-        break;
-      default:
-        top = rect.bottom + padding + window.scrollY;
-        left = rect.left + rect.width / 2;
-    }
-
-    setTooltipPosition({ top, left });
-
-    // Scroll element into view
-    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    findAndPositionTarget();
+    window.addEventListener('resize', findAndPositionTarget);
+    return () => window.removeEventListener('resize', findAndPositionTarget);
   }, [step, currentStep, isActive, isModalStep]);
 
   const handleNext = () => {
-    if (isLastStep) {
+    if (currentStep === tourSteps.length - 1) {
       onComplete();
     } else {
       onNext();
     }
   };
 
+  // ESC key handler
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isActive) {
+        onSkip();
+      }
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isActive, onSkip]);
+
   if (!isActive || !step) return null;
 
-  // Modal steps (welcome and complete)
+  // Modal steps (welcome and complete) - now as compact overlays
   if (isModalStep) {
     return (
       <>
-        {/* Backdrop */}
-        <div className="fixed inset-0 bg-black/60 z-[100] animate-in fade-in" />
-
-        {/* Modal Dialog */}
-        <Dialog open={true} onOpenChange={onSkip}>
-          <DialogContent className="z-[101] max-w-md">
-            <DialogHeader>
-              <DialogTitle className="text-xl">{step.title}</DialogTitle>
-              <DialogDescription className="text-base pt-2">
+        {/* Backdrop - dismissable */}
+        <div className="fixed inset-0 bg-black/50 z-[100]" onClick={onSkip} />
+        
+        {/* Compact welcome card */}
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[101] w-[calc(100vw-2rem)] max-w-sm">
+          <Card className="shadow-xl">
+            <CardHeader className="pb-3">
+              <button
+                onClick={onSkip}
+                className="absolute top-3 right-3 text-muted-foreground hover:text-foreground"
+                aria-label="Close tour"
+              >
+                <X className="w-4 h-4" />
+              </button>
+              <CardTitle className="text-lg pr-6">{step.title}</CardTitle>
+              <CardDescription className="text-sm">
                 {step.description}
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter className="flex-row gap-2 sm:gap-2">
-              {!isLastStep && (
-                <Button variant="ghost" onClick={onSkip} className="flex-1">
-                  Skip Tour
-                </Button>
-              )}
-              <Button onClick={handleNext} className="flex-1">
-                {isLastStep ? 'Start Exploring' : 'Let\'s Go!'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0 pb-4">
+              <div className="flex gap-2">
+                {currentStep === 0 ? (
+                  <>
+                    <Button onClick={onSkip} variant="outline" size="sm" className="flex-1">
+                      Skip
+                    </Button>
+                    <Button onClick={handleNext} size="sm" className="flex-1">
+                      Start
+                    </Button>
+                  </>
+                ) : (
+                  <Button onClick={onComplete} size="sm" className="w-full">
+                    Done
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </>
     );
   }
 
-  // Tooltip steps
+  // Tooltip steps with spotlight
   return (
     <>
-      {/* Backdrop with spotlight */}
-      <div className="fixed inset-0 z-[100] pointer-events-none">
-        {/* Dark overlay */}
-        <div className="absolute inset-0 bg-black/60 animate-in fade-in" />
-        
-        {/* Spotlight cutout */}
-        {targetElement && (
-          <div
-            className="absolute border-4 border-primary rounded-lg animate-in zoom-in shadow-[0_0_0_9999px_rgba(0,0,0,0.6)]"
-            style={{
-              top: targetElement.getBoundingClientRect().top + window.scrollY - 8,
-              left: targetElement.getBoundingClientRect().left - 8,
-              width: targetElement.offsetWidth + 16,
-              height: targetElement.offsetHeight + 16,
-            }}
-          />
-        )}
-      </div>
-
+      {/* Spotlight overlay - dismissable */}
+      <div 
+        className="fixed inset-0 bg-black/50 z-[100] pointer-events-auto"
+        onClick={onSkip}
+        style={{
+          clipPath: targetElement
+            ? `polygon(
+                0 0, 
+                0 100%, 
+                ${targetElement.getBoundingClientRect().left - (step.spotlightPadding || 8)}px 100%, 
+                ${targetElement.getBoundingClientRect().left - (step.spotlightPadding || 8)}px ${targetElement.getBoundingClientRect().top - (step.spotlightPadding || 8)}px,
+                ${targetElement.getBoundingClientRect().right + (step.spotlightPadding || 8)}px ${targetElement.getBoundingClientRect().top - (step.spotlightPadding || 8)}px,
+                ${targetElement.getBoundingClientRect().right + (step.spotlightPadding || 8)}px ${targetElement.getBoundingClientRect().bottom + (step.spotlightPadding || 8)}px,
+                ${targetElement.getBoundingClientRect().left - (step.spotlightPadding || 8)}px ${targetElement.getBoundingClientRect().bottom + (step.spotlightPadding || 8)}px,
+                ${targetElement.getBoundingClientRect().left - (step.spotlightPadding || 8)}px 100%,
+                100% 100%,
+                100% 0
+              )`
+            : undefined,
+        }}
+      />
+      
+      {/* Persistent skip button - always accessible */}
+      <button
+        onClick={onSkip}
+        className="fixed top-4 right-4 z-[102] bg-background border border-border rounded-full p-2 shadow-lg hover:bg-accent pointer-events-auto"
+        aria-label="Skip tour"
+      >
+        <X className="w-4 h-4" />
+      </button>
+      
       {/* Tooltip */}
       <div
-        className="fixed z-[101] animate-in fade-in zoom-in duration-300"
+        className={`fixed z-[101] w-[calc(100vw-2rem)] max-w-xs pointer-events-auto`}
         style={{
-          top: tooltipPosition.top,
+          top: tooltipPosition.position === 'bottom' ? tooltipPosition.top : undefined,
+          bottom: tooltipPosition.position === 'top' ? `calc(100vh - ${tooltipPosition.top}px)` : undefined,
           left: tooltipPosition.left,
-          transform: step.position === 'left' || step.position === 'right' 
-            ? 'translateY(-50%)'
-            : 'translateX(-50%)',
+          transform: 'translateX(-50%)',
         }}
       >
-        <div className="bg-card border shadow-lg rounded-lg p-4 max-w-xs relative">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
-            onClick={onSkip}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-
-          <div className="space-y-3">
-            <div>
-              <h3 className="font-semibold text-sm mb-1">{step.title}</h3>
-              <p className="text-xs text-muted-foreground">{step.description}</p>
-            </div>
-
-            <div className="flex items-center justify-between gap-2 pt-2">
-              <div className="text-xs text-muted-foreground">
-                {currentStep + 1} of {tourSteps.length}
+        <Card className="shadow-xl">
+          <CardHeader className="pb-2 pt-3 px-3">
+            <CardTitle className="text-sm">{step.title}</CardTitle>
+            <CardDescription className="text-xs">
+              {step.description}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-0 pb-3 px-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex gap-1">
+                {tourSteps.map((_, index) => (
+                  <div
+                    key={index}
+                    className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                      index === currentStep ? 'bg-primary' : 'bg-muted'
+                    }`}
+                  />
+                ))}
               </div>
-              <div className="flex gap-2">
-                {!isFirstStep && (
-                  <Button variant="ghost" size="sm" onClick={onPrevious} className="h-8 text-xs">
-                    Back
+              
+              <div className="flex gap-1.5">
+                {currentStep > 0 && !isModalStep && tourSteps[currentStep - 1]?.action !== 'modal' && (
+                  <Button onClick={onPrevious} variant="outline" size="sm" className="h-7 px-2">
+                    <ArrowLeft className="w-3 h-3" />
                   </Button>
                 )}
-                <Button size="sm" onClick={handleNext} className="h-8 text-xs">
-                  {isLastStep ? 'Finish' : 'Next'}
+                <Button onClick={handleNext} size="sm" className="h-7 px-3 text-xs">
+                  {currentStep === tourSteps.length - 1 ? 'Done' : 'Next'}
                 </Button>
               </div>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </>
   );
