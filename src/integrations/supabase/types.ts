@@ -133,6 +133,7 @@ export type Database = {
           brand: string | null
           brand_id: number | null
           cat: string | null
+          clicks_90d: number
           commission_pct: number | null
           count_90_days: number
           created_at: string
@@ -158,6 +159,7 @@ export type Database = {
           brand?: string | null
           brand_id?: number | null
           cat?: string | null
+          clicks_90d?: number
           commission_pct?: number | null
           count_90_days?: number
           created_at?: string
@@ -183,6 +185,7 @@ export type Database = {
           brand?: string | null
           brand_id?: number | null
           cat?: string | null
+          clicks_90d?: number
           commission_pct?: number | null
           count_90_days?: number
           created_at?: string
