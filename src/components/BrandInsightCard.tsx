@@ -187,7 +187,7 @@ const BrandInsightCard = ({
                       >
                         {/* Onboarding Tooltip - shown on first brand only */}
                         {index === 0 && showTooltipOnFirst && (
-                          <div className="absolute -top-14 right-8 z-50 animate-fade-in">
+                          <div className="absolute -top-14 right-2 z-50 animate-fade-in max-w-[calc(100vw-2rem)]">
                             <div className="relative bg-primary text-primary-foreground px-3 py-2 rounded-lg shadow-lg text-xs font-medium whitespace-nowrap">
                               Tap to view products
                               <button
@@ -201,7 +201,7 @@ const BrandInsightCard = ({
                                 ×
                               </button>
                               {/* Arrow pointer */}
-                              <div className="absolute -bottom-1 right-8 w-2 h-2 bg-primary transform rotate-45" />
+                              <div className="absolute -bottom-1 right-3 w-2 h-2 bg-primary transform rotate-45" />
                             </div>
                           </div>
                         )}
