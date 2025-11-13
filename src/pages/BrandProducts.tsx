@@ -313,7 +313,7 @@ const BrandProducts = () => {
 
                 {/* Match Score - Only show if > 60% */}
                 {product.sim_score > 0.6 && (
-                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20 self-end">
                     {(product.sim_score * 100).toFixed(0)}% Match
                   </Badge>
                 )}
