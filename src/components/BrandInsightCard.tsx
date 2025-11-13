@@ -1,9 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronRight } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import { cn } from "@/lib/utils";
 import { useAnalytics, ThemeId } from "@/hooks/useAnalytics";
 import { useGATracking } from "@/hooks/useGATracking";
 import { useNavigate } from "react-router-dom";
@@ -27,11 +24,6 @@ interface BrandInsightCardProps {
   creatorId: number | null;
   brands: BrandData[];
   delay?: number;
-  isOpen: boolean;
-  onOpenChange: (isOpen: boolean) => void;
-  showTooltipOnFirst?: boolean;
-  onFirstBrandClick?: () => void;
-  onDismissTooltip?: () => void;
 }
 
 const BrandAvatar = ({ logoUrl, brandName }: { logoUrl?: string; brandName: string }) => {
@@ -61,24 +53,17 @@ const BrandInsightCard = ({
   creatorId,
   brands,
   delay = 0,
-  isOpen,
-  onOpenChange,
-  showTooltipOnFirst = false,
-  onFirstBrandClick,
-  onDismissTooltip,
 }: BrandInsightCardProps) => {
   const { trackThemeView, trackBrandClick } = useAnalytics(creatorId);
-  const { trackThemeImpression, trackThemeInteraction, trackBrandInteraction } = useGATracking();
+  const { trackThemeImpression, trackBrandInteraction } = useGATracking();
   const navigate = useNavigate();
   const cardRef = useRef<HTMLDivElement>(null);
   const [hasTrackedImpression, setHasTrackedImpression] = useState(false);
 
-  // Track theme view on mount (existing Supabase analytics)
   useEffect(() => {
     trackThemeView(themeId);
   }, [themeId, trackThemeView]);
 
-  // Track theme impression when card becomes visible (GA4)
   useEffect(() => {
     if (!cardRef.current || hasTrackedImpression) return;
 
@@ -100,7 +85,6 @@ const BrandInsightCard = ({
     );
 
     observer.observe(cardRef.current);
-
     return () => {
       if (cardRef.current) {
         observer.unobserve(cardRef.current);
@@ -108,153 +92,98 @@ const BrandInsightCard = ({
     };
   }, [themeId, title, brands.length, hasTrackedImpression, trackThemeImpression]);
 
-  // Calculate max value for proper bar scaling using rounded values
-  const maxValue = brands.length > 0 ? Math.max(...brands.map((b) => Math.ceil(b.value))) : 0;
-
   return (
-    <>
-      <Collapsible open={isOpen} onOpenChange={(open) => {
-        onOpenChange(open);
-        // Track GA4 theme interaction
-        if (open) {
-          trackThemeInteraction({
-            action: 'theme_expand',
-            theme_id: themeId,
-            theme_name: title,
-            brand_count: brands.length,
-          });
-        }
-      }}>
-        <Card
-          ref={cardRef}
-          className={cn(
-            "insight-card animate-fade-in bg-card border-border overflow-hidden transition-all duration-300",
-            isOpen && "ring-2 ring-primary/20 shadow-lg",
-          )}
-          style={{ animationDelay: `${delay}ms` }}
-        >
-          {/* Collapsible Header */}
-          <CollapsibleTrigger className="w-full p-4 sm:p-5 text-left hover:bg-accent/30 transition-all duration-200 group">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 sm:gap-3 flex-1">
-                <Icon className="w-5 h-5 flex-shrink-0 transition-transform group-hover:scale-110" style={{ color }} />
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-base font-semibold text-foreground mb-0.5">{title}</h3>
-                  <p className="text-xs sm:text-sm text-muted-foreground leading-tight">
-                    {title === "Top Trending Brands"
-                      ? "What other creators similar to you are talking about most"
-                      : tagline}
-                  </p>
-                </div>
+    <Card 
+      ref={cardRef}
+      className="overflow-hidden border-primary/10 bg-gradient-to-br from-background to-muted/20 backdrop-blur-sm insight-card"
+    >
+      <div className="p-4 border-b border-primary/10">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg" style={{ backgroundColor: `${color}15` }}>
+            <Icon className="w-5 h-5" style={{ color }} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-base font-semibold text-foreground mb-0.5 truncate">{title}</h3>
+            <p className="text-xs text-muted-foreground truncate">{tagline}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="px-3 pb-3 pt-3 space-y-3">
+        {brands.length === 0 && (
+          <p className="text-sm text-muted-foreground text-center py-4">
+            No brands available in this category
+          </p>
+        )}
+        
+        {brands.map((brand, index) => {
+          const handleBrandClick = async () => {
+            if (creatorId && brand.brand_id) {
+              await trackBrandClick(themeId as string, brand.brand_id);
+            }
+
+            trackBrandInteraction({
+              brand_id: brand.brand_id?.toString() || brand.brand_name,
+              brand_name: brand.brand_name,
+              theme_id: themeId as string,
+              theme_name: title,
+              position: index,
+              interaction_type: 'brand_click',
+            });
+
+            if (brand.brand_id) {
+              try {
+                const { data: brandData, error } = await supabase
+                  .from('brands')
+                  .select('brand_name, display_name')
+                  .eq('brand_id', brand.brand_id)
+                  .single();
+
+                if (error) {
+                  console.error('Error fetching brand details:', error);
+                  navigate(`/brands/${brand.brand_id}`);
+                  return;
+                }
+
+                const displayName = brandData?.display_name || brandData?.brand_name || brand.brand_name;
+                navigate(`/brands/${brand.brand_id}`, { 
+                  state: { 
+                    brandName: displayName,
+                    logoUrl: brand.logo_url,
+                    websiteUrl: brand.website_url,
+                    sourcingLink: brand.sourcing_link,
+                    themeId: themeId,
+                  } 
+                });
+              } catch (error) {
+                console.error('Error in brand click handler:', error);
+                navigate(`/brands/${brand.brand_id}`);
+              }
+            }
+          };
+
+          return (
+            <div
+              key={`${brand.brand_name}-${index}`}
+              onClick={handleBrandClick}
+              className="flex items-center gap-2 p-3 rounded-lg hover:bg-muted/50 transition-all duration-200 cursor-pointer border border-primary/20 shadow-sm active:shadow-md"
+            >
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <BrandAvatar logoUrl={brand.logo_url} brandName={brand.brand_name} />
+                <span className="text-xs font-medium text-foreground truncate">
+                  {brand.brand_name}
+                </span>
               </div>
-              <ChevronDown
-                className={cn(
-                  "w-5 h-5 text-muted-foreground transition-all duration-300 flex-shrink-0 ml-2 group-hover:text-primary",
-                  isOpen && "rotate-180",
-                )}
-              />
-            </div>
-          </CollapsibleTrigger>
-
-          {/* Collapsible Content */}
-          <CollapsibleContent className="accordion-content">
-            <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-1">
-              {/* Metric Header */}
-              <div className="flex justify-end mb-2">
-                <p className="text-[10px] sm:text-xs text-muted-foreground font-medium">
-                  {title === "Top Trending Brands" && "Recent shares by similar creators"}
-                  {title === "Best Reach Brands" && "Views per recent posts"}
-                  {title === "Fastest Selling Products" && "Sales per link(₹)"}
-                </p>
-              </div>
-
-              {/* Brand List */}
-              <div className="space-y-3">
-                {brands.length === 0 ? (
-                  <div className="py-8 text-center">
-                    <p className="text-muted-foreground">No brands available for this category</p>
-                  </div>
-                ) : (
-                  brands.map((brand, index) => {
-                    const roundedValue = Math.ceil(brand.value);
-                    const barWidth = maxValue > 0 ? (roundedValue / maxValue) * 100 : 0;
-
-                    return (
-                      <div
-                        key={`${brand.brand_name}-${index}`}
-                        className="space-y-2 brand-tile-stagger relative"
-                        style={{ "--stagger-index": index } as any}
-                      >
-                        {/* Onboarding Tooltip - shown on first brand only */}
-                        {index === 0 && showTooltipOnFirst && (
-                          <div className="absolute -top-14 right-2 z-50 animate-fade-in max-w-[calc(100vw-2rem)]">
-                            <div className="relative bg-primary text-primary-foreground px-3 py-2 rounded-lg shadow-lg text-xs font-medium whitespace-nowrap">
-                              Tap to view products
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onDismissTooltip?.();
-                                }}
-                                className="ml-2 hover:opacity-80 text-base leading-none"
-                                aria-label="Dismiss"
-                              >
-                                ×
-                              </button>
-                              {/* Arrow pointer */}
-                              <div className="absolute -bottom-1 right-3 w-2 h-2 bg-primary transform rotate-45" />
-                            </div>
-                          </div>
-                        )}
-                        
-                        {/* Brand Info Row */}
-                        <div
-                          className="group flex items-center justify-between cursor-pointer bg-card active:bg-accent active:scale-[0.98] p-3 rounded-lg transition-all duration-200 border border-primary/20 shadow-sm active:shadow-md"
-                          onClick={() => {
-                            // Notify parent if this is the first brand
-                            if (index === 0 && onFirstBrandClick) {
-                              onFirstBrandClick();
-                            }
-                            // Track existing Supabase analytics
-                            if (brand.brand_id) {
-                              trackBrandClick(brand.brand_id, themeId);
-                            }
-                            // Track GA4 brand click
-                            trackBrandInteraction({
-                              action: 'brand_click',
-                              brand_id: brand.brand_id || 0,
-                              brand_name: brand.brand_name,
-                              theme_id: themeId,
-                            });
-                            navigate(
-                              `/brand/products?brand_name=${encodeURIComponent(brand.brand_name)}`,
-                            );
-                          }}
-                          role="button"
-                          tabIndex={0}
-                        >
-                          <div className="flex items-center gap-2 flex-1 min-w-0">
-                            <BrandAvatar logoUrl={brand.logo_url} brandName={brand.brand_name} />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold text-foreground truncate">{brand.brand_name}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <p className="text-sm font-semibold text-foreground">
-                              {Math.ceil(brand.value).toLocaleString()}
-                            </p>
-                            <ChevronRight className="w-5 h-5 text-primary transition-all" />
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <span className="text-xs font-medium text-foreground whitespace-nowrap">
+                  {brand.value}
+                </span>
               </div>
             </div>
-          </CollapsibleContent>
-        </Card>
-      </Collapsible>
-    </>
+          );
+        })}
+      </div>
+    </Card>
   );
 };
 
