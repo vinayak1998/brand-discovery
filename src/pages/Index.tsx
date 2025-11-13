@@ -206,6 +206,13 @@ const Index = () => {
 
           {/* Brand Discovery Tab */}
           <TabsContent value="brands" className="space-y-12">
+            {/* Instructional text */}
+            <div className="text-center mb-8">
+              <p className="text-muted-foreground text-sm md:text-base">
+                Tap any brand to see personalized product recommendations
+              </p>
+            </div>
+            
             {/* Brand Insight Cards */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {themes.map((theme, index) => {
