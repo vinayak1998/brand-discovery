@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertCircle, Sparkles } from 'lucide-react';
 import { THEMES, getTheme } from '@/config/themes';
 import { useAnalytics, ThemeId } from '@/hooks/useAnalytics';
+import { useOnboardingTooltip } from '@/hooks/useOnboardingTooltip';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -31,6 +32,9 @@ const Index = () => {
   const [clickCount, setClickCount] = useState(0);
   const [scrollCount, setScrollCount] = useState(0);
   const hasTrackedEngagement = useRef(false);
+  
+  // Onboarding tooltip for brand discovery
+  const { showTooltip, onBrandClick, dismissTooltip } = useOnboardingTooltip();
   
   // Redirect to landing if no creator_id (but wait if URL has creator_id being processed)
   useEffect(() => {
@@ -206,6 +210,7 @@ const Index = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {themes.map((theme, index) => {
                 const themeBrands = getInsightsByTheme(theme.id);
+                const isFirstTheme = index === 0;
                 
                 return (
                   <BrandInsightCard
@@ -238,6 +243,9 @@ const Index = () => {
                         return next;
                       });
                     }}
+                    showTooltipOnFirst={isFirstTheme && showTooltip && activeTab === 'brands'}
+                    onFirstBrandClick={onBrandClick}
+                    onDismissTooltip={dismissTooltip}
                   />
                 );
               })}

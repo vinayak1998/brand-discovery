@@ -29,6 +29,9 @@ interface BrandInsightCardProps {
   delay?: number;
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
+  showTooltipOnFirst?: boolean;
+  onFirstBrandClick?: () => void;
+  onDismissTooltip?: () => void;
 }
 
 const BrandAvatar = ({ logoUrl, brandName }: { logoUrl?: string; brandName: string }) => {
@@ -60,6 +63,9 @@ const BrandInsightCard = ({
   delay = 0,
   isOpen,
   onOpenChange,
+  showTooltipOnFirst = false,
+  onFirstBrandClick,
+  onDismissTooltip,
 }: BrandInsightCardProps) => {
   const { trackThemeView, trackBrandClick } = useAnalytics(creatorId);
   const { trackThemeImpression, trackThemeInteraction, trackBrandInteraction } = useGATracking();
@@ -162,14 +168,6 @@ const BrandInsightCard = ({
                 </p>
               </div>
 
-              {/* Helper Text */}
-              <div className="mb-3 pb-2 border-b border-border/30">
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <span className="text-primary">👉</span>
-                  <span>Tap any brand to view personalized product recommendations</span>
-                </p>
-              </div>
-
               {/* Brand List */}
               <div className="space-y-3">
                 {brands.length === 0 ? (
@@ -184,13 +182,38 @@ const BrandInsightCard = ({
                     return (
                       <div
                         key={`${brand.brand_name}-${index}`}
-                        className="space-y-2 brand-tile-stagger"
+                        className="space-y-2 brand-tile-stagger relative"
                         style={{ "--stagger-index": index } as any}
                       >
+                        {/* Onboarding Tooltip - shown on first brand only */}
+                        {index === 0 && showTooltipOnFirst && (
+                          <div className="absolute -top-14 right-8 z-50 animate-fade-in">
+                            <div className="relative bg-primary text-primary-foreground px-3 py-2 rounded-lg shadow-lg text-xs font-medium whitespace-nowrap">
+                              Tap to view products
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onDismissTooltip?.();
+                                }}
+                                className="ml-2 hover:opacity-80 text-base leading-none"
+                                aria-label="Dismiss"
+                              >
+                                ×
+                              </button>
+                              {/* Arrow pointer */}
+                              <div className="absolute -bottom-1 right-8 w-2 h-2 bg-primary transform rotate-45" />
+                            </div>
+                          </div>
+                        )}
+                        
                         {/* Brand Info Row */}
                         <div
                           className="group flex items-center justify-between cursor-pointer bg-card active:bg-accent active:scale-[0.98] p-3 rounded-lg transition-all duration-200 border border-primary/20 shadow-sm active:shadow-md"
                           onClick={() => {
+                            // Notify parent if this is the first brand
+                            if (index === 0 && onFirstBrandClick) {
+                              onFirstBrandClick();
+                            }
                             // Track existing Supabase analytics
                             if (brand.brand_id) {
                               trackBrandClick(brand.brand_id, themeId);
