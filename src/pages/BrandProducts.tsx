@@ -5,6 +5,7 @@ import { useGATracking } from '@/hooks/useGATracking';
 import { useScrollTracking } from '@/hooks/useScrollTracking';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
@@ -312,9 +313,9 @@ const BrandProducts = () => {
 
                 {/* Match Score - Only show if > 60% */}
                 {product.sim_score > 0.6 && (
-                  <p className="text-xs text-muted-foreground">
-                    Match Score: {(product.sim_score * 100).toFixed(0)}%
-                  </p>
+                  <Badge variant="secondary" className="text-xs bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">
+                    {(product.sim_score * 100).toFixed(0)}% Match
+                  </Badge>
                 )}
               </Card>
             ))}
