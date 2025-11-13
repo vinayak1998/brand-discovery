@@ -310,10 +310,12 @@ const BrandProducts = () => {
                   </p>
                 )}
 
-                {/* Match Score - now visible on mobile */}
-                <p className="text-xs text-muted-foreground">
-                  Match Score: {(product.sim_score * 100).toFixed(0)}%
-                </p>
+                {/* Match Score - Only show if > 60% */}
+                {product.sim_score > 0.6 && (
+                  <p className="text-xs text-muted-foreground">
+                    Match Score: {(product.sim_score * 100).toFixed(0)}%
+                  </p>
+                )}
               </Card>
             ))}
           </div>
