@@ -1,11 +1,10 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useEffect, useState, useRef } from 'react';
-import { useInsightsData, useSurveySubmission } from '@/hooks/useInsightsData';
+import { useInsightsData } from '@/hooks/useInsightsData';
 import { useCreatorContext } from '@/contexts/CreatorContext';
 import { useGATracking } from '@/hooks/useGATracking';
 import PageHeader from '@/components/PageHeader';
 import BrandInsightCard from '@/components/BrandInsightCard';
-import SurveySection from '@/components/SurveySection';
 import AllProductsView from '@/components/AllProductsView';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -27,8 +26,6 @@ const Index = () => {
   
   const initialOpenId = Object.values(THEMES)[0]?.id ?? null;
   const [openAccordion, setOpenAccordion] = useState<string | null>(initialOpenId); // Ensure at least one is always open
-  const [timeSpent, setTimeSpent] = useState(0);
-  const [hasInteracted, setHasInteracted] = useState(false);
   const [clickCount, setClickCount] = useState(0);
   const [scrollCount, setScrollCount] = useState(0);
   const hasTrackedEngagement = useRef(false);
@@ -41,7 +38,6 @@ const Index = () => {
   }, [isReady, creatorUuid, creatorIdFromUrl, navigate]);
 
   const { insights, loading, error, getInsightsByTheme, hasData, lastUpdated, creatorName, creatorIdNum } = useInsightsData(creatorUuid || '');
-  const { submitSurvey } = useSurveySubmission();
   
   // Initialize analytics tracking
   const { trackPageView, trackCTAClick } = useAnalytics(creatorIdNum);
@@ -60,34 +56,25 @@ const Index = () => {
     }
   }, [creatorIdNum, hasData, trackPageView, trackGAPageView, activeTab]);
 
-  // Timer for 30 seconds
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeSpent(prev => prev + 1);
-    }, 1000);
-    
-    return () => clearInterval(timer);
-  }, []);
-
-  // Track engagement qualified (retention criteria: 2 clicks OR 1 scroll OR 20 seconds)
+  // Track engagement qualified (retention criteria: 2 clicks OR 1 scroll)
   useEffect(() => {
     if (hasTrackedEngagement.current) return;
     
-    const meetsRetentionCriteria = clickCount >= 2 || scrollCount >= 1 || timeSpent >= 20;
+    const meetsRetentionCriteria = clickCount >= 2 || scrollCount >= 1;
     
     if (meetsRetentionCriteria) {
-      const engagementType = clickCount >= 2 ? 'clicks' : scrollCount >= 1 ? 'scroll' : 'time';
+      const engagementType = clickCount >= 2 ? 'clicks' : 'scroll';
       
       trackEngagementQualified({
         engagement_type: engagementType,
-        time_spent: timeSpent,
+        time_spent: 0,
         interaction_count: clickCount,
         scroll_depth: scrollCount,
       });
       
       hasTrackedEngagement.current = true;
     }
-  }, [clickCount, scrollCount, timeSpent, trackEngagementQualified]);
+  }, [clickCount, scrollCount, trackEngagementQualified]);
 
   // Track scroll events
   useEffect(() => {
@@ -102,9 +89,6 @@ const Index = () => {
     window.addEventListener('scroll', handleScroll, { once: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  // Check if survey should be shown (30 seconds OR 1+ interactions)
-  const showSurvey = timeSpent >= 30 || hasInteracted;
 
   // Check if this is an invalid creator ID (no data exists)
   const isInvalidCreator = !loading && !error && !hasData && creatorUuid && creatorUuid !== '0000000000';
@@ -199,15 +183,7 @@ const Index = () => {
           <Card className="p-8 text-center">
             <div className="text-6xl mb-4">📊</div>
             <h2 className="text-xl font-semibold mb-2">We're preparing your insights</h2>
-            <p className="text-muted-foreground mb-8">Please check back soon.</p>
-            
-            {/* Still show survey even with no data */}
-            <div className="max-w-2xl mx-auto">
-              <SurveySection 
-                creatorId={creatorUuid || ''} 
-                onSubmit={submitSurvey}
-              />
-            </div>
+            <p className="text-muted-foreground">Please check back soon.</p>
           </Card>
         </main>
       </div>
@@ -221,7 +197,6 @@ const Index = () => {
       <main className="max-w-7xl mx-auto px-6 py-4">
         {/* Tabs for Brand Discovery vs Product Discovery */}
         <Tabs value={activeTab} onValueChange={(tab) => {
-          setHasInteracted(true);
           setClickCount(prev => prev + 1);
           navigate(`/insights/${tab}`);
         }} className="w-full">
@@ -257,7 +232,6 @@ const Index = () => {
                     delay={index * 100}
                     isOpen={openAccordion === theme.id}
                     onOpenChange={(isOpen) => {
-                      setHasInteracted(true);
                       setClickCount(prev => prev + 1);
                       if (isOpen) {
                         setOpenAccordion(theme.id);
@@ -272,22 +246,6 @@ const Index = () => {
                 );
               })}
             </div>
-
-            {/* Survey Section - Only show after 30s or 1+ interactions */}
-            {showSurvey && (
-              <div className="max-w-2xl mx-auto">
-                <SurveySection 
-                  creatorId={creatorUuid || ''} 
-                  onSubmit={(data) => {
-                    submitSurvey(data);
-                    // Track survey submit
-                    trackConversionAction({
-                      action: 'survey_submit',
-                    });
-                  }}
-                />
-              </div>
-            )}
           </TabsContent>
 
           {/* Product Discovery Tab - Only load data when tab is active */}
