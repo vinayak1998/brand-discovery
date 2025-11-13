@@ -249,7 +249,7 @@ const BrandProducts = () => {
             {products.map((product) => (
               <Card 
                 key={product.id} 
-                className="p-3 sm:p-4 flex flex-col hover:shadow-lg transition-shadow cursor-pointer active:scale-[0.98]"
+                className="p-2 sm:p-3 flex flex-col hover:shadow-lg transition-shadow cursor-pointer active:scale-[0.98]"
                 onClick={() => {
                   if (product.short_code) {
                     const url = `https://www.wishlink.com/share/${product.short_code}?source=brand_discovery&creator=${creatorNumericId}`;
@@ -282,7 +282,7 @@ const BrandProducts = () => {
                 }}
               >
                 {/* Product Image */}
-                <div className="w-full aspect-square mb-3 sm:mb-4 bg-muted rounded overflow-hidden">
+                <div className="w-full aspect-square mb-2 sm:mb-3 bg-muted rounded overflow-hidden">
                   {product.thumbnail_url ? (
                     <img
                       src={product.thumbnail_url}
@@ -300,20 +300,20 @@ const BrandProducts = () => {
                 </div>
 
                 {/* Product Name */}
-                <h3 className="text-xs sm:text-sm font-semibold text-foreground mb-1 sm:mb-2 line-clamp-2 flex-1">
+                <h3 className="text-xs sm:text-sm font-semibold text-foreground mb-1 line-clamp-2 flex-1">
                   {product.name}
                 </h3>
 
                 {/* Price */}
                 {product.price && (
-                  <p className="text-sm font-bold text-foreground mb-2">
+                  <p className="text-sm font-bold text-foreground mb-1">
                     ₹{product.price.toLocaleString('en-IN')}
                   </p>
                 )}
 
                 {/* Match Score - Only show if > 60% */}
                 {product.sim_score > 0.6 && (
-                  <Badge variant="secondary" className="text-xs bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">
                     {(product.sim_score * 100).toFixed(0)}% Match
                   </Badge>
                 )}
