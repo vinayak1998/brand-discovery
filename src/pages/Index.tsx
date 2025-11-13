@@ -205,9 +205,9 @@ const Index = () => {
           </TabsList>
 
           {/* Brand Discovery Tab */}
-          <TabsContent value="brands" className="space-y-12">
+          <TabsContent value="brands" className="space-y-4">
             {/* Instructional text */}
-            <div className="text-center mb-4">
+            <div className="text-center mb-2">
               <p className="text-muted-foreground text-xs md:text-sm">
                 Tap any brand to see personalized product recommendations
               </p>
