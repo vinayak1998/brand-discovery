@@ -19,6 +19,7 @@ interface Product {
   sim_score: number;
   short_code: string | null;
   price: number | null;
+  commission_pct: number | null;
 }
 
 const BrandProducts = () => {
@@ -36,6 +37,7 @@ const BrandProducts = () => {
   const [sourcingLink, setSourcingLink] = useState<string | null>(null);
   const [brandId, setBrandId] = useState<number | null>(null);
   const [displayBrandName, setDisplayBrandName] = useState<string>('');
+  const [commissionDisplay, setCommissionDisplay] = useState<string | null>(null);
 
   // GA4 tracking
   const { 
@@ -95,7 +97,7 @@ const BrandProducts = () => {
         // Fetch products for this creator x brand using brand_id for consistency
         const { data, error: productsError } = await supabase
           .from('creator_x_product_recommendations')
-          .select('id, name, brand, thumbnail_url, purchase_url, sim_score, short_code, price')
+          .select('id, name, brand, thumbnail_url, purchase_url, sim_score, short_code, price, commission_pct')
           .eq('creator_id', creatorData.creator_id)
           .eq('brand_id', brandData.brand_id)
           .order('sim_score', { ascending: false })
@@ -103,7 +105,26 @@ const BrandProducts = () => {
 
         if (productsError) throw productsError;
 
-        setProducts(data || []);
+        const fetchedProducts = data || [];
+        setProducts(fetchedProducts);
+
+        // Calculate commission display
+        const commissions = fetchedProducts
+          .map(p => p.commission_pct)
+          .filter((c): c is number => c !== null && c > 0);
+        
+        if (commissions.length > 0) {
+          const uniqueCommissions = Array.from(new Set(commissions)).sort((a, b) => a - b);
+          if (uniqueCommissions.length === 1) {
+            setCommissionDisplay(`${uniqueCommissions[0]}% commission`);
+          } else {
+            const min = uniqueCommissions[0];
+            const max = uniqueCommissions[uniqueCommissions.length - 1];
+            setCommissionDisplay(`${min}-${max}% commission`);
+          }
+        } else {
+          setCommissionDisplay(null);
+        }
       } catch (err) {
         console.error('Error fetching products:', err);
         setError(err instanceof Error ? err.message : 'Failed to load products');
@@ -233,6 +254,11 @@ const BrandProducts = () => {
           <p className="text-sm sm:text-base text-muted-foreground mt-1">
             {products.length} products curated for you
           </p>
+          {commissionDisplay && (
+            <p className="text-sm text-muted-foreground">
+              {commissionDisplay}
+            </p>
+          )}
         </div>
 
         {/* Products Grid */}
