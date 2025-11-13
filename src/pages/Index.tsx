@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertCircle, Sparkles } from 'lucide-react';
 import { THEMES, getTheme } from '@/config/themes';
 import { useAnalytics, ThemeId } from '@/hooks/useAnalytics';
-
+import { useOnboardingTooltip } from '@/hooks/useOnboardingTooltip';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -25,9 +25,16 @@ const Index = () => {
   const pathname = window.location.pathname;
   const activeTab = pathname.includes('/products') ? 'products' : 'brands';
   
+  // Track which accordions are open (all start open by default)
+  const [openAccordions, setOpenAccordions] = useState<Set<string>>(
+    new Set(Object.values(THEMES).map(t => t.id))
+  );
   const [clickCount, setClickCount] = useState(0);
   const [scrollCount, setScrollCount] = useState(0);
   const hasTrackedEngagement = useRef(false);
+  
+  // Onboarding tooltip for brand discovery
+  const { showTooltip, onBrandClick, dismissTooltip } = useOnboardingTooltip();
   
   // Redirect to landing if no creator_id (but wait if URL has creator_id being processed)
   useEffect(() => {
@@ -223,6 +230,22 @@ const Index = () => {
                       sourcing_link: insight.sourcing_link,
                     }))}
                     delay={index * 100}
+                    isOpen={openAccordions.has(theme.id)}
+                    onOpenChange={(isOpen) => {
+                      setClickCount(prev => prev + 1);
+                      setOpenAccordions(prev => {
+                        const next = new Set(prev);
+                        if (isOpen) {
+                          next.add(theme.id);
+                        } else {
+                          next.delete(theme.id);
+                        }
+                        return next;
+                      });
+                    }}
+                    showTooltipOnFirst={isFirstTheme && showTooltip && activeTab === 'brands'}
+                    onFirstBrandClick={onBrandClick}
+                    onDismissTooltip={dismissTooltip}
                   />
                 );
               })}
