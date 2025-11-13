@@ -24,8 +24,10 @@ const Index = () => {
   const pathname = window.location.pathname;
   const activeTab = pathname.includes('/products') ? 'products' : 'brands';
   
-  const initialOpenId = Object.values(THEMES)[0]?.id ?? null;
-  const [openAccordion, setOpenAccordion] = useState<string | null>(initialOpenId); // Ensure at least one is always open
+  // Track which accordions are open (all start open by default)
+  const [openAccordions, setOpenAccordions] = useState<Set<string>>(
+    new Set(Object.values(THEMES).map(t => t.id))
+  );
   const [clickCount, setClickCount] = useState(0);
   const [scrollCount, setScrollCount] = useState(0);
   const hasTrackedEngagement = useRef(false);
@@ -95,14 +97,7 @@ const Index = () => {
 
   const themes = Object.values(THEMES);
 
-  // Ensure at least one accordion is always open
-  useEffect(() => {
-    if (!openAccordion || !themes.some(t => t.id === openAccordion)) {
-      if (themes[0]) {
-        setOpenAccordion(themes[0].id);
-      }
-    }
-  }, [openAccordion, themes]);
+  // No forced accordion behavior - users can freely expand/collapse all
 
   if (loading) {
     return (
@@ -230,17 +225,18 @@ const Index = () => {
                       sourcing_link: insight.sourcing_link,
                     }))}
                     delay={index * 100}
-                    isOpen={openAccordion === theme.id}
+                    isOpen={openAccordions.has(theme.id)}
                     onOpenChange={(isOpen) => {
                       setClickCount(prev => prev + 1);
-                      if (isOpen) {
-                        setOpenAccordion(theme.id);
-                      } else if (openAccordion === theme.id) {
-                        // Open next theme in cyclic order
-                        const currentIndex = themes.findIndex(t => t.id === theme.id);
-                        const nextIndex = (currentIndex + 1) % themes.length;
-                        setOpenAccordion(themes[nextIndex].id);
-                      }
+                      setOpenAccordions(prev => {
+                        const next = new Set(prev);
+                        if (isOpen) {
+                          next.add(theme.id);
+                        } else {
+                          next.delete(theme.id);
+                        }
+                        return next;
+                      });
                     }}
                   />
                 );

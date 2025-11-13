@@ -162,6 +162,14 @@ const BrandInsightCard = ({
                 </p>
               </div>
 
+              {/* Helper Text */}
+              <div className="mb-3 pb-2 border-b border-border/30">
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <span className="text-primary">👉</span>
+                  <span>Tap any brand to view personalized product recommendations</span>
+                </p>
+              </div>
+
               {/* Brand List */}
               <div className="space-y-3">
                 {brands.length === 0 ? (
@@ -181,7 +189,7 @@ const BrandInsightCard = ({
                       >
                         {/* Brand Info Row */}
                         <div
-                          className="group flex items-center justify-between cursor-pointer hover:bg-accent/70 active:bg-accent active:scale-[0.98] p-2 rounded-lg transition-all duration-200 ring-offset-background focus-visible:outline-none focus-visible:ring-2 border border-border hover:border-primary/40 hover:shadow-sm"
+                          className="group flex items-center justify-between cursor-pointer bg-card active:bg-accent active:scale-[0.98] p-3 rounded-lg transition-all duration-200 border border-primary/20 shadow-sm active:shadow-md"
                           onClick={() => {
                             // Track existing Supabase analytics
                             if (brand.brand_id) {
@@ -211,7 +219,7 @@ const BrandInsightCard = ({
                             <p className="text-sm font-semibold text-foreground">
                               {Math.ceil(brand.value).toLocaleString()}
                             </p>
-                            <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                            <ChevronRight className="w-5 h-5 text-primary transition-all" />
                           </div>
                         </div>
                       </div>
