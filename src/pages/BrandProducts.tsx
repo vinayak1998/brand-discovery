@@ -19,7 +19,6 @@ interface Product {
   sim_score: number;
   short_code: string | null;
   price: number | null;
-  commission_pct: number | null;
 }
 
 const BrandProducts = () => {
@@ -81,7 +80,7 @@ const BrandProducts = () => {
         // Fetch brand data for sourcing link AND display name
         const { data: brandData, error: brandError } = await supabase
           .from('brands')
-          .select('sourcing_link, brand_id, brand_name, display_name')
+          .select('sourcing_link, brand_id, brand_name, display_name, creator_commission')
           .eq('brand_name', brandName)
           .maybeSingle();
 
@@ -94,10 +93,17 @@ const BrandProducts = () => {
         const brandDisplayName = brandData.display_name || brandData.brand_name;
         setDisplayBrandName(brandDisplayName);
 
+        // Set commission display from brand-level data
+        if (brandData.creator_commission && brandData.creator_commission > 0) {
+          setCommissionDisplay(`${brandData.creator_commission}% commission`);
+        } else {
+          setCommissionDisplay(null);
+        }
+
         // Fetch products for this creator x brand using brand_id for consistency
         const { data, error: productsError } = await supabase
           .from('creator_x_product_recommendations')
-          .select('id, name, brand, thumbnail_url, purchase_url, sim_score, short_code, price, commission_pct')
+          .select('id, name, brand, thumbnail_url, purchase_url, sim_score, short_code, price')
           .eq('creator_id', creatorData.creator_id)
           .eq('brand_id', brandData.brand_id)
           .order('sim_score', { ascending: false })
@@ -105,26 +111,7 @@ const BrandProducts = () => {
 
         if (productsError) throw productsError;
 
-        const fetchedProducts = data || [];
-        setProducts(fetchedProducts);
-
-        // Calculate commission display
-        const commissions = fetchedProducts
-          .map(p => p.commission_pct)
-          .filter((c): c is number => c !== null && c > 0);
-        
-        if (commissions.length > 0) {
-          const uniqueCommissions = Array.from(new Set(commissions)).sort((a, b) => a - b);
-          if (uniqueCommissions.length === 1) {
-            setCommissionDisplay(`${uniqueCommissions[0]}% commission`);
-          } else {
-            const min = uniqueCommissions[0];
-            const max = uniqueCommissions[uniqueCommissions.length - 1];
-            setCommissionDisplay(`${min}-${max}% commission`);
-          }
-        } else {
-          setCommissionDisplay(null);
-        }
+        setProducts(data || []);
       } catch (err) {
         console.error('Error fetching products:', err);
         setError(err instanceof Error ? err.message : 'Failed to load products');
