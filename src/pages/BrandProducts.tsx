@@ -4,12 +4,13 @@ import { useCreatorContext } from '@/contexts/CreatorContext';
 import { useCreatorData } from '@/hooks/useCreatorData';
 import { useGATracking } from '@/hooks/useGATracking';
 import { useScrollTracking } from '@/hooks/useScrollTracking';
-import { useBrandProducts } from '@/hooks/useBrandProducts';
+import { useBrandProducts, type SortOption } from '@/hooks/useBrandProducts';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, ExternalLink } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ArrowLeft, ExternalLink, ArrowUpDown } from 'lucide-react';
 
 interface Product {
   id: number;
@@ -29,6 +30,7 @@ const BrandProducts = () => {
   const { creatorData } = useCreatorData(creatorId);
   const brandName = searchParams.get('brand_name');
   const observerTarget = useRef<HTMLDivElement>(null);
+  const [sortBy, setSortBy] = useState<SortOption>('match');
   
   const { 
     products, 
@@ -40,7 +42,7 @@ const BrandProducts = () => {
     totalCount,
     brandData,
     creatorData: fetchedCreatorData
-  } = useBrandProducts(creatorId, brandName, isReady);
+  } = useBrandProducts(creatorId, brandName, isReady, sortBy);
 
   // Derive display values from hook data
   const brandSourcingEnabled = fetchedCreatorData?.brand_sourcing ?? false;
