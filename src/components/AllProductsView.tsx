@@ -10,7 +10,7 @@ import { useGATracking } from '@/hooks/useGATracking';
 import { useScrollTracking } from '@/hooks/useScrollTracking';
 import { getTheme } from '@/config/themes';
 import { Filter, X, ArrowUpDown } from 'lucide-react';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { CategoryFilterItem } from './CategoryFilterItem';
 
 interface AllProductsViewProps {
@@ -21,10 +21,11 @@ interface AllProductsViewProps {
 type SortOption = 'match' | 'reach-high' | 'sales-high' | 'link-shares' | 'price-low' | 'price-high';
 
 const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProps) => {
-  const { products, loading, error, creatorNumericId } = useAllProducts(creatorUuid, shouldLoad);
+  const { products, loading, error, creatorNumericId, loadMore, hasMore, loadingMore } = useAllProducts(creatorUuid, shouldLoad);
   const [selectedSubcategories, setSelectedSubcategories] = useState<Set<string>>(new Set());
   const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set());
   const [sortBy, setSortBy] = useState<SortOption>('match');
+  const observerTarget = useRef<HTMLDivElement>(null);
 
   // GA4 tracking
   const {
@@ -35,6 +36,30 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProp
   } = useGATracking(creatorNumericId);
   
   const { currentDepth } = useScrollTracking();
+
+  // Infinite scroll observer
+  const handleObserver = useCallback((entries: IntersectionObserverEntry[]) => {
+    const [target] = entries;
+    if (target.isIntersecting && hasMore && !loadingMore) {
+      loadMore();
+    }
+  }, [hasMore, loadingMore, loadMore]);
+
+  useEffect(() => {
+    const element = observerTarget.current;
+    if (!element) return;
+
+    const option = {
+      root: null,
+      rootMargin: '400px', // Start loading 400px before the bottom
+      threshold: 0,
+    };
+
+    const observer = new IntersectionObserver(handleObserver, option);
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, [handleObserver]);
 
   // Build hierarchical category structure and category-to-subcategories mapping
   // Only show filters if ALL products have cat AND sscat
@@ -601,8 +626,21 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProp
               </Badge>
             )}
           </Card>
-            );
-          })}
+        );
+      })}
+    </div>
+      )}
+
+      {/* Infinite Scroll Observer Target */}
+      <div ref={observerTarget} className="h-4" />
+
+      {/* Loading More Indicator */}
+      {loadingMore && (
+        <div className="flex justify-center py-8">
+          <div className="flex flex-col items-center gap-2">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <p className="text-sm text-muted-foreground">Loading more products...</p>
+          </div>
         </div>
       )}
     </div>
