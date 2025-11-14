@@ -97,19 +97,19 @@ const BrandProducts = () => {
         brand_id: brandId,
         brand_name: displayBrandName,
         theme_id: '', // Not available on this page
-        product_count: products.length,
+        product_count: totalCount,
       });
 
       // Track product list view
       trackProductListView({
-        list_context: products.length === 0 ? 'empty_state' : 'brand_page',
+        list_context: totalCount === 0 ? 'empty_state' : 'brand_page',
         visible_count: products.length,
-        total_count: products.length,
-        is_empty: products.length === 0,
+        total_count: totalCount,
+        is_empty: totalCount === 0,
         brand_name: displayBrandName,
       });
     }
-  }, [loading, products, brandId, displayBrandName, trackPageView, trackBrandInteraction, trackProductListView]);
+  }, [loading, products, brandId, displayBrandName, totalCount, trackPageView, trackBrandInteraction, trackProductListView]);
 
   if (loading && products.length === 0) {
     return (
