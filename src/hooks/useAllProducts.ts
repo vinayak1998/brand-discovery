@@ -26,7 +26,12 @@ export const useAllProducts = (creatorUuid: string | null, shouldLoad: boolean =
   const [products, setProducts] = useState<ProductWithBrand[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const { trackError } = useGATracking();
+  
+  const PAGE_SIZE = 50;
   
   // Use shared creator data hook
   const { creatorData, loading: creatorLoading } = useCreatorData(creatorUuid);
@@ -67,7 +72,7 @@ export const useAllProducts = (creatorUuid: string | null, shouldLoad: boolean =
           `)
           .eq('creator_id', creatorData.creator_id)
           .order('sim_score', { ascending: false })
-          .limit(500); // Limit initial fetch for performance
+          .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
         const { data, error: productsError } = await productsPromise;
 
@@ -134,8 +139,13 @@ export const useAllProducts = (creatorUuid: string | null, shouldLoad: boolean =
           theme_id: product.brand_id ? (themeMap.get(product.brand_id) || null) : null,
         }));
 
-        setProducts(productsWithBrandInfo);
+        // Check if there are more products to load
+        setHasMore(data.length === PAGE_SIZE);
+        
+        // Append to existing products if loading more, otherwise replace
+        setProducts(prev => page === 0 ? productsWithBrandInfo : [...prev, ...productsWithBrandInfo]);
         setLoading(false);
+        setLoadingMore(false);
       } catch (err) {
         console.error('Error in useAllProducts:', err);
         trackError({
@@ -149,12 +159,22 @@ export const useAllProducts = (creatorUuid: string | null, shouldLoad: boolean =
     };
 
     fetchAllProducts();
-  }, [creatorUuid, creatorData, creatorLoading, shouldLoad, trackError]);
+  }, [creatorUuid, creatorData, creatorLoading, shouldLoad, trackError, page]);
+
+  const loadMore = () => {
+    if (!loadingMore && hasMore && !loading) {
+      setLoadingMore(true);
+      setPage(prev => prev + 1);
+    }
+  };
 
   return { 
     products, 
     loading: loading || creatorLoading, 
     error, 
-    creatorNumericId: creatorData?.creator_id || null 
+    creatorNumericId: creatorData?.creator_id || null,
+    loadMore,
+    hasMore,
+    loadingMore
   };
 };
