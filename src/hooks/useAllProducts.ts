@@ -3,6 +3,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { useGATracking } from './useGATracking';
 import { useCreatorData } from './useCreatorData';
 
+export type SortOption = 'match' | 'reach-high' | 'sales-high' | 'link-shares' | 'price-low' | 'price-high';
+
+export interface FilterOptions {
+  selectedSubcategories: Set<string>;
+  selectedBrands: Set<string>;
+  sortBy: SortOption;
+}
+
 export interface ProductWithBrand {
   id: number;
   name: string;
@@ -22,7 +30,15 @@ export interface ProductWithBrand {
   count_90_days: number | null;
 }
 
-export const useAllProducts = (creatorUuid: string | null, shouldLoad: boolean = true) => {
+export const useAllProducts = (
+  creatorUuid: string | null, 
+  shouldLoad: boolean = true,
+  filterOptions: FilterOptions = {
+    selectedSubcategories: new Set(),
+    selectedBrands: new Set(),
+    sortBy: 'match'
+  }
+) => {
   const [products, setProducts] = useState<ProductWithBrand[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,6 +52,18 @@ export const useAllProducts = (creatorUuid: string | null, shouldLoad: boolean =
   
   // Use shared creator data hook
   const { creatorData, loading: creatorLoading } = useCreatorData(creatorUuid);
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setPage(0);
+    setProducts([]);
+    setHasMore(true);
+    setTotalCount(0);
+  }, [
+    Array.from(filterOptions.selectedSubcategories).join(','),
+    Array.from(filterOptions.selectedBrands).join(','),
+    filterOptions.sortBy
+  ]);
 
   useEffect(() => {
     const fetchAllProducts = async () => {
@@ -55,8 +83,8 @@ export const useAllProducts = (creatorUuid: string | null, shouldLoad: boolean =
           setLoading(true);
         }
 
-        // Fetch products for this creator - PARALLELIZED with brand/insight data below
-        const productsPromise = supabase
+        // Build query with filters
+        let productsQuery = supabase
           .from('creator_x_product_recommendations')
           .select(`
             id, 
@@ -73,22 +101,80 @@ export const useAllProducts = (creatorUuid: string | null, shouldLoad: boolean =
             median_sales,
             count_90_days
           `)
-          .eq('creator_id', creatorData.creator_id)
-          .order('sim_score', { ascending: false })
-          .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+          .eq('creator_id', creatorData.creator_id);
 
-        // Fetch total count only on initial load
-        const promises = page === 0 
-          ? [
-              productsPromise,
-              supabase
+        // Apply category filter
+        if (filterOptions.selectedSubcategories.size > 0) {
+          productsQuery = productsQuery.in('sscat', Array.from(filterOptions.selectedSubcategories));
+        }
+
+        // Apply brand filter - need to map brand names to IDs
+        if (filterOptions.selectedBrands.size > 0) {
+          const { data: brandData } = await supabase
+            .from('brands')
+            .select('brand_id')
+            .in('brand_name', Array.from(filterOptions.selectedBrands));
+          
+          const brandIds = brandData?.map(b => b.brand_id) || [];
+          if (brandIds.length > 0) {
+            productsQuery = productsQuery.in('brand_id', brandIds);
+          }
+        }
+
+        // Apply sorting
+        switch (filterOptions.sortBy) {
+          case 'match':
+            productsQuery = productsQuery.order('sim_score', { ascending: false });
+            break;
+          case 'reach-high':
+            productsQuery = productsQuery.order('median_reach', { ascending: false, nullsFirst: false });
+            break;
+          case 'sales-high':
+            productsQuery = productsQuery.order('median_sales', { ascending: false, nullsFirst: false });
+            break;
+          case 'link-shares':
+            productsQuery = productsQuery.order('count_90_days', { ascending: false });
+            break;
+          case 'price-low':
+            productsQuery = productsQuery.order('price', { ascending: true, nullsFirst: false });
+            break;
+          case 'price-high':
+            productsQuery = productsQuery.order('price', { ascending: false, nullsFirst: false });
+            break;
+        }
+
+        // Apply pagination
+        productsQuery = productsQuery.range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+        
+        const productsPromise = productsQuery;
+
+        // Fetch total count only on initial load (with same filters)
+        const results = page === 0 
+          ? await (async () => {
+              let countQuery = supabase
                 .from('creator_x_product_recommendations')
                 .select('*', { count: 'exact', head: true })
-                .eq('creator_id', creatorData.creator_id)
-            ]
-          : [productsPromise];
+                .eq('creator_id', creatorData.creator_id);
 
-        const results = await Promise.all(promises);
+              if (filterOptions.selectedSubcategories.size > 0) {
+                countQuery = countQuery.in('sscat', Array.from(filterOptions.selectedSubcategories));
+              }
+
+              if (filterOptions.selectedBrands.size > 0) {
+                const { data: brandData } = await supabase
+                  .from('brands')
+                  .select('brand_id')
+                  .in('brand_name', Array.from(filterOptions.selectedBrands));
+                
+                const brandIds = brandData?.map(b => b.brand_id) || [];
+                if (brandIds.length > 0) {
+                  countQuery = countQuery.in('brand_id', brandIds);
+                }
+              }
+
+              return await Promise.all([productsPromise, countQuery]);
+            })()
+          : [await productsPromise];
         const { data, error: productsError } = results[0];
         
         // Set total count on initial load
@@ -182,7 +268,7 @@ export const useAllProducts = (creatorUuid: string | null, shouldLoad: boolean =
     };
 
     fetchAllProducts();
-  }, [creatorUuid, creatorData, creatorLoading, shouldLoad, trackError, page]);
+  }, [creatorUuid, creatorData, creatorLoading, shouldLoad, trackError, page, filterOptions.selectedSubcategories, filterOptions.selectedBrands, filterOptions.sortBy]);
 
   const loadMore = () => {
     if (!loadingMore && hasMore && !loading) {

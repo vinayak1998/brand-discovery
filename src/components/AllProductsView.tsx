@@ -21,10 +21,21 @@ interface AllProductsViewProps {
 type SortOption = 'match' | 'reach-high' | 'sales-high' | 'link-shares' | 'price-low' | 'price-high';
 
 const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProps) => {
-  const { products, loading, error, creatorNumericId, loadMore, hasMore, loadingMore, totalCount } = useAllProducts(creatorUuid, shouldLoad);
   const [selectedSubcategories, setSelectedSubcategories] = useState<Set<string>>(new Set());
   const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set());
   const [sortBy, setSortBy] = useState<SortOption>('match');
+  
+  // Pass filter options to hook - filtering/sorting happens at database level
+  const { products, loading, error, creatorNumericId, loadMore, hasMore, loadingMore, totalCount } = useAllProducts(
+    creatorUuid, 
+    shouldLoad,
+    {
+      selectedSubcategories,
+      selectedBrands,
+      sortBy
+    }
+  );
+  
   const observerTarget = useRef<HTMLDivElement>(null);
 
   // GA4 tracking

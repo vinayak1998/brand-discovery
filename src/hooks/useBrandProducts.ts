@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useGATracking } from './useGATracking';
 
+export type SortOption = 'match' | 'reach-high' | 'sales-high' | 'link-shares' | 'price-low' | 'price-high';
+
 interface Product {
   id: number;
   name: string;
@@ -27,7 +29,12 @@ interface CreatorData {
   brand_sourcing: boolean;
 }
 
-export const useBrandProducts = (creatorUuid: string | null, brandName: string | null, isReady: boolean) => {
+export const useBrandProducts = (
+  creatorUuid: string | null, 
+  brandName: string | null, 
+  isReady: boolean,
+  sortBy: SortOption = 'match'
+) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -40,6 +47,13 @@ export const useBrandProducts = (creatorUuid: string | null, brandName: string |
   const { trackError } = useGATracking();
 
   const PAGE_SIZE = 50;
+
+  // Reset pagination when sort changes
+  useEffect(() => {
+    setPage(0);
+    setProducts([]);
+    setHasMore(true);
+  }, [sortBy]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -83,14 +97,37 @@ export const useBrandProducts = (creatorUuid: string | null, brandName: string |
 
           setBrandData(fetchedBrandData);
 
-          // Fetch total count and first page of products in parallel
-          const productsPromise = supabase
+          // Build query with sorting
+          let productsQuery = supabase
             .from('creator_x_product_recommendations')
-            .select('id, name, brand, thumbnail_url, purchase_url, sim_score, short_code, price')
+            .select('id, name, brand, thumbnail_url, purchase_url, sim_score, short_code, price, median_reach, median_sales, count_90_days')
             .eq('creator_id', fetchedCreatorData.creator_id)
-            .eq('brand_id', fetchedBrandData.brand_id)
-            .order('sim_score', { ascending: false })
-            .range(0, PAGE_SIZE - 1);
+            .eq('brand_id', fetchedBrandData.brand_id);
+
+          // Apply sorting
+          switch (sortBy) {
+            case 'match':
+              productsQuery = productsQuery.order('sim_score', { ascending: false });
+              break;
+            case 'reach-high':
+              productsQuery = productsQuery.order('median_reach', { ascending: false, nullsFirst: false });
+              break;
+            case 'sales-high':
+              productsQuery = productsQuery.order('median_sales', { ascending: false, nullsFirst: false });
+              break;
+            case 'link-shares':
+              productsQuery = productsQuery.order('count_90_days', { ascending: false });
+              break;
+            case 'price-low':
+              productsQuery = productsQuery.order('price', { ascending: true, nullsFirst: false });
+              break;
+            case 'price-high':
+              productsQuery = productsQuery.order('price', { ascending: false, nullsFirst: false });
+              break;
+          }
+
+          productsQuery = productsQuery.range(0, PAGE_SIZE - 1);
+          const productsPromise = productsQuery;
 
           const countPromise = supabase
             .from('creator_x_product_recommendations')
@@ -119,16 +156,37 @@ export const useBrandProducts = (creatorUuid: string | null, brandName: string |
           setProducts(data || []);
           setHasMore((data || []).length === PAGE_SIZE);
         } else {
-          // Pagination - only fetch more products
-          if (!creatorData || !brandData) return;
-
-          const { data, error: productsError } = await supabase
+          // Load more products for existing creator/brand with same sorting
+          let moreQuery = supabase
             .from('creator_x_product_recommendations')
-            .select('id, name, brand, thumbnail_url, purchase_url, sim_score, short_code, price')
+            .select('id, name, brand, thumbnail_url, purchase_url, sim_score, short_code, price, median_reach, median_sales, count_90_days')
             .eq('creator_id', creatorData.creator_id)
-            .eq('brand_id', brandData.brand_id)
-            .order('sim_score', { ascending: false })
-            .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+            .eq('brand_id', brandData.brand_id);
+
+          // Apply same sorting
+          switch (sortBy) {
+            case 'match':
+              moreQuery = moreQuery.order('sim_score', { ascending: false });
+              break;
+            case 'reach-high':
+              moreQuery = moreQuery.order('median_reach', { ascending: false, nullsFirst: false });
+              break;
+            case 'sales-high':
+              moreQuery = moreQuery.order('median_sales', { ascending: false, nullsFirst: false });
+              break;
+            case 'link-shares':
+              moreQuery = moreQuery.order('count_90_days', { ascending: false });
+              break;
+            case 'price-low':
+              moreQuery = moreQuery.order('price', { ascending: true, nullsFirst: false });
+              break;
+            case 'price-high':
+              moreQuery = moreQuery.order('price', { ascending: false, nullsFirst: false });
+              break;
+          }
+
+          moreQuery = moreQuery.range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+          const { data, error: productsError } = await moreQuery;
 
           if (productsError) {
             console.error('Error fetching more products:', productsError);
