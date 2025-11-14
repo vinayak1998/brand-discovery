@@ -1,5 +1,5 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useInsightsData } from '@/hooks/useInsightsData';
 import { useCreatorContext } from '@/contexts/CreatorContext';
 import { useGATracking } from '@/hooks/useGATracking';
@@ -16,6 +16,7 @@ import { useAnalytics, ThemeId } from '@/hooks/useAnalytics';
 import { useOnboardingTooltip } from '@/hooks/useOnboardingTooltip';
 import { TileRankerSurvey } from '@/components/surveys/TileRankerSurvey';
 import { useQuickSurvey } from '@/hooks/useQuickSurvey';
+import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -41,6 +42,9 @@ const Index = () => {
   // Get creator data first (needed for other hooks)
   const { insights, loading, error, getInsightsByTheme, hasData, lastUpdated, creatorName, creatorIdNum } = useInsightsData(creatorUuid || '');
   
+  // Feature flag for surveys
+  const surveysEnabled = useFeatureFlag('quick_surveys_enabled');
+  
   // Tile Ranker Survey (after viewing 2+ themes)
   const { trackQuickSurveyShown, trackQuickSurveyDismissed, trackQuickSurveySubmit } = useAnalytics(creatorIdNum);
   const tileRankerSurvey = useQuickSurvey({
@@ -53,10 +57,10 @@ const Index = () => {
 
   // Track theme views and trigger survey after 2 themes
   useEffect(() => {
-    if (openAccordions.size >= 2 && activeTab === 'brands' && !tileRankerSurvey.isVisible) {
+    if (openAccordions.size >= 2 && activeTab === 'brands' && !tileRankerSurvey.isVisible && surveysEnabled) {
       tileRankerSurvey.showSurvey();
     }
-  }, [openAccordions.size, activeTab]);
+  }, [openAccordions.size, activeTab, tileRankerSurvey, surveysEnabled]);
   
   // Redirect to landing if no creator_id (but wait if URL has creator_id being processed)
   useEffect(() => {
