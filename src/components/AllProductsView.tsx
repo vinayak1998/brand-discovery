@@ -21,7 +21,7 @@ interface AllProductsViewProps {
 type SortOption = 'match' | 'reach-high' | 'sales-high' | 'link-shares' | 'price-low' | 'price-high';
 
 const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProps) => {
-  const { products, loading, error, creatorNumericId, loadMore, hasMore, loadingMore } = useAllProducts(creatorUuid, shouldLoad);
+  const { products, loading, error, creatorNumericId, loadMore, hasMore, loadingMore, totalCount } = useAllProducts(creatorUuid, shouldLoad);
   const [selectedSubcategories, setSelectedSubcategories] = useState<Set<string>>(new Set());
   const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set());
   const [sortBy, setSortBy] = useState<SortOption>('match');
@@ -478,7 +478,10 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProp
       {showFilters && (
         <div className="px-1">
           <span className="text-sm text-muted-foreground">
-            {filteredAndSortedProducts.length} {filteredAndSortedProducts.length === 1 ? 'product' : 'products'}
+            {hasActiveFilters 
+              ? `${filteredAndSortedProducts.length} of ${totalCount} products`
+              : `${totalCount} ${totalCount === 1 ? 'product' : 'products'}`
+            }
           </span>
         </div>
       )}

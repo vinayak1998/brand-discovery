@@ -29,6 +29,7 @@ export const useAllProducts = (creatorUuid: string | null, shouldLoad: boolean =
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [totalCount, setTotalCount] = useState<number>(0);
   const { trackError } = useGATracking();
   
   const PAGE_SIZE = 50;
@@ -76,7 +77,27 @@ export const useAllProducts = (creatorUuid: string | null, shouldLoad: boolean =
           .order('sim_score', { ascending: false })
           .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
-        const { data, error: productsError } = await productsPromise;
+        // Fetch total count only on initial load
+        const promises = page === 0 
+          ? [
+              productsPromise,
+              supabase
+                .from('creator_x_product_recommendations')
+                .select('*', { count: 'exact', head: true })
+                .eq('creator_id', creatorData.creator_id)
+            ]
+          : [productsPromise];
+
+        const results = await Promise.all(promises);
+        const { data, error: productsError } = results[0];
+        
+        // Set total count on initial load
+        if (page === 0 && results[1]) {
+          const countResult = results[1];
+          if (countResult.count !== null) {
+            setTotalCount(countResult.count);
+          }
+        }
 
         if (productsError) {
           console.error('Error fetching products:', productsError);
@@ -177,6 +198,7 @@ export const useAllProducts = (creatorUuid: string | null, shouldLoad: boolean =
     creatorNumericId: creatorData?.creator_id || null,
     loadMore,
     hasMore,
-    loadingMore
+    loadingMore,
+    totalCount
   };
 };
