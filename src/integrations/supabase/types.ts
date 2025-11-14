@@ -247,6 +247,90 @@ export type Database = {
         }
         Relationships: []
       }
+      feature_flags: {
+        Row: {
+          created_at: string
+          description: string | null
+          flag_key: string
+          flag_name: string
+          id: string
+          is_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          flag_key: string
+          flag_name: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          flag_key?: string
+          flag_name?: string
+          id?: string
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      quick_survey_responses: {
+        Row: {
+          context: Json | null
+          created_at: string
+          creator_id: number
+          id: string
+          questions: Json
+          survey_id: string
+          time_to_complete_ms: number | null
+        }
+        Insert: {
+          context?: Json | null
+          created_at?: string
+          creator_id: number
+          id?: string
+          questions: Json
+          survey_id: string
+          time_to_complete_ms?: number | null
+        }
+        Update: {
+          context?: Json | null
+          created_at?: string
+          creator_id?: number
+          id?: string
+          questions?: Json
+          survey_id?: string
+          time_to_complete_ms?: number | null
+        }
+        Relationships: []
+      }
+      survey_rate_limits: {
+        Row: {
+          created_at: string
+          creator_id: number
+          id: string
+          last_shown_at: string
+          survey_id: string
+        }
+        Insert: {
+          created_at?: string
+          creator_id: number
+          id?: string
+          last_shown_at?: string
+          survey_id: string
+        }
+        Update: {
+          created_at?: string
+          creator_id?: number
+          id?: string
+          last_shown_at?: string
+          survey_id?: string
+        }
+        Relationships: []
+      }
       survey_responses: {
         Row: {
           creator_id: number

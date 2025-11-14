@@ -109,7 +109,7 @@ const BrandProducts = () => {
         brand_name: displayBrandName,
       });
     }
-  }, [loading, products, brandId, displayBrandName, totalCount, trackPageView, trackBrandInteraction, trackProductListView]);
+  }, [loading, products.length, brandId, displayBrandName, totalCount, trackPageView, trackBrandInteraction, trackProductListView]);
 
   if (loading && products.length === 0) {
     return (
