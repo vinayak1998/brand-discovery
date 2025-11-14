@@ -68,7 +68,7 @@ const BrandInsightCard = ({
   onDismissTooltip,
 }: BrandInsightCardProps) => {
   const { trackThemeView, trackBrandClick } = useAnalytics(creatorId);
-  const { trackThemeImpression, trackThemeInteraction, trackBrandInteraction } = useGATracking();
+  const { trackThemeImpression, trackThemeInteraction, trackBrandInteraction } = useGATracking(creatorId);
   const navigate = useNavigate();
   const cardRef = useRef<HTMLDivElement>(null);
   const [hasTrackedImpression, setHasTrackedImpression] = useState(false);

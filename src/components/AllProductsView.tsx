@@ -32,7 +32,7 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProp
     trackFilterSortAction,
     trackProductInteraction,
     trackExternalRedirect,
-  } = useGATracking();
+  } = useGATracking(creatorNumericId);
   
   const { currentDepth } = useScrollTracking();
 

@@ -1,5 +1,4 @@
 import { useCallback } from 'react';
-import { useCreatorContext } from '@/contexts/CreatorContext';
 
 // GA4 Event Types
 export type GAEventCategory = 
@@ -54,32 +53,30 @@ declare global {
 
 /**
  * Main GA4 tracking hook
- * Uses creator_id from context as user_id
+ * Uses numeric creator_id for user identification
  */
-export const useGATracking = () => {
-  const { creatorUuid } = useCreatorContext();
-
+export const useGATracking = (creatorId?: number | null) => {
   // Core tracking function
   const trackEvent = useCallback((eventName: string, params: GAEventParams) => {
     if (typeof window.gtag === 'function') {
-      // Set user_id from creator context
-      if (creatorUuid) {
+      // Set user_id from numeric creator ID
+      if (creatorId) {
         window.gtag('set', 'user_properties', {
-          user_id: creatorUuid,
-          creator_id: creatorUuid,
+          user_id: creatorId.toString(),
+          creator_id: creatorId.toString(),
         });
       }
 
       // Send event with all parameters
       window.gtag('event', eventName, {
         ...params,
-        creator_id: creatorUuid,
+        creator_id: creatorId,
         timestamp: Date.now(),
       });
 
       console.log('[GA4 Event]', eventName, params);
     }
-  }, [creatorUuid]);
+  }, [creatorId]);
 
   // 1. PAGE VIEW
   const trackPageView = useCallback((params: {
