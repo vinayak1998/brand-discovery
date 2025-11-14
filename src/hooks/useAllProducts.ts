@@ -50,7 +50,9 @@ export const useAllProducts = (creatorUuid: string | null, shouldLoad: boolean =
       }
 
       try {
-        setLoading(true);
+        if (page === 0) {
+          setLoading(true);
+        }
 
         // Fetch products for this creator - PARALLELIZED with brand/insight data below
         const productsPromise = supabase
