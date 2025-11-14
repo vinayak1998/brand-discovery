@@ -28,7 +28,7 @@ const PageHeader = ({ lastUpdated, creatorName, pageContext = "brands", brandNam
               >
                 {pageContext === "products"
                   ? "Products curated just for you"
-                  : "Boost your reach & earnings with data-driven D2C picks"}
+                  : "Boost your reach & earnings with data-driven picks"}
               </p>
             </div>
           </div>
