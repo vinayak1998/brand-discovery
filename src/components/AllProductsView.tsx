@@ -17,6 +17,7 @@ import { useQuickSurvey } from '@/hooks/useQuickSurvey';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { DiscoverySurvey } from './surveys/DiscoverySurvey';
 import { OutcomeSurvey } from './surveys/OutcomeSurvey';
+import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 
 interface AllProductsViewProps {
   creatorUuid: string;
@@ -42,6 +43,9 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProp
   
   const { currentDepth } = useScrollTracking();
   
+  // Feature flag for surveys
+  const surveysEnabled = useFeatureFlag('quick_surveys_enabled');
+  
   // Analytics tracking for surveys
   const { 
     trackQuickSurveyShown, 
@@ -62,11 +66,11 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProp
   const { observeProduct } = useProductScrollTracker({
     threshold: 20,
     onThresholdReached: () => {
-      if (!discoverySurvey.isVisible) {
+      if (!discoverySurvey.isVisible && surveysEnabled) {
         discoverySurvey.showSurvey();
       }
     },
-    enabled: shouldLoad && !loading,
+    enabled: surveysEnabled && shouldLoad && !loading,
   });
 
   // Outcome Survey (after first product click)
@@ -82,7 +86,7 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProp
   const handleProductClick = (product: any) => {
     const hasClickedProduct = sessionStorage.getItem('has_clicked_product');
     
-    if (!hasClickedProduct) {
+    if (!hasClickedProduct && surveysEnabled) {
       sessionStorage.setItem('has_clicked_product', 'true');
       // Show outcome survey after a short delay
       setTimeout(() => {
@@ -562,12 +566,13 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProp
         return (
           <Card 
             key={product.id}
-            ref={(el) => {
-              if (el) {
-                productRefs.current.set(product.id, el);
-                el.setAttribute('data-product-id', product.id.toString());
-              }
-            }}
+                      ref={(el) => {
+                        if (el) {
+                          productRefs.current.set(product.id, el);
+                          el.setAttribute('data-product-id', product.id.toString());
+                          observeProduct(el);
+                        }
+                      }}
             className="p-2 sm:p-3 flex flex-col hover:shadow-lg transition-shadow cursor-pointer active:scale-[0.98]"
             onClick={() => handleProductClick(product)}
           >
