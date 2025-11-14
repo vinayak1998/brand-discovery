@@ -25,7 +25,7 @@ export const THEMES: Record<string, ThemeConfig> = {
   },
   fastest_selling: {
     id: "fastest_selling",
-    title: "Fastest Selling Products",
+    title: "Fast Selling Brands",
     icon: Zap,
     tagline: "Products flying off the shelves",
     color: "hsl(var(--chart-3))",
