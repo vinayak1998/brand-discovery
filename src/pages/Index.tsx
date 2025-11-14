@@ -1,5 +1,5 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useInsightsData } from '@/hooks/useInsightsData';
 import { useCreatorContext } from '@/contexts/CreatorContext';
 import { useGATracking } from '@/hooks/useGATracking';
@@ -14,9 +14,6 @@ import { AlertCircle, Sparkles } from 'lucide-react';
 import { THEMES, getTheme } from '@/config/themes';
 import { useAnalytics, ThemeId } from '@/hooks/useAnalytics';
 import { useOnboardingTooltip } from '@/hooks/useOnboardingTooltip';
-import { TileRankerSurvey } from '@/components/surveys/TileRankerSurvey';
-import { useQuickSurvey } from '@/hooks/useQuickSurvey';
-import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -39,35 +36,14 @@ const Index = () => {
   // Onboarding tooltip for brand discovery
   const { showTooltip, onBrandClick, dismissTooltip } = useOnboardingTooltip();
   
-  // Get creator data first (needed for other hooks)
-  const { insights, loading, error, getInsightsByTheme, hasData, lastUpdated, creatorName, creatorIdNum } = useInsightsData(creatorUuid || '');
-  
-  // Feature flag for surveys
-  const surveysEnabled = useFeatureFlag('quick_surveys_enabled');
-  
-  // Tile Ranker Survey (after viewing 2+ themes)
-  const { trackQuickSurveyShown, trackQuickSurveyDismissed, trackQuickSurveySubmit } = useAnalytics(creatorIdNum);
-  const tileRankerSurvey = useQuickSurvey({
-    creatorId: creatorIdNum,
-    surveyId: 'tile_ranker',
-    onShown: () => trackQuickSurveyShown('tile_ranker', { context: 'brands_tab', themes_viewed: openAccordions.size }),
-    onDismissed: () => trackQuickSurveyDismissed('tile_ranker'),
-    onSubmitted: () => trackQuickSurveySubmit('tile_ranker', 2, Date.now()),
-  });
-
-  // Track theme views and trigger survey after 2 themes
-  useEffect(() => {
-    if (openAccordions.size >= 2 && activeTab === 'brands' && !tileRankerSurvey.isVisible && surveysEnabled) {
-      tileRankerSurvey.showSurvey();
-    }
-  }, [openAccordions.size, activeTab, tileRankerSurvey, surveysEnabled]);
-  
   // Redirect to landing if no creator_id (but wait if URL has creator_id being processed)
   useEffect(() => {
     if (isReady && !creatorUuid && !creatorIdFromUrl) {
       navigate('/');
     }
   }, [isReady, creatorUuid, creatorIdFromUrl, navigate]);
+
+  const { insights, loading, error, getInsightsByTheme, hasData, lastUpdated, creatorName, creatorIdNum } = useInsightsData(creatorUuid || '');
   
   // Initialize analytics tracking
   const { trackPageView, trackCTAClick } = useAnalytics(creatorIdNum);
@@ -289,13 +265,6 @@ const Index = () => {
           </TabsContent>
         </Tabs>
       </main>
-
-      {/* Tile Ranker Survey */}
-      <TileRankerSurvey
-        isOpen={tileRankerSurvey.isVisible}
-        onClose={tileRankerSurvey.dismissSurvey}
-        onSubmit={tileRankerSurvey.submitSurvey}
-      />
     </div>
   );
 };

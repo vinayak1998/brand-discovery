@@ -125,56 +125,6 @@ export const useAnalytics = (creatorId: number | null) => {
     trackEvent({ eventType: 'survey_submit' });
   }, [trackEvent]);
 
-  // Track quick survey shown
-  const trackQuickSurveyShown = useCallback((surveyId: string, context?: Record<string, any>) => {
-    trackEvent({ 
-      eventType: 'page_view', // Reusing event type for now
-      metadata: { 
-        survey_event: 'survey_shown',
-        survey_id: surveyId,
-        ...context 
-      } 
-    });
-  }, [trackEvent]);
-
-  // Track quick survey response
-  const trackQuickSurveyResponse = useCallback((surveyId: string, questionId: string, answer: any) => {
-    trackEvent({ 
-      eventType: 'page_view', // Reusing event type for now
-      metadata: { 
-        survey_event: 'survey_response',
-        survey_id: surveyId,
-        question_id: questionId,
-        answer 
-      } 
-    });
-  }, [trackEvent]);
-
-  // Track quick survey submit
-  const trackQuickSurveySubmit = useCallback((surveyId: string, questionCount: number, timeToComplete: number) => {
-    trackEvent({ 
-      eventType: 'page_view', // Reusing event type for now
-      metadata: { 
-        survey_event: 'survey_submit',
-        survey_id: surveyId,
-        question_count: questionCount,
-        time_to_complete_ms: timeToComplete 
-      } 
-    });
-  }, [trackEvent]);
-
-  // Track quick survey dismissed
-  const trackQuickSurveyDismissed = useCallback((surveyId: string, context?: Record<string, any>) => {
-    trackEvent({ 
-      eventType: 'page_view', // Reusing event type for now
-      metadata: { 
-        survey_event: 'survey_dismissed',
-        survey_id: surveyId,
-        ...context 
-      } 
-    });
-  }, [trackEvent]);
-
   // Session management
   useEffect(() => {
     if (!creatorId || sessionStartedRef.current) return;
@@ -214,9 +164,5 @@ export const useAnalytics = (creatorId: number | null) => {
     trackCTAClick,
     trackSurveyStart,
     trackSurveySubmit,
-    trackQuickSurveyShown,
-    trackQuickSurveyResponse,
-    trackQuickSurveySubmit,
-    trackQuickSurveyDismissed,
   };
 };

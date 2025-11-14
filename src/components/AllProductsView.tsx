@@ -10,14 +10,8 @@ import { useGATracking } from '@/hooks/useGATracking';
 import { useScrollTracking } from '@/hooks/useScrollTracking';
 import { getTheme } from '@/config/themes';
 import { Filter, X, ArrowUpDown } from 'lucide-react';
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { CategoryFilterItem } from './CategoryFilterItem';
-import { useProductScrollTracker } from '@/hooks/useProductScrollTracker';
-import { useQuickSurvey } from '@/hooks/useQuickSurvey';
-import { useAnalytics } from '@/hooks/useAnalytics';
-import { DiscoverySurvey } from './surveys/DiscoverySurvey';
-import { OutcomeSurvey } from './surveys/OutcomeSurvey';
-import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 
 interface AllProductsViewProps {
   creatorUuid: string;
@@ -31,7 +25,6 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProp
   const [selectedSubcategories, setSelectedSubcategories] = useState<Set<string>>(new Set());
   const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set());
   const [sortBy, setSortBy] = useState<SortOption>('match');
-  const productRefs = useRef<Map<number, HTMLElement>>(new Map());
 
   // GA4 tracking
   const {
@@ -42,89 +35,6 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProp
   } = useGATracking();
   
   const { currentDepth } = useScrollTracking();
-  
-  // Feature flag for surveys
-  const surveysEnabled = useFeatureFlag('quick_surveys_enabled');
-  
-  // Analytics tracking for surveys
-  const { 
-    trackQuickSurveyShown, 
-    trackQuickSurveyResponse, 
-    trackQuickSurveySubmit, 
-    trackQuickSurveyDismissed 
-  } = useAnalytics(creatorNumericId);
-
-  // Discovery Survey (after 20 products scrolled)
-  const discoverySurvey = useQuickSurvey({
-    creatorId: creatorNumericId,
-    surveyId: 'discovery',
-    onShown: () => trackQuickSurveyShown('discovery', { context: 'products_tab', products_count: products.length }),
-    onDismissed: () => trackQuickSurveyDismissed('discovery'),
-    onSubmitted: () => trackQuickSurveySubmit('discovery', 3, Date.now()),
-  });
-
-  const { observeProduct } = useProductScrollTracker({
-    threshold: 20,
-    onThresholdReached: () => {
-      if (!discoverySurvey.isVisible && surveysEnabled) {
-        discoverySurvey.showSurvey();
-      }
-    },
-    enabled: surveysEnabled && shouldLoad && !loading,
-  });
-
-  // Outcome Survey (after first product click)
-  const outcomeSurvey = useQuickSurvey({
-    creatorId: creatorNumericId,
-    surveyId: 'outcome',
-    onShown: () => trackQuickSurveyShown('outcome', { context: 'post_product_click' }),
-    onDismissed: () => trackQuickSurveyDismissed('outcome'),
-    onSubmitted: () => trackQuickSurveySubmit('outcome', 2, Date.now()),
-  });
-
-  // Track first product click in session
-  const handleProductClick = (product: any) => {
-    const hasClickedProduct = sessionStorage.getItem('has_clicked_product');
-    
-    if (!hasClickedProduct && surveysEnabled) {
-      sessionStorage.setItem('has_clicked_product', 'true');
-      // Show outcome survey after a short delay
-      setTimeout(() => {
-        if (!outcomeSurvey.isVisible) {
-          outcomeSurvey.showSurvey();
-        }
-      }, 2000);
-    }
-
-    // Existing tracking
-    if (product.short_code) {
-      const url = `https://www.wishlink.com/share/${product.short_code}?source=product_discovery&creator=${creatorNumericId}`;
-      
-      trackProductInteraction({
-        product_id: product.id,
-        product_name: product.name,
-        brand_id: product.brand_id || 0,
-        brand_name: product.brand_name || '',
-        theme_id: product.theme_id,
-        match_score: product.sim_score || 0,
-        price: product.price,
-        source_tab: 'product_discovery',
-        short_code: product.short_code || '',
-        scroll_depth_at_click: currentDepth,
-      });
-
-      trackExternalRedirect({
-        destination: 'wishlink_product',
-        url,
-        product_id: product.id,
-        brand_id: product.brand_id,
-        brand_name: product.brand_name,
-        short_code: product.short_code,
-      });
-
-      window.open(url, '_blank', 'noopener,noreferrer');
-    }
-  };
 
   // Build hierarchical category structure and category-to-subcategories mapping
   // Only show filters if ALL products have cat AND sscat
@@ -565,16 +475,39 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProp
         
         return (
           <Card 
-            key={product.id}
-                      ref={(el) => {
-                        if (el) {
-                          productRefs.current.set(product.id, el);
-                          el.setAttribute('data-product-id', product.id.toString());
-                          observeProduct(el);
-                        }
-                      }}
+            key={product.id} 
             className="p-2 sm:p-3 flex flex-col hover:shadow-lg transition-shadow cursor-pointer active:scale-[0.98]"
-            onClick={() => handleProductClick(product)}
+            onClick={() => {
+              if (product.short_code) {
+                const url = `https://www.wishlink.com/share/${product.short_code}?source=product_discovery&creator=${creatorNumericId}`;
+                
+                // Track product interaction
+                trackProductInteraction({
+                  product_id: product.id,
+                  product_name: product.name,
+                  brand_id: product.brand_id || 0,
+                  brand_name: product.brand_name || '',
+                  theme_id: product.theme_id,
+                  match_score: product.sim_score || 0,
+                  price: product.price || undefined,
+                  source_tab: 'product_discovery',
+                  short_code: product.short_code,
+                  scroll_depth_at_click: currentDepth,
+                });
+                
+                // Track external redirect
+                trackExternalRedirect({
+                  destination: 'wishlink_product',
+                  url,
+                  product_id: product.id,
+                  brand_id: product.brand_id || undefined,
+                  brand_name: product.brand_name || undefined,
+                  short_code: product.short_code,
+                });
+                
+                window.open(url, '_blank');
+              }
+            }}
           >
             {/* Product Image */}
             <div className="w-full aspect-square mb-2 sm:mb-3 bg-muted rounded overflow-hidden relative">
@@ -672,18 +605,6 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProp
           })}
         </div>
       )}
-
-      {/* Survey Components */}
-      <DiscoverySurvey
-        isOpen={discoverySurvey.isVisible}
-        onClose={discoverySurvey.dismissSurvey}
-        onSubmit={discoverySurvey.submitSurvey}
-      />
-      <OutcomeSurvey
-        isOpen={outcomeSurvey.isVisible}
-        onClose={outcomeSurvey.dismissSurvey}
-        onSubmit={outcomeSurvey.submitSurvey}
-      />
     </div>
   );
 };

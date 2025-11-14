@@ -1,5 +1,5 @@
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useCreatorContext } from '@/contexts/CreatorContext';
 import { useGATracking } from '@/hooks/useGATracking';
 import { useScrollTracking } from '@/hooks/useScrollTracking';
@@ -9,11 +9,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
-import { useDwellTimeTracker } from '@/hooks/useDwellTimeTracker';
-import { useQuickSurvey } from '@/hooks/useQuickSurvey';
-import { useAnalytics } from '@/hooks/useAnalytics';
-import { IntentSurvey } from '@/components/surveys/IntentSurvey';
-import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 
 interface Product {
   id: number;
@@ -24,7 +19,6 @@ interface Product {
   sim_score: number;
   short_code: string | null;
   price: number | null;
-  cat: string | null;
 }
 
 const BrandProducts = () => {
@@ -43,7 +37,6 @@ const BrandProducts = () => {
   const [brandId, setBrandId] = useState<number | null>(null);
   const [displayBrandName, setDisplayBrandName] = useState<string>('');
   const [commissionDisplay, setCommissionDisplay] = useState<string | null>(null);
-  const [productCategories, setProductCategories] = useState<string[]>([]);
 
   // GA4 tracking
   const { 
@@ -56,40 +49,6 @@ const BrandProducts = () => {
   } = useGATracking();
   
   const { currentDepth } = useScrollTracking();
-
-  // Feature flag for surveys
-  const surveysEnabled = useFeatureFlag('quick_surveys_enabled');
-
-  // Analytics for surveys
-  const { 
-    trackQuickSurveyShown, 
-    trackQuickSurveyDismissed, 
-    trackQuickSurveySubmit 
-  } = useAnalytics(creatorNumericId);
-
-  // Intent Survey (20s dwell time without clicking)
-  const intentSurvey = useQuickSurvey({
-    creatorId: creatorNumericId,
-    surveyId: 'intent',
-    onShown: () => trackQuickSurveyShown('intent', { 
-      context: 'brand_detail', 
-      brand_id: brandId,
-      brand_name: displayBrandName 
-    }),
-    onDismissed: () => trackQuickSurveyDismissed('intent'),
-    onSubmitted: () => trackQuickSurveySubmit('intent', 2, Date.now()),
-  });
-
-  const { hasReachedThreshold } = useDwellTimeTracker({
-    threshold: 20000, // 20 seconds
-    onThresholdReached: () => {
-      const hasClickedProduct = sessionStorage.getItem(`brand_${brandId}_clicked`);
-      if (!hasClickedProduct && !intentSurvey.isVisible && surveysEnabled) {
-        intentSurvey.showSurvey();
-      }
-    },
-    enabled: surveysEnabled && !loading && products.length > 0,
-  });
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -144,7 +103,7 @@ const BrandProducts = () => {
         // Fetch products for this creator x brand using brand_id for consistency
         const { data, error: productsError } = await supabase
           .from('creator_x_product_recommendations')
-          .select('id, name, brand, thumbnail_url, purchase_url, sim_score, short_code, price, cat')
+          .select('id, name, brand, thumbnail_url, purchase_url, sim_score, short_code, price')
           .eq('creator_id', creatorData.creator_id)
           .eq('brand_id', brandData.brand_id)
           .order('sim_score', { ascending: false })
@@ -163,61 +122,6 @@ const BrandProducts = () => {
 
     fetchProducts();
   }, [creatorId, brandName, isReady]);
-
-  // Extract categories for IntentSurvey
-  useEffect(() => {
-    if (products.length > 0) {
-      const categoryCounts = products.reduce((acc, p) => {
-        if (p.cat) {
-          acc[p.cat] = (acc[p.cat] || 0) + 1;
-        }
-        return acc;
-      }, {} as Record<string, number>);
-      
-      const categories = Object.entries(categoryCounts)
-        .filter(([_, count]) => count >= 5)
-        .map(([cat, _]) => cat)
-        .sort();
-      
-      setProductCategories(categories);
-    }
-  }, [products]);
-
-  // Handle product click with session tracking
-  const handleProductClick = useCallback((product: Product) => {
-    if (brandId) {
-      sessionStorage.setItem(`brand_${brandId}_clicked`, 'true');
-    }
-
-    if (product.short_code) {
-      const url = `https://www.wishlink.com/share/${product.short_code}?source=brand_discovery&creator=${creatorNumericId}`;
-      
-      // Track product interaction
-      trackProductInteraction({
-        product_id: product.id,
-        product_name: product.name,
-        brand_id: brandId || 0,
-        brand_name: displayBrandName,
-        match_score: product.sim_score,
-        price: product.price || undefined,
-        source_tab: 'brand_discovery',
-        short_code: product.short_code,
-        scroll_depth_at_click: currentDepth,
-      });
-      
-      // Track external redirect
-      trackExternalRedirect({
-        destination: 'wishlink_product',
-        url,
-        product_id: product.id,
-        brand_id: brandId || undefined,
-        brand_name: displayBrandName,
-        short_code: product.short_code,
-      });
-      
-      window.open(url, '_blank');
-    }
-  }, [brandId, creatorNumericId, displayBrandName, trackProductInteraction, trackExternalRedirect, currentDepth]);
 
   // Track page view and product list view when data loads
   useEffect(() => {
@@ -359,7 +263,36 @@ const BrandProducts = () => {
               <Card 
                 key={product.id} 
                 className="p-2 sm:p-3 flex flex-col hover:shadow-lg transition-shadow cursor-pointer active:scale-[0.98]"
-                onClick={() => handleProductClick(product)}
+                onClick={() => {
+                  if (product.short_code) {
+                    const url = `https://www.wishlink.com/share/${product.short_code}?source=brand_discovery&creator=${creatorNumericId}`;
+                    
+                    // Track product interaction
+                    trackProductInteraction({
+                      product_id: product.id,
+                      product_name: product.name,
+                      brand_id: brandId || 0,
+                      brand_name: displayBrandName,
+                      match_score: product.sim_score,
+                      price: product.price || undefined,
+                      source_tab: 'brand_discovery',
+                      short_code: product.short_code,
+                      scroll_depth_at_click: currentDepth,
+                    });
+                    
+                    // Track external redirect
+                    trackExternalRedirect({
+                      destination: 'wishlink_product',
+                      url,
+                      product_id: product.id,
+                      brand_id: brandId || undefined,
+                      brand_name: displayBrandName,
+                      short_code: product.short_code,
+                    });
+                    
+                    window.open(url, '_blank');
+                  }
+                }}
               >
                 {/* Product Image */}
                 <div className="w-full aspect-square mb-2 sm:mb-3 bg-muted rounded overflow-hidden">
@@ -402,15 +335,6 @@ const BrandProducts = () => {
           </div>
         )}
       </main>
-
-      {/* Intent Survey */}
-      <IntentSurvey
-        isOpen={intentSurvey.isVisible}
-        onClose={intentSurvey.dismissSurvey}
-        onSubmit={intentSurvey.submitSurvey}
-        brandName={displayBrandName}
-        categories={productCategories}
-      />
     </div>
   );
 };

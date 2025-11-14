@@ -11,7 +11,6 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Progress } from "@/components/ui/progress";
 import { useNavigate } from "react-router-dom";
 import { Textarea } from "@/components/ui/textarea";
-import { FeatureFlagsManager } from "@/components/admin/FeatureFlagsManager";
 
 const AdminContent = () => {
   const navigate = useNavigate();
@@ -679,9 +678,6 @@ const AdminContent = () => {
             </div>
           </CardContent>
         </Card>
-
-        {/* Feature Flags Manager */}
-        <FeatureFlagsManager />
       </div>
     </div>
   );
