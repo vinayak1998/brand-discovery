@@ -274,19 +274,19 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProp
     if (!loading && products.length >= 0) {
       const listContext = hasActiveFilters 
         ? 'filtered' 
-        : products.length === 0 
+        : totalCount === 0 
           ? 'empty_state' 
           : 'product_tab';
       
       trackProductListView({
         list_context: listContext,
         visible_count: filteredAndSortedProducts.length,
-        total_count: products.length,
+        total_count: totalCount,
         is_empty: filteredAndSortedProducts.length === 0,
         filter_count: selectedSubcategories.size + selectedBrands.size,
       });
     }
-  }, [loading, products.length, filteredAndSortedProducts.length, hasActiveFilters, selectedSubcategories.size, selectedBrands.size, trackProductListView]);
+  }, [loading, products.length, filteredAndSortedProducts.length, hasActiveFilters, selectedSubcategories.size, selectedBrands.size, totalCount, trackProductListView]);
 
   if (loading && products.length === 0) {
     return (
