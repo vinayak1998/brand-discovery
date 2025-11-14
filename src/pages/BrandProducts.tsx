@@ -1,10 +1,10 @@
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useCreatorContext } from '@/contexts/CreatorContext';
 import { useCreatorData } from '@/hooks/useCreatorData';
 import { useGATracking } from '@/hooks/useGATracking';
 import { useScrollTracking } from '@/hooks/useScrollTracking';
-import { supabase } from '@/integrations/supabase/client';
+import { useBrandProducts } from '@/hooks/useBrandProducts';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -28,17 +28,29 @@ const BrandProducts = () => {
   const { creatorUuid: creatorId, isReady } = useCreatorContext();
   const { creatorData } = useCreatorData(creatorId);
   const brandName = searchParams.get('brand_name');
+  const observerTarget = useRef<HTMLDivElement>(null);
   
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [creatorName, setCreatorName] = useState<string | null>(null);
-  const [creatorNumericId, setCreatorNumericId] = useState<number | null>(null);
-  const [brandSourcingEnabled, setBrandSourcingEnabled] = useState<boolean>(false);
-  const [sourcingLink, setSourcingLink] = useState<string | null>(null);
-  const [brandId, setBrandId] = useState<number | null>(null);
-  const [displayBrandName, setDisplayBrandName] = useState<string>('');
-  const [commissionDisplay, setCommissionDisplay] = useState<string | null>(null);
+  const { 
+    products, 
+    loading, 
+    error, 
+    loadMore,
+    hasMore,
+    loadingMore,
+    totalCount,
+    brandData,
+    creatorData: fetchedCreatorData
+  } = useBrandProducts(creatorId, brandName, isReady);
+
+  // Derive display values from hook data
+  const brandSourcingEnabled = fetchedCreatorData?.brand_sourcing ?? false;
+  const sourcingLink = brandData?.sourcing_link || null;
+  const brandId = brandData?.brand_id || null;
+  const displayBrandName = brandData?.display_name || brandData?.brand_name || brandName || '';
+  const creatorNumericId = fetchedCreatorData?.creator_id || null;
+  const commissionDisplay = (brandData?.creator_commission && brandData.creator_commission > 0)
+    ? `${brandData.creator_commission}% commission` 
+    : null;
 
   // GA4 tracking
   const { 
@@ -52,78 +64,22 @@ const BrandProducts = () => {
   
   const { currentDepth } = useScrollTracking();
 
+  // Infinite scroll observer
   useEffect(() => {
-    const fetchProducts = async () => {
-      if (!isReady) return;
-      
-      if (!creatorId || !brandName) {
-        setError('Missing creator ID or brand name');
-        setLoading(false);
-        return;
-      }
+    if (!observerTarget.current) return;
 
-      try {
-        setLoading(true);
-        
-        // First get the creator's internal ID, name, and brand sourcing status
-        const { data: creatorData, error: creatorError } = await supabase
-          .from('creators')
-          .select('creator_id, name, brand_sourcing')
-          .eq('uuid', creatorId)
-          .single();
-
-        if (creatorError) throw creatorError;
-        if (!creatorData) throw new Error('Creator not found');
-        
-        setCreatorName(creatorData.name);
-        setCreatorNumericId(creatorData.creator_id);
-        setBrandSourcingEnabled(creatorData.brand_sourcing ?? false);
-
-        // Fetch brand data for sourcing link AND display name
-        const { data: brandData, error: brandError } = await supabase
-          .from('brands')
-          .select('sourcing_link, brand_id, brand_name, display_name, creator_commission')
-          .eq('brand_name', brandName)
-          .maybeSingle();
-
-        if (!brandData) {
-          throw new Error('Brand not found');
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore) {
+          loadMore();
         }
+      },
+      { rootMargin: '400px' }
+    );
 
-        setSourcingLink(brandData.sourcing_link);
-        setBrandId(brandData.brand_id);
-        const brandDisplayName = brandData.display_name || brandData.brand_name;
-        setDisplayBrandName(brandDisplayName);
-
-        // Set commission display from brand-level data
-        if (brandData.creator_commission && brandData.creator_commission > 0) {
-          setCommissionDisplay(`${brandData.creator_commission}% commission`);
-        } else {
-          setCommissionDisplay(null);
-        }
-
-        // Fetch products for this creator x brand using brand_id for consistency
-        const { data, error: productsError } = await supabase
-          .from('creator_x_product_recommendations')
-          .select('id, name, brand, thumbnail_url, purchase_url, sim_score, short_code, price')
-          .eq('creator_id', creatorData.creator_id)
-          .eq('brand_id', brandData.brand_id)
-          .order('sim_score', { ascending: false })
-          .limit(50);
-
-        if (productsError) throw productsError;
-
-        setProducts(data || []);
-      } catch (err) {
-        console.error('Error fetching products:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load products');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProducts();
-  }, [creatorId, brandName, isReady]);
+    observer.observe(observerTarget.current);
+    return () => observer.disconnect();
+  }, [hasMore, loadingMore, loadMore]);
 
   // Track page view and product list view when data loads
   useEffect(() => {
@@ -155,7 +111,7 @@ const BrandProducts = () => {
     }
   }, [loading, products, brandId, displayBrandName, trackPageView, trackBrandInteraction, trackProductListView]);
 
-  if (loading) {
+  if (loading && products.length === 0) {
     return (
       <div className="min-h-screen bg-background">
         <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
@@ -241,7 +197,7 @@ const BrandProducts = () => {
             {displayBrandName || brandName}
           </h1>
           <p className="text-sm sm:text-base text-muted-foreground mt-1">
-            {products.length} products curated for you
+            {totalCount} {totalCount === 1 ? 'product' : 'products'} curated for you
           </p>
           {commissionDisplay && (
             <p className="text-sm text-muted-foreground">
@@ -260,8 +216,9 @@ const BrandProducts = () => {
             </p>
           </Card>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-4 md:gap-6">
-            {products.map((product) => (
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-4 md:gap-6">
+              {products.map((product) => (
               <Card 
                 key={product.id} 
                 className="p-2 sm:p-3 flex flex-col hover:shadow-lg transition-shadow cursor-pointer active:scale-[0.98]"
@@ -334,7 +291,19 @@ const BrandProducts = () => {
                 )}
               </Card>
             ))}
-          </div>
+            </div>
+
+            {/* Loading indicator + observer target */}
+            <div className="min-h-[80px] flex items-center justify-center mt-6">
+              {loadingMore && (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                  <p className="text-sm">Loading more...</p>
+                </div>
+              )}
+            </div>
+            <div ref={observerTarget} className="h-px" />
+          </>
         )}
       </main>
     </div>
