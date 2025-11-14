@@ -1,6 +1,7 @@
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useCreatorContext } from '@/contexts/CreatorContext';
+import { useCreatorData } from '@/hooks/useCreatorData';
 import { useGATracking } from '@/hooks/useGATracking';
 import { useScrollTracking } from '@/hooks/useScrollTracking';
 import { supabase } from '@/integrations/supabase/client';
@@ -25,6 +26,7 @@ const BrandProducts = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { creatorUuid: creatorId, isReady } = useCreatorContext();
+  const { creatorData } = useCreatorData(creatorId);
   const brandName = searchParams.get('brand_name');
   
   const [products, setProducts] = useState<Product[]>([]);
@@ -46,7 +48,7 @@ const BrandProducts = () => {
     trackExternalRedirect,
     trackConversionAction,
     trackBrandInteraction,
-  } = useGATracking();
+  } = useGATracking(creatorData?.creator_id);
   
   const { currentDepth } = useScrollTracking();
 

@@ -47,7 +47,7 @@ const Index = () => {
   
   // Initialize analytics tracking
   const { trackPageView, trackCTAClick } = useAnalytics(creatorIdNum);
-  const { trackPageView: trackGAPageView, trackEngagementQualified, trackConversionAction } = useGATracking();
+  const { trackPageView: trackGAPageView, trackEngagementQualified, trackConversionAction } = useGATracking(creatorIdNum);
   
   // Track page view on mount (GA4)
   useEffect(() => {
