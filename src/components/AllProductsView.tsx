@@ -631,18 +631,18 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProp
     </div>
       )}
 
-      {/* Infinite Scroll Observer Target */}
-      <div ref={observerTarget} className="h-4" />
-
-      {/* Loading More Indicator */}
-      {loadingMore && (
-        <div className="flex justify-center py-8">
-          <div className="flex flex-col items-center gap-2">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            <p className="text-sm text-muted-foreground">Loading more products...</p>
+      {/* Loading More Indicator - Fixed height to prevent layout shift */}
+      <div className="min-h-[80px] flex items-center justify-center">
+        {loadingMore && (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+            <p className="text-sm">Loading more...</p>
           </div>
-        </div>
-      )}
+        )}
+      </div>
+
+      {/* Infinite Scroll Observer Target - invisible trigger */}
+      <div ref={observerTarget} className="h-px" />
     </div>
   );
 };
