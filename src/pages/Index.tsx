@@ -38,6 +38,9 @@ const Index = () => {
   // Onboarding tooltip for brand discovery
   const { showTooltip, onBrandClick, dismissTooltip } = useOnboardingTooltip();
   
+  // Get creator data first (needed for other hooks)
+  const { insights, loading, error, getInsightsByTheme, hasData, lastUpdated, creatorName, creatorIdNum } = useInsightsData(creatorUuid || '');
+  
   // Tile Ranker Survey (after viewing 2+ themes)
   const { trackQuickSurveyShown, trackQuickSurveyDismissed, trackQuickSurveySubmit } = useAnalytics(creatorIdNum);
   const tileRankerSurvey = useQuickSurvey({
@@ -61,8 +64,6 @@ const Index = () => {
       navigate('/');
     }
   }, [isReady, creatorUuid, creatorIdFromUrl, navigate]);
-
-  const { insights, loading, error, getInsightsByTheme, hasData, lastUpdated, creatorName, creatorIdNum } = useInsightsData(creatorUuid || '');
   
   // Initialize analytics tracking
   const { trackPageView, trackCTAClick } = useAnalytics(creatorIdNum);
