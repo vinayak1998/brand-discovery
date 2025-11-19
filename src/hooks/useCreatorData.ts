@@ -36,11 +36,10 @@ export const useCreatorData = (creatorUuid: string | null) => {
           .single();
 
         if (creatorError) {
-          console.error('Error fetching creator:', creatorError);
           trackError({
             action: 'api_error',
             error_message: 'Failed to fetch creator information',
-            error_context: creatorError.message,
+            error_context: `Table: creators, UUID: ${creatorUuid}, ${creatorError.message}`,
           });
           setError('Failed to fetch creator information');
           setLoading(false);
@@ -56,13 +55,13 @@ export const useCreatorData = (creatorUuid: string | null) => {
         setCreatorData(data);
         setLoading(false);
       } catch (err) {
-        console.error('Error in useCreatorData:', err);
+        const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
         trackError({
           action: 'load_error',
-          error_message: err instanceof Error ? err.message : 'An unexpected error occurred',
-          error_context: 'useCreatorData hook',
+          error_message: errorMessage,
+          error_context: `useCreatorData hook, Creator UUID: ${creatorUuid}`,
         });
-        setError('An unexpected error occurred');
+        setError(errorMessage);
         setLoading(false);
       }
     };
