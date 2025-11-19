@@ -445,7 +445,7 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProp
       {showFilters && (
         <div className="px-1">
           <span className="text-sm text-muted-foreground">
-            {`${products.length} ${products.length === 1 ? 'product' : 'products'}`}
+            {`${totalCount} ${totalCount === 1 ? 'product' : 'products'}`}
           </span>
         </div>
       )}
