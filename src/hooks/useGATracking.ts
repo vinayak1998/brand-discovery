@@ -73,8 +73,6 @@ export const useGATracking = (creatorId?: number | null) => {
         creator_id: creatorId,
         timestamp: Date.now(),
       });
-
-      console.log('[GA4 Event]', eventName, params);
     }
   }, [creatorId]);
 

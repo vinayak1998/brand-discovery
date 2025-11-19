@@ -140,11 +140,10 @@ export const useBrandProducts = (
           const { data, error: productsError } = productsResult;
 
           if (productsError) {
-            console.error('Error fetching products:', productsError);
             trackError({
               action: 'api_error',
-              error_message: productsError.message,
-              error_context: 'brand_products_fetch_failed'
+              error_message: 'Failed to fetch brand products',
+              error_context: `Table: creator_x_product_recommendations, Brand: ${brandName}, Creator ID: ${fetchedCreatorData.creator_id}, ${productsError.message}`,
             });
             throw productsError;
           }
@@ -189,11 +188,10 @@ export const useBrandProducts = (
           const { data, error: productsError } = await moreQuery;
 
           if (productsError) {
-            console.error('Error fetching more products:', productsError);
             trackError({
               action: 'api_error',
-              error_message: productsError.message,
-              error_context: 'brand_products_pagination_failed'
+              error_message: 'Failed to fetch more brand products',
+              error_context: `Pagination - Page: ${page}, Brand: ${brandName}, Creator UUID: ${creatorUuid}, ${productsError.message}`,
             });
             throw productsError;
           }
@@ -204,13 +202,13 @@ export const useBrandProducts = (
 
         setError(null);
       } catch (err) {
-        console.error('Error in useBrandProducts:', err);
-        setError(err instanceof Error ? err.message : 'An error occurred');
+        const errorMessage = err instanceof Error ? err.message : 'An error occurred';
         trackError({
           action: 'load_error',
-          error_message: err instanceof Error ? err.message : 'Unknown error',
-          error_context: 'brand_products_error'
+          error_message: errorMessage,
+          error_context: `useBrandProducts hook, Brand: ${brandName}, Creator UUID: ${creatorUuid}, Page: ${page}`,
         });
+        setError(errorMessage);
       } finally {
         setLoading(false);
         setLoadingMore(false);

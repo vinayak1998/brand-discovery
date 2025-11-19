@@ -4,6 +4,7 @@ import { InsightRow as CSVInsightRow } from '@/utils/csvParser';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { useCreatorData } from './useCreatorData';
+import { useGATracking } from './useGATracking';
 
 // Types for our data structure - extending CSV types for backward compatibility
 export interface InsightRow {
@@ -48,6 +49,7 @@ export const useInsightsData = (creatorUuid: string) => {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const { insights: csvInsights, hasInsightsData } = useCSVData();
+  const { trackError } = useGATracking();
   
   // Use shared creator data hook
   const { creatorData, loading: creatorLoading } = useCreatorData(creatorUuid);
@@ -69,12 +71,10 @@ export const useInsightsData = (creatorUuid: string) => {
         });
 
         if (functionError) {
-          console.error('Error calling edge function:', functionError);
           throw functionError;
         }
 
         if (!data || !data.insights || data.insights.length === 0) {
-          console.log('No insights found, trying fallback data');
           // Try CSV or mock data as fallback
           if (hasInsightsData) {
             const filteredData = csvInsights.filter(row => row.creator_id === creatorData.creator_id).map(row => ({
@@ -108,10 +108,14 @@ export const useInsightsData = (creatorUuid: string) => {
         // Set last updated to today for now (edge function doesn't return this)
         setLastUpdated(format(new Date(), 'MMMM d, yyyy'));
         
-        console.log('Fetched data from edge function for creator UUID:', creatorUuid, transformedData);
         setInsights(transformedData);
       } catch (err) {
-        console.error('Error fetching insights:', err);
+        const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+        trackError({
+          action: 'api_error',
+          error_message: 'Failed to fetch insights',
+          error_context: `Edge function: get-creator-insights, Creator UUID: ${creatorUuid}, ${errorMessage}`,
+        });
         
         // Try fallback data on error
         if (hasInsightsData && creatorData) {

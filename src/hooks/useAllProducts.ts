@@ -186,11 +186,10 @@ export const useAllProducts = (
         }
 
         if (productsError) {
-          console.error('Error fetching products:', productsError);
           trackError({
             action: 'api_error',
             error_message: 'Failed to fetch products',
-            error_context: productsError.message,
+            error_context: `Table: creator_x_product_recommendations, Creator ID: ${creatorData.creator_id}, ${productsError.message}`,
           });
           setError('Failed to fetch products');
           setLoading(false);
@@ -256,13 +255,13 @@ export const useAllProducts = (
         setLoading(false);
         setLoadingMore(false);
       } catch (err) {
-        console.error('Error in useAllProducts:', err);
+        const errorMessage = err instanceof Error ? err.message : 'Failed to load products';
         trackError({
           action: 'load_error',
-          error_message: err instanceof Error ? err.message : 'An unexpected error occurred',
-          error_context: 'useAllProducts hook',
+          error_message: errorMessage,
+          error_context: `useAllProducts hook, Creator UUID: ${creatorUuid}, Page: ${page}, Filters: ${JSON.stringify({ categories: Array.from(filterOptions.selectedSubcategories), brands: Array.from(filterOptions.selectedBrands), sort: filterOptions.sortBy })}`,
         });
-        setError('An unexpected error occurred');
+        setError(errorMessage);
         setLoading(false);
       }
     };
