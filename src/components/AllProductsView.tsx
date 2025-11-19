@@ -12,6 +12,7 @@ import { getTheme } from '@/config/themes';
 import { Filter, X, ArrowUpDown } from 'lucide-react';
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { CategoryFilterItem } from './CategoryFilterItem';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AllProductsViewProps {
   creatorUuid: string;
@@ -24,6 +25,10 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProp
   const [selectedSubcategories, setSelectedSubcategories] = useState<Set<string>>(new Set());
   const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set());
   const [sortBy, setSortBy] = useState<SortOption>('match');
+  
+  // Store complete unfiltered lists for filter UI
+  const [allBrands, setAllBrands] = useState<string[]>([]);
+  const [allCategories, setAllCategories] = useState<Map<string, string[]>>(new Map());
   
   // Pass filter options to hook - filtering/sorting happens at database level
   const { products, loading, error, creatorNumericId, loadMore, hasMore, loadingMore, totalCount } = useAllProducts(
@@ -72,104 +77,55 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProp
     return () => observer.disconnect();
   }, [handleObserver]);
 
-  // Build hierarchical category structure and category-to-subcategories mapping
-  // Only show filters if ALL products have cat AND sscat
-  const { categoryHierarchy, categoryToSubcategories, showFilters } = useMemo(() => {
-    // Check if all products have both cat and sscat
-    const allHaveCategoryAndSubcategory = products.every(
-      product => product.cat && product.sscat
-    );
-    
-    if (!allHaveCategoryAndSubcategory) {
-      return { 
-        categoryHierarchy: new Map<string, string[]>(), 
-        categoryToSubcategories: new Map<string, string[]>(),
-        showFilters: false 
-      };
-    }
-    
-    const hierarchy = new Map<string, Set<string>>();
-    
-    products.forEach(product => {
-      if (product.cat && product.sscat) {
-        if (!hierarchy.has(product.cat)) {
-          hierarchy.set(product.cat, new Set());
+  // Fetch complete filter options on mount
+  useEffect(() => {
+    const fetchFilterOptions = async () => {
+      if (!creatorNumericId || !shouldLoad) return;
+      
+      // Fetch all products for this creator to build complete filter lists
+      const { data } = await supabase
+        .from('creator_x_product_recommendations')
+        .select('brand_id, cat, sscat')
+        .eq('creator_id', creatorNumericId);
+      
+      if (data) {
+        // Build complete brand list from brand IDs
+        const brandIds = [...new Set(data.map(p => p.brand_id).filter(Boolean))];
+        if (brandIds.length > 0) {
+          const { data: brands } = await supabase
+            .from('brands')
+            .select('brand_name')
+            .in('brand_id', brandIds);
+          setAllBrands(brands?.map(b => b.brand_name).sort() || []);
         }
-        hierarchy.get(product.cat)!.add(product.sscat);
+        
+        // Build complete category hierarchy
+        const hierarchy = new Map<string, Set<string>>();
+        data.forEach(product => {
+          if (product.cat && product.sscat) {
+            if (!hierarchy.has(product.cat)) {
+              hierarchy.set(product.cat, new Set());
+            }
+            hierarchy.get(product.cat)!.add(product.sscat);
+          }
+        });
+        
+        const sortedHierarchy = new Map<string, string[]>();
+        Array.from(hierarchy.keys()).sort().forEach(cat => {
+          sortedHierarchy.set(cat, Array.from(hierarchy.get(cat)!).sort());
+        });
+        setAllCategories(sortedHierarchy);
       }
-    });
-    
-    // Convert to sorted arrays
-    const sortedHierarchy = new Map<string, string[]>();
-    const catToSubcats = new Map<string, string[]>();
-    
-    Array.from(hierarchy.keys()).sort().forEach(cat => {
-      const subcats = Array.from(hierarchy.get(cat)!).sort();
-      sortedHierarchy.set(cat, subcats);
-      catToSubcats.set(cat, subcats);
-    });
-    
-    return {
-      categoryHierarchy: sortedHierarchy,
-      categoryToSubcategories: catToSubcats,
-      showFilters: true,
     };
-  }, [products]);
-
-  // Get unique brands sorted alphabetically
-  const brandList = useMemo(() => {
-    const brands = new Set<string>();
-    products.forEach(product => {
-      if (product.brand_name) {
-        brands.add(product.brand_name);
-      }
-    });
-    return Array.from(brands).sort();
-  }, [products]);
-
-  // Filter and sort products
-  const filteredAndSortedProducts = useMemo(() => {
-    // First, filter
-    let result = products.filter(product => {
-      const matchesCategory = selectedSubcategories.size === 0 || 
-                             (product.sscat && selectedSubcategories.has(product.sscat));
-      const matchesBrand = selectedBrands.size === 0 || 
-                          (product.brand_name && selectedBrands.has(product.brand_name));
-      return matchesCategory && matchesBrand;
-    });
     
-    // Then, sort
-    result.sort((a, b) => {
-      switch (sortBy) {
-        case 'match':
-          return (b.sim_score || 0) - (a.sim_score || 0);
-        
-        case 'reach-high':
-          return (b.median_reach || 0) - (a.median_reach || 0);
-        
-        case 'sales-high':
-          return (b.median_sales || 0) - (a.median_sales || 0);
-        
-        case 'link-shares':
-          return (b.count_90_days || 0) - (a.count_90_days || 0);
-        
-        case 'price-low':
-          if (!a.price) return 1;
-          if (!b.price) return -1;
-          return a.price - b.price;
-        
-        case 'price-high':
-          if (!a.price) return 1;
-          if (!b.price) return -1;
-          return b.price - a.price;
-        
-        default:
-          return 0;
-      }
-    });
-    
-    return result;
-  }, [products, selectedSubcategories, selectedBrands, sortBy]);
+    fetchFilterOptions();
+  }, [creatorNumericId, shouldLoad]);
+
+  // Use pre-fetched complete lists for filter UI
+  const categoryHierarchy = allCategories;
+  const categoryToSubcategories = allCategories;
+  const showFilters = allCategories.size > 0 && allBrands.length > 0;
+  const brandList = allBrands;
 
   const hasActiveFilters = selectedSubcategories.size > 0 || selectedBrands.size > 0;
 
@@ -291,13 +247,13 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProp
       
       trackProductListView({
         list_context: listContext,
-        visible_count: filteredAndSortedProducts.length,
+        visible_count: products.length,
         total_count: totalCount,
-        is_empty: filteredAndSortedProducts.length === 0,
+        is_empty: products.length === 0,
         filter_count: selectedSubcategories.size + selectedBrands.size,
       });
     }
-  }, [loading, products.length, filteredAndSortedProducts.length, hasActiveFilters, selectedSubcategories.size, selectedBrands.size, totalCount, trackProductListView]);
+  }, [loading, products.length, hasActiveFilters, selectedSubcategories.size, selectedBrands.size, totalCount, trackProductListView]);
 
   if (loading && products.length === 0) {
     return (
@@ -489,16 +445,13 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProp
       {showFilters && (
         <div className="px-1">
           <span className="text-sm text-muted-foreground">
-            {hasActiveFilters 
-              ? `${filteredAndSortedProducts.length} of ${totalCount} products`
-              : `${totalCount} ${totalCount === 1 ? 'product' : 'products'}`
-            }
+            {`${products.length} ${products.length === 1 ? 'product' : 'products'}`}
           </span>
         </div>
       )}
 
       {/* Products Grid */}
-      {filteredAndSortedProducts.length === 0 ? (
+      {products.length === 0 ? (
         <Card className="p-8 text-center">
           <div className="text-6xl mb-4">🔍</div>
           <h2 className="text-xl font-semibold mb-2">No Products Match Filters</h2>
@@ -509,7 +462,7 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProp
         </Card>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-4 md:gap-6">
-      {filteredAndSortedProducts.map((product) => {
+      {products.map((product) => {
         const theme = product.theme_id ? getTheme(product.theme_id) : null;
         
         return (
