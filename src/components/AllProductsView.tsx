@@ -643,20 +643,18 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProp
 
       {/* Infinite Scroll Observer Target - invisible trigger */}
       <div ref={observerTarget} className="h-px" />
-    </>
-  )}
 
-  {/* Reels Dialog */}
-  <ReelsDialog
-    reelUrls={selectedProductReels || []}
-    productName={selectedProductName}
-    productId={selectedProductId}
-    brandId={selectedProductBrandId}
-    open={isReelsDialogOpen}
-    onOpenChange={setIsReelsDialogOpen}
-    creatorId={creatorNumericId}
-  />
-</div>
+      {/* Reels Dialog */}
+      <ReelsDialog
+        reelUrls={selectedProductReels || []}
+        productName={selectedProductName}
+        productId={selectedProductId}
+        brandId={selectedProductBrandId}
+        open={isReelsDialogOpen}
+        onOpenChange={setIsReelsDialogOpen}
+        creatorId={creatorNumericId}
+      />
+    </div>
 );
 };
 
