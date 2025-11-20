@@ -10,7 +10,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, ExternalLink, ArrowUpDown } from 'lucide-react';
+import { ArrowLeft, ExternalLink, ArrowUpDown, Play } from 'lucide-react';
+import { ReelsDialog } from '@/components/ReelsDialog';
 
 interface Product {
   id: number;
@@ -21,6 +22,7 @@ interface Product {
   sim_score: number;
   short_code: string | null;
   price: number | null;
+  top_3_posts_by_views: string[] | null;
 }
 
 const BrandProducts = () => {
@@ -31,6 +33,12 @@ const BrandProducts = () => {
   const brandName = searchParams.get('brand_name');
   const observerTarget = useRef<HTMLDivElement>(null);
   const [sortBy, setSortBy] = useState<SortOption>('match');
+  
+  // Reels dialog state
+  const [selectedProductReels, setSelectedProductReels] = useState<string[] | null>(null);
+  const [selectedProductName, setSelectedProductName] = useState<string>('');
+  const [selectedProductId, setSelectedProductId] = useState<number>(0);
+  const [isReelsDialogOpen, setIsReelsDialogOpen] = useState(false);
   
   const { 
     products, 
@@ -62,6 +70,7 @@ const BrandProducts = () => {
     trackExternalRedirect,
     trackConversionAction,
     trackBrandInteraction,
+    trackCustomEvent,
   } = useGATracking(creatorData?.creator_id);
   
   const { currentDepth } = useScrollTracking();
@@ -256,7 +265,7 @@ const BrandProducts = () => {
                 }}
               >
                 {/* Product Image */}
-                <div className="w-full aspect-square mb-2 sm:mb-3 bg-muted rounded overflow-hidden">
+                <div className="w-full aspect-square mb-2 sm:mb-3 bg-muted rounded overflow-hidden relative">
                   {product.thumbnail_url ? (
                     <img
                       src={product.thumbnail_url}
@@ -270,6 +279,29 @@ const BrandProducts = () => {
                     <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
                       No Image
                     </div>
+                  )}
+
+                  {/* Play Button Overlay - Center */}
+                  {product.top_3_posts_by_views && product.top_3_posts_by_views.length > 0 && (
+                    <button
+                      className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/70 hover:bg-black/80 transition-all flex items-center justify-center z-20 hover:scale-110"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        setSelectedProductReels(product.top_3_posts_by_views);
+                        setSelectedProductName(product.name);
+                        setSelectedProductId(product.id);
+                        setIsReelsDialogOpen(true);
+                        trackCustomEvent('reel_view_opened', {
+                          product_id: product.id,
+                          brand_id: brandId,
+                          reel_count: product.top_3_posts_by_views?.length || 0,
+                        });
+                      }}
+                      aria-label="Play reels"
+                    >
+                      <Play className="w-6 h-6 text-white fill-white" />
+                    </button>
                   )}
                 </div>
 
@@ -308,6 +340,17 @@ const BrandProducts = () => {
           </>
         )}
       </main>
+
+      {/* Reels Dialog */}
+      <ReelsDialog
+        reelUrls={selectedProductReels || []}
+        productName={selectedProductName}
+        productId={selectedProductId}
+        brandId={brandId}
+        open={isReelsDialogOpen}
+        onOpenChange={setIsReelsDialogOpen}
+        creatorId={creatorNumericId}
+      />
     </div>
   );
 };

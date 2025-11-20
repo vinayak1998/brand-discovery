@@ -9,10 +9,11 @@ import { useAllProducts } from '@/hooks/useAllProducts';
 import { useGATracking } from '@/hooks/useGATracking';
 import { useScrollTracking } from '@/hooks/useScrollTracking';
 import { getTheme } from '@/config/themes';
-import { Filter, X, ArrowUpDown } from 'lucide-react';
+import { Filter, X, ArrowUpDown, Play } from 'lucide-react';
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { CategoryFilterItem } from './CategoryFilterItem';
 import { supabase } from '@/integrations/supabase/client';
+import { ReelsDialog } from './ReelsDialog';
 
 interface AllProductsViewProps {
   creatorUuid: string;
@@ -29,6 +30,13 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProp
   // Store complete unfiltered lists for filter UI
   const [allBrands, setAllBrands] = useState<string[]>([]);
   const [allCategories, setAllCategories] = useState<Map<string, string[]>>(new Map());
+  
+  // Reels dialog state
+  const [selectedProductReels, setSelectedProductReels] = useState<string[] | null>(null);
+  const [selectedProductName, setSelectedProductName] = useState<string>('');
+  const [selectedProductId, setSelectedProductId] = useState<number>(0);
+  const [selectedProductBrandId, setSelectedProductBrandId] = useState<number | null>(null);
+  const [isReelsDialogOpen, setIsReelsDialogOpen] = useState(false);
   
   // Pass filter options to hook - filtering/sorting happens at database level
   const { products, loading, error, creatorNumericId, loadMore, hasMore, loadingMore, totalCount } = useAllProducts(
@@ -49,6 +57,7 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProp
     trackFilterSortAction,
     trackProductInteraction,
     trackExternalRedirect,
+    trackCustomEvent,
   } = useGATracking(creatorNumericId);
   
   const { currentDepth } = useScrollTracking();
@@ -557,6 +566,30 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProp
                 </TooltipProvider>
               )}
 
+              {/* Play Button Overlay - Center */}
+              {product.top_3_posts_by_views && product.top_3_posts_by_views.length > 0 && (
+                <button
+                  className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/70 hover:bg-black/80 transition-all flex items-center justify-center z-20 hover:scale-110"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    setSelectedProductReels(product.top_3_posts_by_views);
+                    setSelectedProductName(product.name);
+                    setSelectedProductId(product.id);
+                    setSelectedProductBrandId(product.brand_id);
+                    setIsReelsDialogOpen(true);
+                    trackCustomEvent('reel_view_opened', {
+                      product_id: product.id,
+                      brand_id: product.brand_id,
+                      reel_count: product.top_3_posts_by_views?.length || 0,
+                    });
+                  }}
+                  aria-label="Play reels"
+                >
+                  <Play className="w-6 h-6 text-white fill-white" />
+                </button>
+              )}
+
               {/* Theme Badge - Overlaid on Bottom Right */}
               {theme && (
                 <div className="absolute bottom-2 right-2 z-20">
@@ -610,8 +643,21 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProp
 
       {/* Infinite Scroll Observer Target - invisible trigger */}
       <div ref={observerTarget} className="h-px" />
-    </div>
-  );
+    </>
+  )}
+
+  {/* Reels Dialog */}
+  <ReelsDialog
+    reelUrls={selectedProductReels || []}
+    productName={selectedProductName}
+    productId={selectedProductId}
+    brandId={selectedProductBrandId}
+    open={isReelsDialogOpen}
+    onOpenChange={setIsReelsDialogOpen}
+    creatorId={creatorNumericId}
+  />
+</div>
+);
 };
 
 export default AllProductsView;
