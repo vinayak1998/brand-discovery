@@ -76,6 +76,26 @@ export const useGATracking = (creatorId?: number | null) => {
     }
   }, [creatorId]);
 
+  // Custom event tracking for flexible event tracking
+  const trackCustomEvent = useCallback((eventName: string, params?: Record<string, any>) => {
+    if (typeof window.gtag === 'function') {
+      // Set user_id from numeric creator ID
+      if (creatorId) {
+        window.gtag('set', 'user_properties', {
+          user_id: creatorId.toString(),
+          creator_id: creatorId.toString(),
+        });
+      }
+
+      // Send event with all parameters
+      window.gtag('event', eventName, {
+        ...params,
+        creator_id: creatorId,
+        timestamp: Date.now(),
+      });
+    }
+  }, [creatorId]);
+
   // 1. PAGE VIEW
   const trackPageView = useCallback((params: {
     page_path: string;
@@ -324,5 +344,6 @@ export const useGATracking = (creatorId?: number | null) => {
     trackExternalRedirect,
     trackError,
     trackPerformanceReady,
+    trackCustomEvent,
   };
 };
