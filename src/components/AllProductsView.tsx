@@ -613,7 +613,15 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProp
                   onClick={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
-                    setSelectedProductReels(product.top_3_posts_by_views);
+                    
+                    // Validate reels data before opening dialog
+                    const reels = product.top_3_posts_by_views;
+                    if (!reels || !Array.isArray(reels) || reels.length === 0) {
+                      console.error('Invalid reels data:', reels);
+                      return;
+                    }
+                    
+                    setSelectedProductReels(reels);
                     setSelectedProductName(product.name);
                     setSelectedProductId(product.id);
                     setSelectedProductBrandId(product.brand_id);
@@ -621,7 +629,7 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProp
                     trackCustomEvent('product_insights_opened', {
                       product_id: product.id,
                       brand_id: product.brand_id,
-                      reel_count: product.top_3_posts_by_views?.length || 0,
+                      reel_count: reels.length,
                     });
                   }}
                   aria-label="View product insights"
