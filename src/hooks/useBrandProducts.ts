@@ -155,7 +155,25 @@ export const useBrandProducts = (
 
           setProducts((data || []).map(p => ({
             ...p,
-            top_3_posts_by_views: (p.top_3_posts_by_views as unknown as string[]) || null,
+            top_3_posts_by_views: (() => {
+              const reels = p.top_3_posts_by_views;
+              if (!reels) return null;
+              
+              if (typeof reels === 'string') {
+                try {
+                  const parsed = JSON.parse(reels);
+                  return Array.isArray(parsed) ? parsed : null;
+                } catch {
+                  return null;
+                }
+              }
+              
+              if (Array.isArray(reels)) {
+                return reels;
+              }
+              
+              return null;
+            })(),
           })));
           setHasMore((data || []).length === PAGE_SIZE);
         } else {
@@ -202,7 +220,25 @@ export const useBrandProducts = (
 
           setProducts(prev => [...prev, ...(data || []).map(p => ({
             ...p,
-            top_3_posts_by_views: (p.top_3_posts_by_views as unknown as string[]) || null,
+            top_3_posts_by_views: (() => {
+              const reels = p.top_3_posts_by_views;
+              if (!reels) return null;
+              
+              if (typeof reels === 'string') {
+                try {
+                  const parsed = JSON.parse(reels);
+                  return Array.isArray(parsed) ? parsed : null;
+                } catch {
+                  return null;
+                }
+              }
+              
+              if (Array.isArray(reels)) {
+                return reels;
+              }
+              
+              return null;
+            })(),
           }))]);
           setHasMore((data || []).length === PAGE_SIZE);
         }

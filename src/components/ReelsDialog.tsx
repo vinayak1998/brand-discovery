@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
@@ -34,8 +34,18 @@ export const ReelsDialog = ({
   const [embedError, setEmbedError] = useState(false);
   const { trackCustomEvent } = useGATracking(creatorId);
 
+  // Defensive check - ensure reelUrls is actually an array
+  const safeReelUrls = useMemo(() => {
+    if (!reelUrls) return [];
+    if (!Array.isArray(reelUrls)) {
+      console.error('reelUrls is not an array:', reelUrls);
+      return [];
+    }
+    return reelUrls.filter(url => typeof url === 'string' && url.trim().length > 0);
+  }, [reelUrls]);
+
   const handleNext = () => {
-    const nextIndex = (currentIndex + 1) % reelUrls.length;
+    const nextIndex = (currentIndex + 1) % safeReelUrls.length;
     setCurrentIndex(nextIndex);
     setEmbedError(false);
     trackCustomEvent('reel_navigation', {
@@ -47,7 +57,7 @@ export const ReelsDialog = ({
   };
 
   const handlePrevious = () => {
-    const prevIndex = (currentIndex - 1 + reelUrls.length) % reelUrls.length;
+    const prevIndex = (currentIndex - 1 + safeReelUrls.length) % safeReelUrls.length;
     setCurrentIndex(prevIndex);
     setEmbedError(false);
     trackCustomEvent('reel_navigation', {
@@ -66,9 +76,9 @@ export const ReelsDialog = ({
     }
   };
 
-  if (reelUrls.length === 0) return null;
+  if (safeReelUrls.length === 0) return null;
 
-  const currentReelUrl = reelUrls[currentIndex];
+  const currentReelUrl = safeReelUrls[currentIndex];
   const embedUrl = getEmbedUrl(currentReelUrl);
 
   return (
@@ -106,13 +116,13 @@ export const ReelsDialog = ({
         </div>
 
         {/* Navigation Controls */}
-        {reelUrls.length > 1 && (
+        {safeReelUrls.length > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t">
             <Button
               variant="ghost"
               size="sm"
               onClick={handlePrevious}
-              disabled={reelUrls.length === 1}
+              disabled={safeReelUrls.length === 1}
             >
               <ChevronLeft className="w-4 h-4 mr-1" />
               Previous
@@ -120,7 +130,7 @@ export const ReelsDialog = ({
 
             {/* Dots indicator */}
             <div className="flex items-center gap-1.5">
-              {reelUrls.map((_, index) => (
+              {safeReelUrls.map((_, index) => (
                 <button
                   key={index}
                   onClick={() => {
@@ -141,7 +151,7 @@ export const ReelsDialog = ({
               variant="ghost"
               size="sm"
               onClick={handleNext}
-              disabled={reelUrls.length === 1}
+              disabled={safeReelUrls.length === 1}
             >
               Next
               <ChevronRight className="w-4 h-4 ml-1" />
@@ -152,7 +162,7 @@ export const ReelsDialog = ({
         {/* Reel counter */}
         <div className="px-4 pb-3 text-center">
           <p className="text-xs text-muted-foreground">
-            Reel {currentIndex + 1} of {reelUrls.length}
+            Reel {currentIndex + 1} of {safeReelUrls.length}
           </p>
         </div>
       </DialogContent>
