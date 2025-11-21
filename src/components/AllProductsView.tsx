@@ -9,11 +9,10 @@ import { useAllProducts } from '@/hooks/useAllProducts';
 import { useGATracking } from '@/hooks/useGATracking';
 import { useScrollTracking } from '@/hooks/useScrollTracking';
 import { getTheme } from '@/config/themes';
-import { Filter, X, ArrowUpDown, Info } from 'lucide-react';
+import { Filter, X, ArrowUpDown } from 'lucide-react';
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { CategoryFilterItem } from './CategoryFilterItem';
 import { supabase } from '@/integrations/supabase/client';
-import { ReelsDialog } from './ReelsDialog';
 
 interface AllProductsViewProps {
   creatorUuid: string;
@@ -30,13 +29,6 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProp
   // Store complete unfiltered lists for filter UI
   const [allBrands, setAllBrands] = useState<string[]>([]);
   const [allCategories, setAllCategories] = useState<Map<string, string[]>>(new Map());
-  
-  // Reels dialog state
-  const [selectedProductReels, setSelectedProductReels] = useState<string[] | null>(null);
-  const [selectedProductName, setSelectedProductName] = useState<string>('');
-  const [selectedProductId, setSelectedProductId] = useState<number>(0);
-  const [selectedProductBrandId, setSelectedProductBrandId] = useState<number | null>(null);
-  const [isReelsDialogOpen, setIsReelsDialogOpen] = useState(false);
   
   // Pass filter options to hook - filtering/sorting happens at database level
   const { products, loading, error, creatorNumericId, loadMore, hasMore, loadingMore, totalCount } = useAllProducts(
@@ -57,7 +49,6 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProp
     trackFilterSortAction,
     trackProductInteraction,
     trackExternalRedirect,
-    trackCustomEvent,
   } = useGATracking(creatorNumericId);
   
   const { currentDepth } = useScrollTracking();
@@ -595,49 +586,12 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProp
               </p>
             )}
 
-            {/* Card Footer: Match Score (left) + Info Button (right) */}
-            <div className="flex items-center justify-between mt-2">
-              {/* Match Score Badge - Bottom Left */}
-              {product.sim_score > 0.6 ? (
-                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">
-                  {(product.sim_score * 100).toFixed(0)}% Match
-                </Badge>
-              ) : (
-                <div />
-              )}
-              
-              {/* Info Button - Bottom Right */}
-              {product.top_3_posts_by_views && product.top_3_posts_by_views.length > 0 && (
-                <button
-                  className="w-8 h-8 rounded-full border border-border bg-background hover:bg-accent transition-colors flex items-center justify-center"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    
-                    // Validate reels data before opening dialog
-                    const reels = product.top_3_posts_by_views;
-                    if (!reels || !Array.isArray(reels) || reels.length === 0) {
-                      console.error('Invalid reels data:', reels);
-                      return;
-                    }
-                    
-                    setSelectedProductReels(reels);
-                    setSelectedProductName(product.name);
-                    setSelectedProductId(product.id);
-                    setSelectedProductBrandId(product.brand_id);
-                    setIsReelsDialogOpen(true);
-                    trackCustomEvent('product_insights_opened', {
-                      product_id: product.id,
-                      brand_id: product.brand_id,
-                      reel_count: reels.length,
-                    });
-                  }}
-                  aria-label="View product insights"
-                >
-                  <Info className="w-4 h-4 text-muted-foreground" />
-                </button>
-              )}
-            </div>
+            {/* Match Score - Only show if > 60% */}
+            {product.sim_score > 0.6 && (
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20 self-end">
+                {(product.sim_score * 100).toFixed(0)}% Match
+              </Badge>
+            )}
           </Card>
         );
       })}
@@ -656,19 +610,8 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProp
 
       {/* Infinite Scroll Observer Target - invisible trigger */}
       <div ref={observerTarget} className="h-px" />
-
-      {/* Reels Dialog */}
-      <ReelsDialog
-        reelUrls={selectedProductReels || []}
-        productName={selectedProductName}
-        productId={selectedProductId}
-        brandId={selectedProductBrandId}
-        open={isReelsDialogOpen}
-        onOpenChange={setIsReelsDialogOpen}
-        creatorId={creatorNumericId}
-      />
     </div>
-);
+  );
 };
 
 export default AllProductsView;

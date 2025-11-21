@@ -13,7 +13,6 @@ interface Product {
   sim_score: number;
   short_code: string | null;
   price: number | null;
-  top_3_posts_by_views: string[] | null;
 }
 
 interface BrandData {
@@ -101,7 +100,7 @@ export const useBrandProducts = (
           // Build query with sorting
           let productsQuery = supabase
             .from('creator_x_product_recommendations')
-            .select('id, name, brand, thumbnail_url, purchase_url, sim_score, short_code, price, median_reach, median_sales, count_90_days, top_3_posts_by_views')
+            .select('id, name, brand, thumbnail_url, purchase_url, sim_score, short_code, price, median_reach, median_sales, count_90_days')
             .eq('creator_id', fetchedCreatorData.creator_id)
             .eq('brand_id', fetchedBrandData.brand_id);
 
@@ -153,34 +152,13 @@ export const useBrandProducts = (
             setTotalCount(countResult.count);
           }
 
-          setProducts((data || []).map(p => ({
-            ...p,
-            top_3_posts_by_views: (() => {
-              const reels = p.top_3_posts_by_views;
-              if (!reels) return null;
-              
-              if (typeof reels === 'string') {
-                try {
-                  const parsed = JSON.parse(reels);
-                  return Array.isArray(parsed) ? parsed : null;
-                } catch {
-                  return null;
-                }
-              }
-              
-              if (Array.isArray(reels)) {
-                return reels;
-              }
-              
-              return null;
-            })(),
-          })));
+          setProducts(data || []);
           setHasMore((data || []).length === PAGE_SIZE);
         } else {
           // Load more products for existing creator/brand with same sorting
           let moreQuery = supabase
             .from('creator_x_product_recommendations')
-            .select('id, name, brand, thumbnail_url, purchase_url, sim_score, short_code, price, median_reach, median_sales, count_90_days, top_3_posts_by_views')
+            .select('id, name, brand, thumbnail_url, purchase_url, sim_score, short_code, price, median_reach, median_sales, count_90_days')
             .eq('creator_id', creatorData.creator_id)
             .eq('brand_id', brandData.brand_id);
 
@@ -218,28 +196,7 @@ export const useBrandProducts = (
             throw productsError;
           }
 
-          setProducts(prev => [...prev, ...(data || []).map(p => ({
-            ...p,
-            top_3_posts_by_views: (() => {
-              const reels = p.top_3_posts_by_views;
-              if (!reels) return null;
-              
-              if (typeof reels === 'string') {
-                try {
-                  const parsed = JSON.parse(reels);
-                  return Array.isArray(parsed) ? parsed : null;
-                } catch {
-                  return null;
-                }
-              }
-              
-              if (Array.isArray(reels)) {
-                return reels;
-              }
-              
-              return null;
-            })(),
-          }))]);
+          setProducts(prev => [...prev, ...(data || [])]);
           setHasMore((data || []).length === PAGE_SIZE);
         }
 

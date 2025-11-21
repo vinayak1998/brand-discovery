@@ -28,7 +28,6 @@ export interface ProductWithBrand {
   median_reach: number | null;
   median_sales: number | null;
   count_90_days: number | null;
-  top_3_posts_by_views: string[] | null;
 }
 
 export const useAllProducts = (
@@ -100,8 +99,7 @@ export const useAllProducts = (
             sscat,
             median_reach,
             median_sales,
-            count_90_days,
-            top_3_posts_by_views
+            count_90_days
           `)
           .eq('creator_id', creatorData.creator_id);
 
@@ -247,27 +245,6 @@ export const useAllProducts = (
           brand_name: product.brand_id ? (brandNameMap.get(product.brand_id) || 'Unknown') : 'Unknown',
           logo_url: product.brand_id ? (brandLogoMap.get(product.brand_id) || null) : null,
           theme_id: product.brand_id ? (themeMap.get(product.brand_id) || null) : null,
-          top_3_posts_by_views: (() => {
-            const reels = product.top_3_posts_by_views;
-            if (!reels) return null;
-            
-            // If it's a string, parse it
-            if (typeof reels === 'string') {
-              try {
-                const parsed = JSON.parse(reels);
-                return Array.isArray(parsed) ? parsed : null;
-              } catch {
-                return null;
-              }
-            }
-            
-            // If it's already an array, use it
-            if (Array.isArray(reels)) {
-              return reels;
-            }
-            
-            return null;
-          })(),
         }));
 
         // Check if there are more products to load
