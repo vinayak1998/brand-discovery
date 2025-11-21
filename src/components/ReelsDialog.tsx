@@ -83,13 +83,13 @@ export const ReelsDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-sm w-full p-0 gap-0 overflow-hidden max-h-[80vh]">
+      <DialogContent className="max-w-[340px] w-full p-0 gap-0 overflow-hidden max-h-[85vh]">
         <DialogHeader className="px-4 pt-4 pb-2">
           <DialogTitle className="text-sm font-semibold line-clamp-1">{productName}</DialogTitle>
         </DialogHeader>
 
         {/* Reel Display */}
-        <div className="relative w-full h-[400px] sm:h-[500px] bg-muted">
+        <div className="relative w-full aspect-[9/16] max-h-[500px] bg-muted">
           {!embedError ? (
             <iframe
               src={embedUrl}
