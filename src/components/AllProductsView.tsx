@@ -9,7 +9,7 @@ import { useAllProducts } from '@/hooks/useAllProducts';
 import { useGATracking } from '@/hooks/useGATracking';
 import { useScrollTracking } from '@/hooks/useScrollTracking';
 import { getTheme } from '@/config/themes';
-import { Filter, X, ArrowUpDown, Play } from 'lucide-react';
+import { Filter, X, ArrowUpDown, Info } from 'lucide-react';
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { CategoryFilterItem } from './CategoryFilterItem';
 import { supabase } from '@/integrations/supabase/client';
@@ -566,30 +566,6 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProp
                 </TooltipProvider>
               )}
 
-              {/* Play Button Overlay - Center */}
-              {product.top_3_posts_by_views && product.top_3_posts_by_views.length > 0 && (
-                <button
-                  className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/70 hover:bg-black/80 transition-all flex items-center justify-center z-20 hover:scale-110"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    setSelectedProductReels(product.top_3_posts_by_views);
-                    setSelectedProductName(product.name);
-                    setSelectedProductId(product.id);
-                    setSelectedProductBrandId(product.brand_id);
-                    setIsReelsDialogOpen(true);
-                    trackCustomEvent('reel_view_opened', {
-                      product_id: product.id,
-                      brand_id: product.brand_id,
-                      reel_count: product.top_3_posts_by_views?.length || 0,
-                    });
-                  }}
-                  aria-label="Play reels"
-                >
-                  <Play className="w-6 h-6 text-white fill-white" />
-                </button>
-              )}
-
               {/* Theme Badge - Overlaid on Bottom Right */}
               {theme && (
                 <div className="absolute bottom-2 right-2 z-20">
@@ -619,12 +595,41 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProp
               </p>
             )}
 
-            {/* Match Score - Only show if > 60% */}
-            {product.sim_score > 0.6 && (
-              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20 self-end">
-                {(product.sim_score * 100).toFixed(0)}% Match
-              </Badge>
-            )}
+            {/* Card Footer: Match Score (left) + Info Button (right) */}
+            <div className="flex items-center justify-between mt-2">
+              {/* Match Score Badge - Bottom Left */}
+              {product.sim_score > 0.6 ? (
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">
+                  {(product.sim_score * 100).toFixed(0)}% Match
+                </Badge>
+              ) : (
+                <div />
+              )}
+              
+              {/* Info Button - Bottom Right */}
+              {product.top_3_posts_by_views && product.top_3_posts_by_views.length > 0 && (
+                <button
+                  className="w-8 h-8 rounded-full border border-border bg-background hover:bg-accent transition-colors flex items-center justify-center"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    setSelectedProductReels(product.top_3_posts_by_views);
+                    setSelectedProductName(product.name);
+                    setSelectedProductId(product.id);
+                    setSelectedProductBrandId(product.brand_id);
+                    setIsReelsDialogOpen(true);
+                    trackCustomEvent('product_insights_opened', {
+                      product_id: product.id,
+                      brand_id: product.brand_id,
+                      reel_count: product.top_3_posts_by_views?.length || 0,
+                    });
+                  }}
+                  aria-label="View product insights"
+                >
+                  <Info className="w-4 h-4 text-muted-foreground" />
+                </button>
+              )}
+            </div>
           </Card>
         );
       })}
