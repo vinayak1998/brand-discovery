@@ -24,7 +24,7 @@ const queryClient = new QueryClient();
 
 // Global tracking wrapper component
 const GlobalTracking = ({ children }: { children: React.ReactNode }) => {
-  const { trackScrollMilestone, trackPerformanceReady, trackSessionStart } = useGATracking();
+  const { trackScrollMilestone, trackPerformanceReady } = useGATracking();
 
   // Track scroll milestones - memoized callback to prevent infinite loop
   const handleScrollMilestone = useCallback((depth: number) => {
@@ -41,10 +41,7 @@ const GlobalTracking = ({ children }: { children: React.ReactNode }) => {
     trackPerformanceWhenReady((metrics) => {
       trackPerformanceReady(metrics);
     });
-
-    // Track session start
-    trackSessionStart();
-  }, [trackPerformanceReady, trackSessionStart]);
+  }, [trackPerformanceReady]);
 
   return <>{children}</>;
 };
