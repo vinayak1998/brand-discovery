@@ -47,20 +47,21 @@ const Index = () => {
   
   // Initialize analytics tracking
   const { trackPageView, trackCTAClick } = useAnalytics(creatorIdNum);
-  const { trackPageView: trackGAPageView, trackEngagementQualified, trackConversionAction } = useGATracking(creatorIdNum);
+  const { trackPageView: trackGAPageView, trackEngagementQualified, trackConversionAction, trackSessionStart } = useGATracking(creatorIdNum);
   
-  // Track page view on mount (GA4)
+  // Track session start and page view on mount (GA4)
   useEffect(() => {
     if (creatorIdNum && hasData) {
+      trackSessionStart();
       trackPageView();
       trackGAPageView({
         page_path: window.location.pathname,
-        page_title: activeTab === 'brands' ? 'Brand Discovery' : 'Product Discovery',
+        page_title: 'Creator Insights',
         tab: activeTab,
-        screen: activeTab === 'brands' ? 'brand_discovery' : 'product_discovery',
+        screen: 'insights_dashboard',
       });
     }
-  }, [creatorIdNum, hasData, trackPageView, trackGAPageView, activeTab]);
+  }, [creatorIdNum, hasData, trackSessionStart, trackPageView, trackGAPageView]);
 
   // Track engagement qualified (retention criteria: 2 clicks OR 1 scroll)
   useEffect(() => {
