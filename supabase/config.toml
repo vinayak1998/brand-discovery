@@ -11,3 +11,6 @@ verify_jwt = true
 
 [functions.admin-download-brand-insights]
 verify_jwt = true
+
+[functions.admin-bulk-upload]
+verify_jwt = true
