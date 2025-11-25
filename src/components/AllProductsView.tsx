@@ -296,7 +296,7 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: All
     <div className="space-y-4">
       {/* Filter Bar - Only show if all products have cat and sscat */}
       {showFilters && (
-        <div className="sticky top-0 z-30 bg-background pb-2 space-y-4">
+        <div className="sticky top-0 z-30 bg-background pb-2 space-y-4 shadow-md">
           {/* Row 1: Filter and Sort Controls - Connected with divider */}
           <div className="flex items-center border rounded-lg overflow-hidden bg-background shadow-sm">
             {/* Filters Section */}
