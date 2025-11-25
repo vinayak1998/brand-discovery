@@ -17,11 +17,12 @@ import { supabase } from '@/integrations/supabase/client';
 interface AllProductsViewProps {
   creatorUuid: string;
   shouldLoad?: boolean;
+  onProductClick?: () => void;
 }
 
 type SortOption = 'match' | 'reach-high' | 'sales-high' | 'link-shares' | 'price-low' | 'price-high';
 
-const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProps) => {
+const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: AllProductsViewProps) => {
   const [selectedSubcategories, setSelectedSubcategories] = useState<Set<string>>(new Set());
   const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set());
   const [sortBy, setSortBy] = useState<SortOption>('match');
@@ -470,6 +471,9 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true }: AllProductsViewProp
             key={product.id} 
             className="p-2 sm:p-3 flex flex-col hover:shadow-lg transition-shadow cursor-pointer active:scale-[0.98]"
             onClick={() => {
+              // Track engagement click
+              onProductClick?.();
+              
               if (product.short_code) {
                 const url = `https://www.wishlink.com/share/${product.short_code}?source=product_discovery&creator=${creatorNumericId}`;
                 

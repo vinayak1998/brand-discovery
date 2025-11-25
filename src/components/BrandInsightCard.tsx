@@ -32,6 +32,7 @@ interface BrandInsightCardProps {
   showTooltipOnFirst?: boolean;
   onFirstBrandClick?: () => void;
   onDismissTooltip?: () => void;
+  onBrandClick?: () => void;
 }
 
 const BrandAvatar = ({ logoUrl, brandName }: { logoUrl?: string; brandName: string }) => {
@@ -66,6 +67,7 @@ const BrandInsightCard = ({
   showTooltipOnFirst = false,
   onFirstBrandClick,
   onDismissTooltip,
+  onBrandClick,
 }: BrandInsightCardProps) => {
   const { trackThemeView, trackBrandClick } = useAnalytics(creatorId);
   const { trackThemeImpression, trackThemeInteraction, trackBrandInteraction } = useGATracking(creatorId);
@@ -210,6 +212,9 @@ const BrandInsightCard = ({
                         <div
                           className="group flex items-center justify-between cursor-pointer bg-card active:bg-accent active:scale-[0.98] p-3 rounded-lg transition-all duration-200 border border-primary/20 shadow-sm active:shadow-md"
                           onClick={() => {
+                            // Track engagement click
+                            onBrandClick?.();
+                            
                             // Notify parent if this is the first brand
                             if (index === 0 && onFirstBrandClick) {
                               onFirstBrandClick();

@@ -1,5 +1,5 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useInsightsData } from '@/hooks/useInsightsData';
 import { useCreatorContext } from '@/contexts/CreatorContext';
 import { useGATracking } from '@/hooks/useGATracking';
@@ -95,6 +95,11 @@ const Index = () => {
     
     window.addEventListener('scroll', handleScroll, { once: true });
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Callback to track brand/product clicks for engagement
+  const handleInteractionClick = useCallback(() => {
+    setClickCount(prev => prev + 1);
   }, []);
 
   // Check if this is an invalid creator ID (no data exists)
@@ -254,6 +259,7 @@ const Index = () => {
                     showTooltipOnFirst={isFirstTheme && showTooltip && activeTab === 'brands'}
                     onFirstBrandClick={onBrandClick}
                     onDismissTooltip={dismissTooltip}
+                    onBrandClick={handleInteractionClick}
                   />
                 );
               })}
@@ -262,7 +268,11 @@ const Index = () => {
 
           {/* Product Discovery Tab - Only load data when tab is active */}
           <TabsContent value="products" className="pt-2">
-            <AllProductsView creatorUuid={creatorUuid || ''} shouldLoad={activeTab === 'products'} />
+            <AllProductsView 
+              creatorUuid={creatorUuid || ''} 
+              shouldLoad={activeTab === 'products'}
+              onProductClick={handleInteractionClick}
+            />
           </TabsContent>
         </Tabs>
       </main>
