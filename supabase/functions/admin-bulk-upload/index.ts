@@ -41,9 +41,9 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { csvType, csvData } = await req.json();
+    const { csvType, csvData, syncMode = 'upsert' } = await req.json();
 
-    console.log('Processing bulk upload, type:', csvType);
+    console.log('Processing bulk upload, type:', csvType, 'syncMode:', syncMode);
 
     if (!csvType || !csvData) {
       return new Response(
@@ -52,14 +52,14 @@ Deno.serve(async (req) => {
       );
     }
 
-    let stats = { created: 0, updated: 0, errors: 0 };
+    let stats = { created: 0, updated: 0, errors: 0, deleted: 0 };
 
     if (csvType === 'creators') {
       stats = await processCreators(supabase, csvData);
     } else if (csvType === 'brands') {
       stats = await processBrands(supabase, csvData);
     } else if (csvType === 'insights') {
-      stats = await processInsights(supabase, csvData);
+      stats = await processInsights(supabase, csvData, syncMode);
     } else {
       return new Response(
         JSON.stringify({ error: 'Invalid csvType. Must be "creators", "brands", or "insights"' }),
@@ -138,9 +138,39 @@ async function processBrands(supabase: any, rows: BrandRow[]) {
   return stats;
 }
 
-async function processInsights(supabase: any, rows: InsightRow[]) {
-  const stats = { created: 0, updated: 0, errors: 0 };
+async function processInsights(supabase: any, rows: InsightRow[], syncMode: string = 'upsert') {
+  const stats = { created: 0, updated: 0, errors: 0, deleted: 0 };
 
+  // If full_sync mode, delete old brand associations for each creator+theme combo first
+  if (syncMode === 'full_sync') {
+    // Extract unique creator_id + theme_id combinations
+    const creatorThemePairs = new Map<string, { creator_id: number; theme_id: string }>();
+    rows.forEach(row => {
+      const key = `${row.creator_id}-${row.theme_id}`;
+      creatorThemePairs.set(key, { creator_id: row.creator_id, theme_id: row.theme_id });
+    });
+
+    console.log(`Full sync mode: Deleting old insights for ${creatorThemePairs.size} creator+theme combinations`);
+
+    // Delete old insights for each creator+theme combination
+    for (const pair of creatorThemePairs.values()) {
+      const { error, count } = await supabase
+        .from('creator_brand_insights')
+        .delete({ count: 'exact' })
+        .eq('creator_id', pair.creator_id)
+        .eq('theme_id', pair.theme_id);
+
+      if (error) {
+        console.error(`Error deleting old insights for creator ${pair.creator_id}, theme ${pair.theme_id}:`, error);
+      } else {
+        stats.deleted += count || 0;
+      }
+    }
+
+    console.log(`Deleted ${stats.deleted} old insight(s)`);
+  }
+
+  // Insert new insights in batches
   for (let i = 0; i < rows.length; i += BATCH_SIZE) {
     const batch = rows.slice(i, i + BATCH_SIZE).map((r) => ({
       creator_id: r.creator_id,
@@ -151,10 +181,10 @@ async function processInsights(supabase: any, rows: InsightRow[]) {
 
     const { error } = await supabase
       .from('creator_brand_insights')
-      .upsert(batch, { onConflict: 'creator_id,brand_id,theme_id', ignoreDuplicates: false });
+      .insert(batch);
 
     if (error) {
-      console.error(`Error upserting insights batch (${i}-${i + batch.length - 1}):`, error);
+      console.error(`Error inserting insights batch (${i}-${i + batch.length - 1}):`, error);
       stats.errors += batch.length;
     } else {
       stats.created += batch.length;
