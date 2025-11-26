@@ -141,36 +141,22 @@ async function processBrands(supabase: any, rows: BrandRow[]) {
 async function processInsights(supabase: any, rows: InsightRow[], syncMode: string = 'upsert') {
   const stats = { created: 0, updated: 0, errors: 0, deleted: 0 };
 
-  // If full_sync mode, delete old brand associations for each creator+theme combo first
-  if (syncMode === 'full_sync') {
-    // Extract unique creator_id + theme_id combinations
-    const creatorThemePairs = new Map<string, { creator_id: number; theme_id: string }>();
-    rows.forEach(row => {
-      const key = `${row.creator_id}-${row.theme_id}`;
-      creatorThemePairs.set(key, { creator_id: row.creator_id, theme_id: row.theme_id });
-    });
+  // Delete ALL existing insights first (complete table overwrite)
+  console.log('Deleting all existing insights for complete table overwrite...');
+  const { error: deleteError, count: deletedCount } = await supabase
+    .from('creator_brand_insights')
+    .delete({ count: 'exact' })
+    .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all rows
 
-    console.log(`Full sync mode: Deleting old insights for ${creatorThemePairs.size} creator+theme combinations`);
-
-    // Delete old insights for each creator+theme combination
-    for (const pair of creatorThemePairs.values()) {
-      const { error, count } = await supabase
-        .from('creator_brand_insights')
-        .delete({ count: 'exact' })
-        .eq('creator_id', pair.creator_id)
-        .eq('theme_id', pair.theme_id);
-
-      if (error) {
-        console.error(`Error deleting old insights for creator ${pair.creator_id}, theme ${pair.theme_id}:`, error);
-      } else {
-        stats.deleted += count || 0;
-      }
-    }
-
-    console.log(`Deleted ${stats.deleted} old insight(s)`);
+  if (deleteError) {
+    console.error('Error deleting existing insights:', deleteError);
+    return { ...stats, errors: 1 };
   }
+  
+  stats.deleted = deletedCount || 0;
+  console.log(`Deleted ${stats.deleted} existing insight(s)`);
 
-  // Insert new insights in batches
+  // Insert all new insights in batches
   for (let i = 0; i < rows.length; i += BATCH_SIZE) {
     const batch = rows.slice(i, i + BATCH_SIZE).map((r) => ({
       creator_id: r.creator_id,
