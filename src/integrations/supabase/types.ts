@@ -83,6 +83,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "creator_brand_insights_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["brand_id"]
+          },
+          {
             foreignKeyName: "creator_brand_insights_creator_id_fkey"
             columns: ["creator_id"]
             isOneToOne: false
