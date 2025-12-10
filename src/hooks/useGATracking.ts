@@ -215,7 +215,7 @@ export const useGATracking = (creatorId?: number | null) => {
   // 9. FILTER/SORT ACTION
   const trackFilterSortAction = useCallback((params: {
     action: 'filter_apply' | 'sort_change' | 'filter_clear';
-    filter_type?: 'brand' | 'category' | 'both';
+    filter_type?: 'brand' | 'category' | 'price' | 'both';
     filter_count?: number;
     sort_by?: string;
     selected_brands?: string[];

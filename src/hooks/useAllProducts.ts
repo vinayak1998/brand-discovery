@@ -8,8 +8,24 @@ export type SortOption = 'match' | 'reach-high' | 'sales-high' | 'link-shares' |
 export interface FilterOptions {
   selectedSubcategories: Set<string>;
   selectedBrands: Set<string>;
+  selectedPriceRanges: Set<string>;
   sortBy: SortOption;
 }
+
+export interface PriceRange {
+  key: string;
+  label: string;
+  min: number;
+  max: number | null;
+}
+
+export const PRICE_RANGES: PriceRange[] = [
+  { key: '0-500', label: '₹0 - ₹500', min: 0, max: 500 },
+  { key: '500-1000', label: '₹500 - ₹1,000', min: 500, max: 1000 },
+  { key: '1000-1500', label: '₹1,000 - ₹1,500', min: 1000, max: 1500 },
+  { key: '1500-2000', label: '₹1,500 - ₹2,000', min: 1500, max: 2000 },
+  { key: '2000+', label: '₹2,000+', min: 2000, max: null },
+];
 
 export interface ProductWithBrand {
   id: number;
@@ -36,6 +52,7 @@ export const useAllProducts = (
   filterOptions: FilterOptions = {
     selectedSubcategories: new Set(),
     selectedBrands: new Set(),
+    selectedPriceRanges: new Set(),
     sortBy: 'match'
   }
 ) => {
@@ -62,6 +79,7 @@ export const useAllProducts = (
   }, [
     Array.from(filterOptions.selectedSubcategories).join(','),
     Array.from(filterOptions.selectedBrands).join(','),
+    Array.from(filterOptions.selectedPriceRanges).join(','),
     filterOptions.sortBy
   ]);
 
@@ -121,6 +139,22 @@ export const useAllProducts = (
           }
         }
 
+        // Apply price range filter
+        if (filterOptions.selectedPriceRanges.size > 0) {
+          const priceConditions = Array.from(filterOptions.selectedPriceRanges).map(rangeKey => {
+            const range = PRICE_RANGES.find(r => r.key === rangeKey);
+            if (!range) return null;
+            if (range.max === null) {
+              return `price.gte.${range.min}`;
+            }
+            return `and(price.gte.${range.min},price.lt.${range.max})`;
+          }).filter(Boolean);
+          
+          if (priceConditions.length > 0) {
+            productsQuery = productsQuery.or(priceConditions.join(','));
+          }
+        }
+
         // Apply sorting
         switch (filterOptions.sortBy) {
           case 'match':
@@ -169,6 +203,22 @@ export const useAllProducts = (
                 const brandIds = brandData?.map(b => b.brand_id) || [];
                 if (brandIds.length > 0) {
                   countQuery = countQuery.in('brand_id', brandIds);
+                }
+              }
+
+              // Apply price range filter for count
+              if (filterOptions.selectedPriceRanges.size > 0) {
+                const priceConditions = Array.from(filterOptions.selectedPriceRanges).map(rangeKey => {
+                  const range = PRICE_RANGES.find(r => r.key === rangeKey);
+                  if (!range) return null;
+                  if (range.max === null) {
+                    return `price.gte.${range.min}`;
+                  }
+                  return `and(price.gte.${range.min},price.lt.${range.max})`;
+                }).filter(Boolean);
+                
+                if (priceConditions.length > 0) {
+                  countQuery = countQuery.or(priceConditions.join(','));
                 }
               }
 
@@ -267,7 +317,7 @@ export const useAllProducts = (
     };
 
     fetchAllProducts();
-  }, [creatorUuid, creatorData, creatorLoading, shouldLoad, trackError, page, filterOptions.selectedSubcategories, filterOptions.selectedBrands, filterOptions.sortBy]);
+  }, [creatorUuid, creatorData, creatorLoading, shouldLoad, trackError, page, filterOptions.selectedSubcategories, filterOptions.selectedBrands, filterOptions.selectedPriceRanges, filterOptions.sortBy]);
 
   const loadMore = () => {
     if (!loadingMore && hasMore && !loading) {
