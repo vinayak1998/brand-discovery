@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useAllProducts } from '@/hooks/useAllProducts';
+import { useAllProducts, PRICE_RANGES } from '@/hooks/useAllProducts';
 import { useGATracking } from '@/hooks/useGATracking';
 import { useScrollTracking } from '@/hooks/useScrollTracking';
 import { getTheme } from '@/config/themes';
@@ -25,6 +25,7 @@ type SortOption = 'match' | 'reach-high' | 'sales-high' | 'link-shares' | 'price
 const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: AllProductsViewProps) => {
   const [selectedSubcategories, setSelectedSubcategories] = useState<Set<string>>(new Set());
   const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set());
+  const [selectedPriceRanges, setSelectedPriceRanges] = useState<Set<string>>(new Set());
   const [sortBy, setSortBy] = useState<SortOption>('match');
   
   // Store complete unfiltered lists for filter UI
@@ -38,6 +39,7 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: All
     {
       selectedSubcategories,
       selectedBrands,
+      selectedPriceRanges,
       sortBy
     }
   );
@@ -128,14 +130,32 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: All
   const showFilters = allCategories.size > 0 && allBrands.length > 0;
   const brandList = allBrands;
 
-  const hasActiveFilters = selectedSubcategories.size > 0 || selectedBrands.size > 0;
+  const hasActiveFilters = selectedSubcategories.size > 0 || selectedBrands.size > 0 || selectedPriceRanges.size > 0;
 
   const clearFilters = () => {
     setSelectedSubcategories(new Set());
     setSelectedBrands(new Set());
+    setSelectedPriceRanges(new Set());
     // Track filter clear
     trackFilterSortAction({
       action: 'filter_clear',
+    });
+  };
+
+  // Handle price range click
+  const handlePriceRangeClick = (rangeKey: string) => {
+    const newSelection = new Set(selectedPriceRanges);
+    if (newSelection.has(rangeKey)) {
+      newSelection.delete(rangeKey);
+    } else {
+      newSelection.add(rangeKey);
+    }
+    setSelectedPriceRanges(newSelection);
+    
+    trackFilterSortAction({
+      action: 'filter_apply',
+      filter_type: 'price',
+      filter_count: selectedSubcategories.size + selectedBrands.size + newSelection.size,
     });
   };
 
@@ -160,7 +180,7 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: All
     trackFilterSortAction({
       action: 'filter_apply',
       filter_type: 'category',
-      filter_count: newSelection.size + selectedBrands.size,
+      filter_count: newSelection.size + selectedBrands.size + selectedPriceRanges.size,
       selected_categories: Array.from(newSelection),
       selected_brands: Array.from(selectedBrands),
     });
@@ -182,7 +202,7 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: All
     trackFilterSortAction({
       action: 'filter_apply',
       filter_type: 'category',
-      filter_count: newSelection.size + selectedBrands.size,
+      filter_count: newSelection.size + selectedBrands.size + selectedPriceRanges.size,
       selected_categories: Array.from(newSelection),
       selected_brands: Array.from(selectedBrands),
     });
@@ -202,7 +222,7 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: All
     trackFilterSortAction({
       action: 'filter_apply',
       filter_type: 'brand',
-      filter_count: selectedSubcategories.size + newSelection.size,
+      filter_count: selectedSubcategories.size + newSelection.size + selectedPriceRanges.size,
       selected_categories: Array.from(selectedSubcategories),
       selected_brands: Array.from(newSelection),
     });
@@ -251,10 +271,10 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: All
         visible_count: products.length,
         total_count: totalCount,
         is_empty: products.length === 0,
-        filter_count: selectedSubcategories.size + selectedBrands.size,
+        filter_count: selectedSubcategories.size + selectedBrands.size + selectedPriceRanges.size,
       });
     }
-  }, [loading, products.length, hasActiveFilters, selectedSubcategories.size, selectedBrands.size, totalCount, trackProductListView]);
+  }, [loading, products.length, hasActiveFilters, selectedSubcategories.size, selectedBrands.size, selectedPriceRanges.size, totalCount, trackProductListView]);
 
   if (loading && products.length === 0) {
     return (
@@ -310,7 +330,7 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: All
                   <span>Filters</span>
                   {hasActiveFilters && (
                     <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs">
-                      {selectedSubcategories.size + selectedBrands.size}
+                      {selectedSubcategories.size + selectedBrands.size + selectedPriceRanges.size}
                     </Badge>
                   )}
                 </Button>
@@ -330,6 +350,27 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: All
                           onClick={() => handleBrandClick(brand)}
                         >
                           {brand}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* Separator */}
+                  <div className="border-t" />
+
+                  {/* Price Range Filter Section */}
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Filter by Price</label>
+                    <div className="space-y-1">
+                      {PRICE_RANGES.map(range => (
+                        <Button
+                          key={range.key}
+                          variant={selectedPriceRanges.has(range.key) ? "secondary" : "ghost"}
+                          size="sm"
+                          className="w-full justify-start text-xs"
+                          onClick={() => handlePriceRangeClick(range.key)}
+                        >
+                          {range.label}
                         </Button>
                       ))}
                     </div>
@@ -367,7 +408,7 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: All
               trackFilterSortAction({
                 action: 'sort_change',
                 sort_by: newSortBy,
-                filter_count: selectedSubcategories.size + selectedBrands.size,
+                filter_count: selectedSubcategories.size + selectedBrands.size + selectedPriceRanges.size,
               });
             }}>
               <SelectTrigger className="flex-1 border-0 rounded-none h-11 gap-2">
@@ -410,6 +451,30 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: All
               </button>
             </Badge>
           ))}
+
+          {/* Price Range Filter Chips */}
+          {Array.from(selectedPriceRanges).map(rangeKey => {
+            const range = PRICE_RANGES.find(r => r.key === rangeKey);
+            return (
+              <Badge 
+                key={`price-${rangeKey}`}
+                variant="secondary" 
+                className="gap-1.5 pr-1 pl-2.5 py-1"
+              >
+                <span className="text-xs">{range?.label}</span>
+                <button
+                  onClick={() => {
+                    const newSelection = new Set(selectedPriceRanges);
+                    newSelection.delete(rangeKey);
+                    setSelectedPriceRanges(newSelection);
+                  }}
+                  className="hover:bg-secondary-foreground/20 rounded-full p-0.5 transition-colors"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            );
+          })}
           
           {/* Category Filter Chips */}
           {getActiveFilterChips().map((chip, idx) => (
