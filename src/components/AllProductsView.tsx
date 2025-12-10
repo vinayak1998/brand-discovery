@@ -154,7 +154,6 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: All
     
     trackFilterSortAction({
       action: 'filter_apply',
-      filter_type: 'price',
       filter_count: selectedSubcategories.size + selectedBrands.size + newSelection.size,
     });
   };
