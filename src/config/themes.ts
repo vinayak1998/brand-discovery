@@ -11,7 +11,7 @@ export interface ThemeConfig {
 export const THEMES: Record<string, ThemeConfig> = {
   top_trending: {
     id: "top_trending",
-    title: "Top Trending Brands",
+    title: "Most Shared Brands",
     icon: Flame,
     tagline: "Brands gaining the most momentum right now",
     color: "hsl(var(--primary))",
