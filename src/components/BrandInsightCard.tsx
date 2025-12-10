@@ -143,9 +143,7 @@ const BrandInsightCard = ({
                 <div className="flex-1 min-w-0">
                   <h3 className="text-base font-semibold text-foreground mb-0.5">{title}</h3>
                   <p className="text-xs sm:text-sm text-muted-foreground leading-tight">
-                    {title === "Top Trending Brands"
-                      ? "What other creators similar to you are talking about most"
-                      : tagline}
+                    {tagline}
                   </p>
                 </div>
               </div>
@@ -164,9 +162,9 @@ const BrandInsightCard = ({
               {/* Metric Header */}
               <div className="flex justify-end mb-2">
                 <p className="text-[10px] sm:text-xs text-muted-foreground font-medium">
-                  {title === "Top Trending Brands" && "Recent shares by similar creators"}
-                  {title === "Best Reach Brands" && "Views per recent posts"}
-                  {title === "Fast Selling Brands" && "Sales per link(₹)"}
+                  {title === "Most Shared Brands" && "Recent shares by similar creators"}
+                  {title === "Brands Driving High Reel Reach" && "Views per recent posts"}
+                  {title === "High Sales Brands" && "Sales per link(₹)"}
                 </p>
               </div>
 
