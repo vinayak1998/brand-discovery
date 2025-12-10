@@ -92,13 +92,13 @@ const BrandInsightCard = ({
               theme_id: themeId,
               theme_name: title,
               brand_count: brands.length,
-              position: Array.from(document.querySelectorAll('.insight-card')).indexOf(entry.target as Element),
+              position: Array.from(document.querySelectorAll(".insight-card")).indexOf(entry.target as Element),
             });
             setHasTrackedImpression(true);
           }
         });
       },
-      { threshold: 0.5 }
+      { threshold: 0.5 },
     );
 
     observer.observe(cardRef.current);
@@ -115,18 +115,21 @@ const BrandInsightCard = ({
 
   return (
     <>
-      <Collapsible open={isOpen} onOpenChange={(open) => {
-        onOpenChange(open);
-        // Track GA4 theme interaction
-        if (open) {
-          trackThemeInteraction({
-            action: 'theme_expand',
-            theme_id: themeId,
-            theme_name: title,
-            brand_count: brands.length,
-          });
-        }
-      }}>
+      <Collapsible
+        open={isOpen}
+        onOpenChange={(open) => {
+          onOpenChange(open);
+          // Track GA4 theme interaction
+          if (open) {
+            trackThemeInteraction({
+              action: "theme_expand",
+              theme_id: themeId,
+              theme_name: title,
+              brand_count: brands.length,
+            });
+          }
+        }}
+      >
         <Card
           ref={cardRef}
           className={cn(
@@ -143,7 +146,7 @@ const BrandInsightCard = ({
                 <div className="flex-1 min-w-0">
                   <h3 className="text-base font-semibold text-foreground mb-0.5">{title}</h3>
                   <p className="text-xs sm:text-sm text-muted-foreground leading-tight">
-                    {title === "Top Trending Brands"
+                    {title === "Most Shared Brands"
                       ? "What other creators similar to you are talking about most"
                       : tagline}
                   </p>
@@ -207,14 +210,14 @@ const BrandInsightCard = ({
                             </div>
                           </div>
                         )}
-                        
+
                         {/* Brand Info Row */}
                         <div
                           className="group flex items-center justify-between cursor-pointer bg-card active:bg-accent active:scale-[0.98] p-3 rounded-lg transition-all duration-200 border border-primary/20 shadow-sm active:shadow-md"
                           onClick={() => {
                             // Track engagement click
                             onBrandClick?.();
-                            
+
                             // Notify parent if this is the first brand
                             if (index === 0 && onFirstBrandClick) {
                               onFirstBrandClick();
@@ -225,14 +228,12 @@ const BrandInsightCard = ({
                             }
                             // Track GA4 brand click
                             trackBrandInteraction({
-                              action: 'brand_click',
+                              action: "brand_click",
                               brand_id: brand.brand_id || 0,
                               brand_name: brand.brand_name,
                               theme_id: themeId,
                             });
-                            navigate(
-                              `/brand/products?brand_name=${encodeURIComponent(brand.brand_name)}`,
-                            );
+                            navigate(`/brand/products?brand_name=${encodeURIComponent(brand.brand_name)}`);
                           }}
                           role="button"
                           tabIndex={0}
