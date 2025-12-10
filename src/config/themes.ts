@@ -11,23 +11,23 @@ export interface ThemeConfig {
 export const THEMES: Record<string, ThemeConfig> = {
   top_trending: {
     id: "top_trending",
-    title: "Top Trending Brands",
+    title: "Most Shared Brands",
     icon: Flame,
-    tagline: "Brands gaining the most momentum right now",
+    tagline: "What other creators similar to you are talking about most",
     color: "hsl(var(--primary))",
   },
   best_reach: {
     id: "best_reach",
-    title: "Best Reach Brands",
+    title: "Brands Driving High Reel Reach",
     icon: TrendingUp,
-    tagline: "Maximize your audience with these brands",
+    tagline: "Maximize your reel reach with these brands",
     color: "hsl(var(--chart-2))",
   },
   fastest_selling: {
     id: "fastest_selling",
-    title: "Fast Selling Brands",
+    title: "High Sales Brands",
     icon: Zap,
-    tagline: "Products flying off the shelves",
+    tagline: "Products with highest sales performance",
     color: "hsl(var(--chart-3))",
   },
 };
