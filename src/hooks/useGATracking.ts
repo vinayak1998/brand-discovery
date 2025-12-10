@@ -212,7 +212,7 @@ export const useGATracking = (creatorId?: number | null) => {
     });
   }, [trackEvent]);
 
-  // 9. FILTER/SORT ACTION
+  // 9. FILTER/SORT ACTION - supports brand, category, price filtering
   const trackFilterSortAction = useCallback((params: {
     action: 'filter_apply' | 'sort_change' | 'filter_clear';
     filter_type?: 'brand' | 'category' | 'price' | 'both';
