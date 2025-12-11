@@ -3,7 +3,43 @@ import { supabase } from '@/integrations/supabase/client';
 import { useGATracking } from './useGATracking';
 import { useCreatorData } from './useCreatorData';
 
-export type SortOption = 'match' | 'reach-high' | 'sales-high' | 'link-shares' | 'price-low' | 'price-high';
+export type SortOption = 'default' | 'match' | 'reach-high' | 'sales-high' | 'link-shares' | 'price-low' | 'price-high';
+
+// Shuffle products within 5% match score buckets (only for default sorting)
+const shuffleWithinBuckets = (products: ProductWithBrand[]): ProductWithBrand[] => {
+  if (products.length === 0) return products;
+  
+  // Group by 5% buckets (sim_score is 0-1, so bucket = floor(score * 20))
+  const buckets: Map<number, ProductWithBrand[]> = new Map();
+  
+  products.forEach(product => {
+    const bucketKey = Math.floor(product.sim_score * 20);
+    if (!buckets.has(bucketKey)) {
+      buckets.set(bucketKey, []);
+    }
+    buckets.get(bucketKey)!.push(product);
+  });
+  
+  // Fisher-Yates shuffle
+  const shuffleArray = <T>(array: T[]): T[] => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+  
+  // Sort bucket keys descending (highest scores first) and flatten
+  const sortedBucketKeys = [...buckets.keys()].sort((a, b) => b - a);
+  const shuffledProducts: ProductWithBrand[] = [];
+  
+  sortedBucketKeys.forEach(bucketKey => {
+    shuffledProducts.push(...shuffleArray(buckets.get(bucketKey)!));
+  });
+  
+  return shuffledProducts;
+};
 
 export interface FilterOptions {
   selectedSubcategories: Set<string>;
@@ -53,7 +89,7 @@ export const useAllProducts = (
     selectedSubcategories: new Set(),
     selectedBrands: new Set(),
     selectedPriceRanges: new Set(),
-    sortBy: 'match'
+    sortBy: 'default'
   }
 ) => {
   const [products, setProducts] = useState<ProductWithBrand[]>([]);
@@ -157,6 +193,7 @@ export const useAllProducts = (
 
         // Apply sorting
         switch (filterOptions.sortBy) {
+          case 'default':
           case 'match':
             productsQuery = productsQuery.order('sim_score', { ascending: false });
             break;
@@ -290,12 +327,17 @@ export const useAllProducts = (
         });
 
         // Map data back to products
-        const productsWithBrandInfo = data.map(product => ({
+        let productsWithBrandInfo = data.map(product => ({
           ...product,
           brand_name: product.brand_id ? (brandNameMap.get(product.brand_id) || 'Unknown') : 'Unknown',
           logo_url: product.brand_id ? (brandLogoMap.get(product.brand_id) || null) : null,
           theme_id: product.brand_id ? (themeMap.get(product.brand_id) || null) : null,
         }));
+
+        // Randomize within 5% match score buckets for default sorting only
+        if (filterOptions.sortBy === 'default') {
+          productsWithBrandInfo = shuffleWithinBuckets(productsWithBrandInfo);
+        }
 
         // Check if there are more products to load
         setHasMore(data.length === PAGE_SIZE);
