@@ -20,13 +20,13 @@ interface AllProductsViewProps {
   onProductClick?: () => void;
 }
 
-type SortOption = 'match' | 'reach-high' | 'sales-high' | 'link-shares' | 'price-low' | 'price-high';
+type SortOption = 'default' | 'match' | 'reach-high' | 'sales-high' | 'link-shares' | 'price-low' | 'price-high';
 
 const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: AllProductsViewProps) => {
   const [selectedSubcategories, setSelectedSubcategories] = useState<Set<string>>(new Set());
   const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set());
   const [selectedPriceRanges, setSelectedPriceRanges] = useState<Set<string>>(new Set());
-  const [sortBy, setSortBy] = useState<SortOption>('match');
+  const [sortBy, setSortBy] = useState<SortOption>('default');
   
   // Store complete unfiltered lists for filter UI
   const [allBrands, setAllBrands] = useState<string[]>([]);
@@ -400,7 +400,7 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: All
             <div className="w-px h-8 bg-border" />
 
             {/* Sort Section */}
-            <Select value={sortBy} onValueChange={(value) => {
+            <Select value={sortBy === 'default' ? '' : sortBy} onValueChange={(value) => {
               const newSortBy = value as SortOption;
               setSortBy(newSortBy);
               // Track sort change
