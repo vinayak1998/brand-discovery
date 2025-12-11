@@ -339,13 +339,13 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: All
                   {/* Brand Filter Section */}
                   <div>
                     <label className="text-sm font-medium mb-2 block">Filter by Brand</label>
-                    <div className="space-y-1 max-h-[150px] overflow-y-auto">
+                    <div className="flex flex-wrap gap-2 max-h-[120px] overflow-y-auto">
                       {brandList.map(brand => (
                         <Button
                           key={brand}
                           variant={selectedBrands.has(brand) ? "secondary" : "ghost"}
                           size="sm"
-                          className="w-full justify-start text-xs"
+                          className="text-xs px-3 py-1 h-auto"
                           onClick={() => handleBrandClick(brand)}
                         >
                           {brand}
@@ -360,13 +360,13 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: All
                   {/* Price Range Filter Section */}
                   <div>
                     <label className="text-sm font-medium mb-2 block">Filter by Price</label>
-                    <div className="space-y-1">
+                    <div className="flex flex-wrap gap-2">
                       {PRICE_RANGES.map(range => (
                         <Button
                           key={range.key}
                           variant={selectedPriceRanges.has(range.key) ? "secondary" : "ghost"}
                           size="sm"
-                          className="w-full justify-start text-xs"
+                          className="text-xs px-3 py-1 h-auto"
                           onClick={() => handlePriceRangeClick(range.key)}
                         >
                           {range.label}
