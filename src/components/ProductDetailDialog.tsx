@@ -8,8 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ExternalLink, Copy, Bookmark, BookmarkCheck, Check } from 'lucide-react';
-import { useState } from 'react';
+import { ExternalLink, Copy, Bookmark, BookmarkCheck, Check, Play } from 'lucide-react';
+import { useState, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { getTheme } from '@/config/themes';
 
@@ -28,6 +28,7 @@ interface ProductWithBrand {
   theme_id?: string;
   cat?: string | null;
   sscat?: string | null;
+  top_3_posts_by_views?: unknown;
 }
 
 interface ProductDetailDialogProps {
@@ -57,6 +58,22 @@ export const ProductDetailDialog = ({
   const matchScore = Math.round(product.sim_score * 100);
   const showMatchScore = matchScore > 60;
   const themeConfig = product.theme_id ? getTheme(product.theme_id) : null;
+
+  // Parse reel URLs from top_3_posts_by_views
+  const reelUrls = useMemo(() => {
+    if (!product.top_3_posts_by_views) return [];
+    try {
+      const data = typeof product.top_3_posts_by_views === 'string' 
+        ? JSON.parse(product.top_3_posts_by_views) 
+        : product.top_3_posts_by_views;
+      if (Array.isArray(data)) {
+        return data.filter((url): url is string => typeof url === 'string' && url.length > 0);
+      }
+      return [];
+    } catch {
+      return [];
+    }
+  }, [product.top_3_posts_by_views]);
 
   const handleCheckProduct = () => {
     if (!product.short_code) {
@@ -233,6 +250,38 @@ export const ProductDetailDialog = ({
                 {isWishlisted ? 'Saved' : 'Save'}
               </Button>
             </div>
+
+            {/* Content Ideas Section */}
+            {reelUrls.length > 0 && (
+              <div className="pt-4 border-t border-border">
+                <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                  📹 Content Ideas
+                  <Badge variant="secondary" className="text-xs px-1.5 py-0">
+                    {reelUrls.length}
+                  </Badge>
+                </h4>
+                <div className="flex gap-2">
+                  {reelUrls.map((url, index) => (
+                    <button
+                      key={index}
+                      onClick={() => window.open(url, '_blank')}
+                      className="relative w-16 h-16 rounded-lg overflow-hidden group transition-transform hover:scale-105"
+                      style={{
+                        background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)',
+                        padding: '2px'
+                      }}
+                    >
+                      <div className="w-full h-full bg-background rounded-md flex items-center justify-center">
+                        <Play className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Tap to see how creators styled this product
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </DialogContent>

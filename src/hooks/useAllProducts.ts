@@ -80,6 +80,7 @@ export interface ProductWithBrand {
   median_reach: number | null;
   median_sales: number | null;
   count_90_days: number | null;
+  top_3_posts_by_views?: unknown;
 }
 
 export const useAllProducts = (
@@ -153,7 +154,8 @@ export const useAllProducts = (
             sscat,
             median_reach,
             median_sales,
-            count_90_days
+            count_90_days,
+            top_3_posts_by_views
           `)
           .eq('creator_id', creatorData.creator_id);
 
@@ -327,7 +329,7 @@ export const useAllProducts = (
         });
 
         // Map data back to products
-        let productsWithBrandInfo = data.map(product => ({
+        let productsWithBrandInfo: ProductWithBrand[] = data.map(product => ({
           ...product,
           brand_name: product.brand_id ? (brandNameMap.get(product.brand_id) || 'Unknown') : 'Unknown',
           logo_url: product.brand_id ? (brandLogoMap.get(product.brand_id) || null) : null,

@@ -13,6 +13,7 @@ interface Product {
   sim_score: number;
   short_code: string | null;
   price: number | null;
+  top_3_posts_by_views?: unknown;
 }
 
 interface BrandData {
@@ -116,7 +117,7 @@ export const useBrandProducts = (
           // Build query with sorting
           let productsQuery = supabase
             .from('creator_x_product_recommendations')
-            .select('id, name, brand, thumbnail_url, purchase_url, sim_score, short_code, price, median_reach, median_sales, count_90_days')
+            .select('id, name, brand, thumbnail_url, purchase_url, sim_score, short_code, price, median_reach, median_sales, count_90_days, top_3_posts_by_views')
             .eq('creator_id', fetchedCreatorData.creator_id)
             .eq('brand_id', fetchedBrandData.brand_id);
 
@@ -174,7 +175,7 @@ export const useBrandProducts = (
           // Load more products for existing creator/brand with same sorting
           let moreQuery = supabase
             .from('creator_x_product_recommendations')
-            .select('id, name, brand, thumbnail_url, purchase_url, sim_score, short_code, price, median_reach, median_sales, count_90_days')
+            .select('id, name, brand, thumbnail_url, purchase_url, sim_score, short_code, price, median_reach, median_sales, count_90_days, top_3_posts_by_views')
             .eq('creator_id', creatorData.creator_id)
             .eq('brand_id', brandData.brand_id);
 
