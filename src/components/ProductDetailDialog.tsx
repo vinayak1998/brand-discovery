@@ -53,15 +53,9 @@ export const ProductDetailDialog = ({
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
 
-  if (!product) return null;
-
-  const matchScore = Math.round(product.sim_score * 100);
-  const showMatchScore = matchScore > 60;
-  const themeConfig = product.theme_id ? getTheme(product.theme_id) : null;
-
-  // Parse reel URLs from top_3_posts_by_views
+  // Parse reel URLs from top_3_posts_by_views - must be before early return
   const reelUrls = useMemo(() => {
-    if (!product.top_3_posts_by_views) return [];
+    if (!product?.top_3_posts_by_views) return [];
     try {
       const data = typeof product.top_3_posts_by_views === 'string' 
         ? JSON.parse(product.top_3_posts_by_views) 
@@ -73,7 +67,13 @@ export const ProductDetailDialog = ({
     } catch {
       return [];
     }
-  }, [product.top_3_posts_by_views]);
+  }, [product?.top_3_posts_by_views]);
+
+  if (!product) return null;
+
+  const matchScore = Math.round(product.sim_score * 100);
+  const showMatchScore = matchScore > 60;
+  const themeConfig = product.theme_id ? getTheme(product.theme_id) : null;
 
   const handleCheckProduct = () => {
     if (!product.short_code) {
