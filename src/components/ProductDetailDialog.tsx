@@ -136,9 +136,9 @@ export const ProductDetailDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm p-0">
+      <DialogContent className="max-w-[288px] p-0">
         {/* Product Image with Brand Overlay */}
-        <div className="relative w-full aspect-square bg-muted">
+        <div className="relative w-full aspect-[4/5] bg-muted">
           {product.thumbnail_url ? (
             <img
               src={product.thumbnail_url}
@@ -184,7 +184,7 @@ export const ProductDetailDialog = ({
         </div>
 
         {/* Product Details */}
-        <div className="px-4 py-3 space-y-3">
+        <div className="px-3 py-2.5 space-y-2.5">
           {/* Product Title - Left aligned */}
           <DialogHeader className="p-0 space-y-0">
             <DialogTitle className="text-lg font-semibold leading-snug line-clamp-2 text-left">
