@@ -136,14 +136,14 @@ export const ProductDetailDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm p-0 top-[5%] translate-y-0 max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-sm p-0 !top-4 !translate-y-0 max-h-[95vh] overflow-y-auto">
         {/* Product Image with Brand Overlay */}
-        <div className="relative w-full aspect-[4/3] bg-muted">
+        <div className="relative w-full h-48 bg-muted flex items-center justify-center">
           {product.thumbnail_url ? (
             <img
               src={product.thumbnail_url}
               alt={product.name}
-              className="w-full h-full object-cover"
+              className="max-h-48 max-w-full object-contain"
               loading="lazy"
             />
           ) : (
@@ -154,21 +154,21 @@ export const ProductDetailDialog = ({
           
           {/* Brand overlay - bottom left */}
           {product.brand_name && (
-            <div className="absolute bottom-2 left-2 flex items-center gap-1.5 bg-black/60 backdrop-blur-sm rounded-md px-2 py-1">
-              <Avatar className="h-4 w-4 rounded-sm">
+            <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/60 backdrop-blur-sm rounded-md px-1.5 py-0.5">
+              <Avatar className="h-3.5 w-3.5 rounded-sm">
                 <AvatarImage src={product.brand_logo} alt={product.brand_name} />
-                <AvatarFallback className="text-[9px] rounded-sm">
+                <AvatarFallback className="text-[8px] rounded-sm">
                   {product.brand_name.charAt(0)}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-xs text-white font-medium">{product.brand_name}</span>
+              <span className="text-[11px] text-white font-medium">{product.brand_name}</span>
             </div>
           )}
           
           {/* Theme badge overlay - bottom right */}
           {themeConfig && (
             <Badge 
-              className="absolute bottom-2 right-2 text-xs px-1.5 py-0.5"
+              className="absolute bottom-2 right-2 text-[10px] px-1.5 py-0.5"
               style={{ 
                 backgroundColor: `${themeConfig.color}20`,
                 color: themeConfig.color,
@@ -184,7 +184,7 @@ export const ProductDetailDialog = ({
         </div>
 
         {/* Product Details */}
-        <div className="px-4 py-3 space-y-3">
+        <div className="px-3 py-2 space-y-2">
           {/* Product Title - Left aligned */}
           <DialogHeader className="p-0 space-y-0">
             <DialogTitle className="text-base font-semibold leading-snug line-clamp-2 text-left">
@@ -208,36 +208,39 @@ export const ProductDetailDialog = ({
           </div>
 
           {/* CTA Buttons */}
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {/* Primary CTA - Check Product */}
             <Button 
               onClick={handleCheckProduct}
-              className="w-full gap-2"
+              size="sm"
+              className="w-full gap-1.5"
             >
-              <ExternalLink className="h-4 w-4" />
+              <ExternalLink className="h-3.5 w-3.5" />
               Check Product
             </Button>
 
             {/* Secondary CTAs Row */}
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1.5">
               <Button
                 onClick={handleCopyLink}
                 variant="outline"
-                className="gap-1.5"
+                size="sm"
+                className="gap-1"
               >
-                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                {copied ? 'Copied!' : 'Copy Link'}
+                {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                {copied ? 'Copied!' : 'Copy'}
               </Button>
 
               <Button
                 onClick={handleSaveForLater}
                 variant={isWishlisted ? "secondary" : "outline"}
-                className="gap-1.5"
+                size="sm"
+                className="gap-1"
               >
                 {isWishlisted ? (
-                  <BookmarkCheck className="h-4 w-4" />
+                  <BookmarkCheck className="h-3.5 w-3.5" />
                 ) : (
-                  <Bookmark className="h-4 w-4" />
+                  <Bookmark className="h-3.5 w-3.5" />
                 )}
                 {isWishlisted ? 'Saved' : 'Save'}
               </Button>
@@ -246,31 +249,31 @@ export const ProductDetailDialog = ({
 
           {/* Content Ideas Section */}
           {reelUrls.length > 0 && (
-            <div className="pt-3 border-t border-border">
-              <h4 className="text-xs font-medium mb-2 flex items-center gap-1.5 text-muted-foreground">
+            <div className="pt-2 border-t border-border">
+              <h4 className="text-[11px] font-medium mb-1.5 flex items-center gap-1 text-muted-foreground">
                 📹 Content Ideas
-                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                <Badge variant="secondary" className="text-[9px] px-1 py-0">
                   {reelUrls.length}
                 </Badge>
               </h4>
-              <div className="flex gap-2">
+              <div className="flex gap-1.5">
                 {reelUrls.map((url, index) => (
                   <button
                     key={index}
                     onClick={() => window.open(url, '_blank')}
-                    className="relative w-12 h-12 rounded-lg overflow-hidden group transition-transform hover:scale-105"
+                    className="relative w-10 h-10 rounded-md overflow-hidden group transition-transform hover:scale-105"
                     style={{
                       background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)',
-                      padding: '2px'
+                      padding: '1.5px'
                     }}
                   >
-                    <div className="w-full h-full bg-background rounded-md flex items-center justify-center">
-                      <Play className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    <div className="w-full h-full bg-background rounded-[5px] flex items-center justify-center">
+                      <Play className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
                     </div>
                   </button>
                 ))}
               </div>
-              <p className="text-[10px] text-muted-foreground mt-1.5">
+              <p className="text-[9px] text-muted-foreground mt-1">
                 Tap to see how creators styled this
               </p>
             </div>
