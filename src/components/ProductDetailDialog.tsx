@@ -138,12 +138,12 @@ export const ProductDetailDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm p-0">
         {/* Product Image with Brand Overlay */}
-        <div className="relative w-full aspect-square bg-muted flex items-center justify-center">
+        <div className="relative w-full aspect-square bg-muted">
           {product.thumbnail_url ? (
             <img
               src={product.thumbnail_url}
               alt={product.name}
-              className="max-w-full max-h-full object-contain"
+              className="w-full h-full object-cover"
               loading="lazy"
             />
           ) : (
