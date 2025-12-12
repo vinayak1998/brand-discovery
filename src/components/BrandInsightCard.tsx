@@ -1,7 +1,8 @@
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { ChevronDown, ChevronRight, Info } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { useAnalytics, ThemeId } from "@/hooks/useAnalytics";
@@ -163,16 +164,7 @@ const BrandInsightCard = ({
 
           {/* Collapsible Content */}
           <CollapsibleContent className="accordion-content">
-            <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-1">
-              {/* Metric Header */}
-              <div className="flex justify-end mb-2">
-                <p className="text-[10px] sm:text-xs text-muted-foreground font-medium">
-                  {title === "Most Shared Brands" && "Recent shares by similar creators"}
-                  {title === "Best Reach Brands" && "Views per recent posts"}
-                  {title === "Fast Selling Brands" && "Sales per link(₹)"}
-                </p>
-              </div>
-
+            <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-2">
               {/* Brand List */}
               <div className="space-y-3">
                 {brands.length === 0 ? (
@@ -245,9 +237,23 @@ const BrandInsightCard = ({
                             </div>
                           </div>
                           <div className="flex items-center gap-1.5">
-                            <p className="text-sm font-semibold text-foreground">
-                              {Math.ceil(brand.value).toLocaleString()}
-                            </p>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div 
+                                  className="text-muted-foreground hover:text-foreground cursor-help p-1"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <Info className="w-4 h-4" />
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent side="left">
+                                <p className="text-xs">
+                                  {themeId === 'top_trending' && `${Math.ceil(brand.value).toLocaleString()} shares by similar creators`}
+                                  {themeId === 'best_reach' && `${Math.ceil(brand.value).toLocaleString()} views per recent post`}
+                                  {themeId === 'fastest_selling' && `₹${Math.ceil(brand.value).toLocaleString()} sales per link`}
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
                             <ChevronRight className="w-5 h-5 text-primary transition-all" />
                           </div>
                         </div>
