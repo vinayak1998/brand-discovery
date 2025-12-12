@@ -10,8 +10,9 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertCircle, Sparkles } from 'lucide-react';
+import { AlertCircle, Sparkles, Heart } from 'lucide-react';
 import { THEMES, getTheme } from '@/config/themes';
+import SavedProductsView from '@/components/SavedProductsView';
 import { useAnalytics, ThemeId } from '@/hooks/useAnalytics';
 import { useOnboardingTooltip } from '@/hooks/useOnboardingTooltip';
 
@@ -23,7 +24,7 @@ const Index = () => {
   
   // Determine active tab from URL path
   const pathname = window.location.pathname;
-  const activeTab = pathname.includes('/products') ? 'products' : 'brands';
+  const activeTab = pathname.includes('/saved') ? 'saved' : pathname.includes('/products') ? 'products' : 'brands';
   
   // Track which accordions are open (all start open by default)
   const [openAccordions, setOpenAccordions] = useState<Set<string>>(
@@ -57,7 +58,7 @@ const Index = () => {
       trackGAPageView({
         page_path: window.location.pathname,
         page_title: 'Creator Insights',
-        tab: activeTab,
+        tab: activeTab as 'brands' | 'products',
         screen: 'insights_dashboard',
       });
     }
@@ -220,9 +221,13 @@ const Index = () => {
           setClickCount(prev => prev + 1);
           navigate(`/insights/${tab}`);
         }} className="w-full">
-          <TabsList className="grid w-full max-w-md mx-auto mb-4" style={{ gridTemplateColumns: '1fr 1fr' }}>
+          <TabsList className="grid w-full max-w-md mx-auto mb-4" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
             <TabsTrigger value="brands">Brands</TabsTrigger>
             <TabsTrigger value="products">Products</TabsTrigger>
+            <TabsTrigger value="saved" className="gap-1">
+              <Heart className="h-3.5 w-3.5" />
+              Saved
+            </TabsTrigger>
           </TabsList>
 
           {/* Brand Discovery Tab */}
@@ -291,6 +296,14 @@ const Index = () => {
             <AllProductsView 
               creatorUuid={creatorUuid || ''} 
               shouldLoad={activeTab === 'products'}
+              onProductClick={handleInteractionClick}
+            />
+          </TabsContent>
+
+          {/* Saved Products Tab */}
+          <TabsContent value="saved" className="pt-2">
+            <SavedProductsView 
+              creatorUuid={creatorUuid || ''} 
               onProductClick={handleInteractionClick}
             />
           </TabsContent>
