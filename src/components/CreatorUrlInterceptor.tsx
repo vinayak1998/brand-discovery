@@ -22,6 +22,9 @@ const CreatorUrlInterceptor = () => {
       // New flow: URL → /insights/brands directly
       if (location.pathname === '/insights' || location.pathname === '/') {
         navigate('/insights/brands', { replace: true });
+      } else if (location.pathname === '/insights/saved') {
+        // Handle saved route - just clean URL
+        navigate('/insights/saved', { replace: true });
       } else {
         // For other paths, just clean the URL
         const newSearchParams = new URLSearchParams(searchParams);
