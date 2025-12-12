@@ -1,5 +1,5 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useInsightsData } from '@/hooks/useInsightsData';
 import { useCreatorContext } from '@/contexts/CreatorContext';
 import { useGATracking } from '@/hooks/useGATracking';
@@ -107,7 +107,22 @@ const Index = () => {
 
   const themes = Object.values(THEMES);
 
-  // No forced accordion behavior - users can freely expand/collapse all
+  // Pick a random brand across all themes for tooltip placement (on mount)
+  const tooltipTarget = useMemo(() => {
+    if (!hasData) return null;
+    
+    const allBrands: Array<{ themeId: string; brandIndex: number }> = [];
+    themes.forEach((theme) => {
+      const themeBrands = getInsightsByTheme(theme.id);
+      themeBrands.forEach((_, brandIdx) => {
+        allBrands.push({ themeId: theme.id, brandIndex: brandIdx });
+      });
+    });
+    
+    if (allBrands.length === 0) return null;
+    const randomIdx = Math.floor(Math.random() * allBrands.length);
+    return allBrands[randomIdx];
+  }, [hasData]); // Only recompute when hasData changes (initial load)
 
   if (loading) {
     return (
@@ -221,9 +236,14 @@ const Index = () => {
             
             {/* Brand Insight Cards */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {themes.map((theme, index) => {
+                {themes.map((theme, index) => {
                 const themeBrands = getInsightsByTheme(theme.id);
-                const isFirstTheme = index === 0;
+                
+                // Determine which brand index in this theme should show tooltip
+                const tooltipBrandIndex = 
+                  showTooltip && activeTab === 'brands' && tooltipTarget?.themeId === theme.id
+                    ? tooltipTarget.brandIndex
+                    : null;
                 
                 return (
                   <BrandInsightCard
@@ -256,8 +276,8 @@ const Index = () => {
                         return next;
                       });
                     }}
-                    showTooltipOnFirst={isFirstTheme && showTooltip && activeTab === 'brands'}
-                    onFirstBrandClick={onBrandClick}
+                    showTooltipOnBrandIndex={tooltipBrandIndex}
+                    onTooltipBrandClick={onBrandClick}
                     onDismissTooltip={dismissTooltip}
                     onBrandClick={handleInteractionClick}
                   />
