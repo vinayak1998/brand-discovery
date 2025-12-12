@@ -136,18 +136,18 @@ export const ProductDetailDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm sm:max-w-md p-0 overflow-hidden">
+      <DialogContent className="max-w-sm sm:max-w-md p-0 max-h-[85vh] overflow-y-auto">
         {/* Product Image with Brand Overlay */}
-        <div className="relative w-full aspect-[4/3] bg-muted">
+        <div className="relative w-full max-h-56 sm:max-h-64 bg-muted overflow-hidden">
           {product.thumbnail_url ? (
             <img
               src={product.thumbnail_url}
               alt={product.name}
-              className="w-full h-full object-cover"
+              className="w-full h-56 sm:h-64 object-cover"
               loading="lazy"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+            <div className="w-full h-40 flex items-center justify-center text-muted-foreground">
               No image
             </div>
           )}
