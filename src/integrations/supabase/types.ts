@@ -128,6 +128,27 @@ export type Database = {
         }
         Relationships: []
       }
+      creator_wishlisted_products: {
+        Row: {
+          created_at: string
+          creator_id: number
+          id: string
+          product_id: number
+        }
+        Insert: {
+          created_at?: string
+          creator_id: number
+          id?: string
+          product_id: number
+        }
+        Update: {
+          created_at?: string
+          creator_id?: number
+          id?: string
+          product_id?: number
+        }
+        Relationships: []
+      }
       creator_x_product_recommendations: {
         Row: {
           brand: string | null

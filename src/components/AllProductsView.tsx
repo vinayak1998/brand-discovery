@@ -8,10 +8,12 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useAllProducts, PRICE_RANGES } from '@/hooks/useAllProducts';
 import { useGATracking } from '@/hooks/useGATracking';
 import { useScrollTracking } from '@/hooks/useScrollTracking';
+import { useWishlist } from '@/hooks/useWishlist';
 import { getTheme } from '@/config/themes';
 import { Filter, X, ArrowUpDown } from 'lucide-react';
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { CategoryFilterItem } from './CategoryFilterItem';
+import { ProductDetailDialog } from './ProductDetailDialog';
 import { supabase } from '@/integrations/supabase/client';
 
 interface AllProductsViewProps {
@@ -22,11 +24,30 @@ interface AllProductsViewProps {
 
 type SortOption = 'default' | 'match' | 'reach-high' | 'sales-high' | 'link-shares' | 'price-low' | 'price-high';
 
+// Define product type for dialog
+interface ProductForDialog {
+  id: number;
+  product_id: number | null;
+  name: string;
+  sim_score: number;
+  thumbnail_url: string | null;
+  price: number | null;
+  short_code: string | null;
+  purchase_url: string | null;
+  brand_id: number | null;
+  brand_name?: string;
+  brand_logo?: string;
+  theme_id?: string;
+  cat?: string | null;
+  sscat?: string | null;
+}
+
 const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: AllProductsViewProps) => {
   const [selectedSubcategories, setSelectedSubcategories] = useState<Set<string>>(new Set());
   const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set());
   const [selectedPriceRanges, setSelectedPriceRanges] = useState<Set<string>>(new Set());
   const [sortBy, setSortBy] = useState<SortOption>('default');
+  const [selectedProduct, setSelectedProduct] = useState<ProductForDialog | null>(null);
   
   // Store complete unfiltered lists for filter UI
   const [allBrands, setAllBrands] = useState<string[]>([]);
@@ -55,6 +76,9 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: All
   } = useGATracking(creatorNumericId);
   
   const { currentDepth } = useScrollTracking();
+  
+  // Wishlist hook
+  const { isWishlisted, toggleWishlist } = useWishlist(creatorNumericId);
 
   // Infinite scroll observer
   const handleObserver = useCallback((entries: IntersectionObserverEntry[]) => {
@@ -538,35 +562,37 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: All
               // Track engagement click
               onProductClick?.();
               
-              if (product.short_code) {
-                const url = `https://www.wishlink.com/share/${product.short_code}?source=product_discovery&creator=${creatorNumericId}`;
-                
-                // Track product interaction
-                trackProductInteraction({
-                  product_id: product.id,
-                  product_name: product.name,
-                  brand_id: product.brand_id || 0,
-                  brand_name: product.brand_name || '',
-                  theme_id: product.theme_id,
-                  match_score: product.sim_score || 0,
-                  price: product.price || undefined,
-                  source_tab: 'product_discovery',
-                  short_code: product.short_code,
-                  scroll_depth_at_click: currentDepth,
-                });
-                
-                // Track external redirect
-                trackExternalRedirect({
-                  destination: 'wishlink_product',
-                  url,
-                  product_id: product.id,
-                  brand_id: product.brand_id || undefined,
-                  brand_name: product.brand_name || undefined,
-                  short_code: product.short_code,
-                });
-                
-                window.open(url, '_blank');
-              }
+              // Track product interaction
+              trackProductInteraction({
+                product_id: product.id,
+                product_name: product.name,
+                brand_id: product.brand_id || 0,
+                brand_name: product.brand_name || '',
+                theme_id: product.theme_id,
+                match_score: product.sim_score || 0,
+                price: product.price || undefined,
+                source_tab: 'product_discovery',
+                short_code: product.short_code || '',
+                scroll_depth_at_click: currentDepth,
+              });
+              
+              // Open product detail dialog instead of redirecting
+              setSelectedProduct({
+                id: product.id,
+                product_id: product.id, // Use id as product_id
+                name: product.name,
+                sim_score: product.sim_score,
+                thumbnail_url: product.thumbnail_url,
+                price: product.price,
+                short_code: product.short_code,
+                purchase_url: product.purchase_url,
+                brand_id: product.brand_id,
+                brand_name: product.brand_name,
+                brand_logo: product.logo_url,
+                theme_id: product.theme_id || undefined,
+                cat: product.cat,
+                sscat: product.sscat,
+              });
             }}
           >
             {/* Product Image */}
@@ -678,6 +704,29 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: All
 
       {/* Infinite Scroll Observer Target - invisible trigger */}
       <div ref={observerTarget} className="h-px" />
+
+      {/* Product Detail Dialog */}
+      <ProductDetailDialog
+        product={selectedProduct}
+        open={!!selectedProduct}
+        onOpenChange={(open) => !open && setSelectedProduct(null)}
+        isWishlisted={selectedProduct ? isWishlisted(selectedProduct.id) : false}
+        onToggleWishlist={() => selectedProduct && toggleWishlist(selectedProduct.id)}
+        creatorId={creatorNumericId}
+        onExternalRedirect={() => {
+          if (selectedProduct?.short_code) {
+            const url = `https://www.wishlink.com/share/${selectedProduct.short_code}?source=product_discovery&creator=${creatorNumericId}`;
+            trackExternalRedirect({
+              destination: 'wishlink_product',
+              url,
+              product_id: selectedProduct.id,
+              brand_id: selectedProduct.brand_id || undefined,
+              brand_name: selectedProduct.brand_name || undefined,
+              short_code: selectedProduct.short_code,
+            });
+          }
+        }}
+      />
     </div>
   );
 };
