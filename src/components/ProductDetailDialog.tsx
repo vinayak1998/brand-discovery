@@ -137,8 +137,8 @@ export const ProductDetailDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm sm:max-w-md p-0 overflow-hidden">
-        {/* Product Image */}
-        <div className="relative w-full aspect-square bg-muted">
+        {/* Product Image with Brand Overlay */}
+        <div className="relative w-full aspect-[4/3] bg-muted">
           {product.thumbnail_url ? (
             <img
               src={product.thumbnail_url}
@@ -152,10 +152,23 @@ export const ProductDetailDialog = ({
             </div>
           )}
           
-          {/* Theme badge overlay */}
+          {/* Brand overlay - bottom left */}
+          {product.brand_name && (
+            <div className="absolute bottom-2 left-2 flex items-center gap-1.5 bg-black/60 backdrop-blur-sm rounded-md px-2 py-1">
+              <Avatar className="h-4 w-4 rounded-sm">
+                <AvatarImage src={product.brand_logo} alt={product.brand_name} />
+                <AvatarFallback className="text-[10px] rounded-sm">
+                  {product.brand_name.charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-xs text-white font-medium">{product.brand_name}</span>
+            </div>
+          )}
+          
+          {/* Theme badge overlay - bottom right */}
           {themeConfig && (
             <Badge 
-              className="absolute bottom-3 right-3 text-xs px-2 py-1"
+              className="absolute bottom-2 right-2 text-xs px-1.5 py-0.5"
               style={{ 
                 backgroundColor: `${themeConfig.color}20`,
                 color: themeConfig.color,
@@ -170,119 +183,101 @@ export const ProductDetailDialog = ({
           )}
         </div>
 
-        {/* Product Details */}
-        <div className="p-4 sm:p-6 space-y-4">
-          <DialogHeader className="p-0 space-y-3">
-            {/* Brand Info */}
-            <div className="flex items-center gap-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Avatar className="h-6 w-6 rounded-md">
-                      <AvatarImage src={product.brand_logo} alt={product.brand_name} />
-                      <AvatarFallback className="text-xs rounded-md">
-                        {product.brand_name?.charAt(0) || 'B'}
-                      </AvatarFallback>
-                    </Avatar>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">
-                    <p>{product.brand_name || 'Unknown Brand'}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <span className="text-sm text-muted-foreground">{product.brand_name}</span>
-            </div>
-
-            {/* Product Title */}
-            <DialogTitle className="text-lg font-semibold leading-snug line-clamp-2">
+        {/* Product Details - Compact */}
+        <div className="px-4 py-3 space-y-3">
+          {/* Product Title - Left aligned */}
+          <DialogHeader className="p-0 space-y-0">
+            <DialogTitle className="text-base font-semibold leading-snug line-clamp-2 text-left">
               {product.name}
             </DialogTitle>
-
-            {/* Price and Match Score Row */}
-            <div className="flex items-center justify-between">
-              <span className="text-xl font-bold">
-                {product.price != null ? `₹${product.price.toLocaleString('en-IN')}` : 'Price N/A'}
-              </span>
-              {showMatchScore && (
-                <Badge 
-                  variant="secondary" 
-                  className="bg-green-500/10 text-green-600 border-green-500/20"
-                >
-                  {matchScore}% Match
-                </Badge>
-              )}
-            </div>
           </DialogHeader>
 
-          {/* CTA Buttons */}
-          <div className="space-y-3 pt-2">
+          {/* Price and Match Score Row */}
+          <div className="flex items-center justify-between">
+            <span className="text-lg font-bold">
+              {product.price != null ? `₹${product.price.toLocaleString('en-IN')}` : 'Price N/A'}
+            </span>
+            {showMatchScore && (
+              <Badge 
+                variant="secondary" 
+                className="bg-green-500/10 text-green-600 border-green-500/20 text-xs"
+              >
+                {matchScore}% Match
+              </Badge>
+            )}
+          </div>
+
+          {/* CTA Buttons - Compact */}
+          <div className="space-y-2">
             {/* Primary CTA - Check Product */}
             <Button 
               onClick={handleCheckProduct}
               className="w-full gap-2"
-              size="lg"
+              size="default"
             >
               <ExternalLink className="h-4 w-4" />
               Check Product
             </Button>
 
             {/* Secondary CTAs Row */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2">
               <Button
                 onClick={handleCopyLink}
                 variant="outline"
-                className="gap-2"
+                size="sm"
+                className="gap-1.5"
               >
-                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                 {copied ? 'Copied!' : 'Copy Link'}
               </Button>
 
               <Button
                 onClick={handleSaveForLater}
                 variant={isWishlisted ? "secondary" : "outline"}
-                className="gap-2"
+                size="sm"
+                className="gap-1.5"
               >
                 {isWishlisted ? (
-                  <BookmarkCheck className="h-4 w-4" />
+                  <BookmarkCheck className="h-3.5 w-3.5" />
                 ) : (
-                  <Bookmark className="h-4 w-4" />
+                  <Bookmark className="h-3.5 w-3.5" />
                 )}
                 {isWishlisted ? 'Saved' : 'Save'}
               </Button>
             </div>
-
-            {/* Content Ideas Section */}
-            {reelUrls.length > 0 && (
-              <div className="pt-4 border-t border-border">
-                <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
-                  📹 Content Ideas
-                  <Badge variant="secondary" className="text-xs px-1.5 py-0">
-                    {reelUrls.length}
-                  </Badge>
-                </h4>
-                <div className="flex gap-2">
-                  {reelUrls.map((url, index) => (
-                    <button
-                      key={index}
-                      onClick={() => window.open(url, '_blank')}
-                      className="relative w-16 h-16 rounded-lg overflow-hidden group transition-transform hover:scale-105"
-                      style={{
-                        background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)',
-                        padding: '2px'
-                      }}
-                    >
-                      <div className="w-full h-full bg-background rounded-md flex items-center justify-center">
-                        <Play className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                      </div>
-                    </button>
-                  ))}
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Tap to see how creators styled this product
-                </p>
-              </div>
-            )}
           </div>
+
+          {/* Content Ideas Section - Compact */}
+          {reelUrls.length > 0 && (
+            <div className="pt-2 border-t border-border">
+              <h4 className="text-xs font-medium mb-2 flex items-center gap-1.5 text-muted-foreground">
+                📹 Content Ideas
+                <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4">
+                  {reelUrls.length}
+                </Badge>
+              </h4>
+              <div className="flex gap-2">
+                {reelUrls.map((url, index) => (
+                  <button
+                    key={index}
+                    onClick={() => window.open(url, '_blank')}
+                    className="relative w-14 h-14 rounded-lg overflow-hidden group transition-transform hover:scale-105"
+                    style={{
+                      background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)',
+                      padding: '2px'
+                    }}
+                  >
+                    <div className="w-full h-full bg-background rounded-md flex items-center justify-center">
+                      <Play className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    </div>
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-1.5">
+                Tap to see how creators styled this product
+              </p>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
