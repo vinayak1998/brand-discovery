@@ -176,36 +176,15 @@ const BrandInsightCard = ({
                     const roundedValue = Math.ceil(brand.value);
                     const barWidth = maxValue > 0 ? (roundedValue / maxValue) * 100 : 0;
 
-                    return (
+                      return (
                       <div
                         key={`${brand.brand_name}-${index}`}
-                        className="space-y-2 brand-tile-stagger relative"
+                        className="brand-tile-stagger"
                         style={{ "--stagger-index": index } as any}
                       >
-                        {/* Onboarding Tooltip - shown on randomly selected brand */}
-                        {showTooltipOnBrandIndex === index && (
-                          <div className="absolute -top-14 right-0 z-50 animate-fade-in max-w-[calc(100vw-2rem)]">
-                            <div className="relative bg-primary text-primary-foreground px-3 py-2 rounded-lg shadow-lg text-xs font-medium whitespace-nowrap">
-                              Tap to view products
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onDismissTooltip?.();
-                                }}
-                                className="ml-2 hover:opacity-80 text-base leading-none"
-                                aria-label="Dismiss"
-                              >
-                                ×
-                              </button>
-                              {/* Arrow pointer - precisely aligned with ChevronRight */}
-                              <div className="absolute -bottom-1 right-4 w-2 h-2 bg-primary transform rotate-45" />
-                            </div>
-                          </div>
-                        )}
-
                         {/* Brand Info Row */}
                         <div
-                          className="group flex items-center justify-between cursor-pointer bg-card active:bg-accent active:scale-[0.98] p-3 rounded-lg transition-all duration-200 border border-primary/20 shadow-sm active:shadow-md"
+                          className="group relative flex items-center justify-between cursor-pointer bg-card active:bg-accent active:scale-[0.98] p-3 rounded-lg transition-all duration-200 border border-primary/20 shadow-sm active:shadow-md"
                           onClick={() => {
                             // Track engagement click
                             onBrandClick?.();
@@ -230,6 +209,27 @@ const BrandInsightCard = ({
                           role="button"
                           tabIndex={0}
                         >
+                          {/* Onboarding Tooltip - positioned above the ChevronRight */}
+                          {showTooltipOnBrandIndex === index && (
+                            <div className="absolute -top-11 right-0 z-50 animate-fade-in">
+                              <div className="relative bg-primary text-primary-foreground px-3 py-2 rounded-lg shadow-lg text-xs font-medium whitespace-nowrap">
+                                Tap to view products
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onDismissTooltip?.();
+                                  }}
+                                  className="ml-2 hover:opacity-80 text-base leading-none"
+                                  aria-label="Dismiss"
+                                >
+                                  ×
+                                </button>
+                                {/* Arrow pointer - aligned with ChevronRight icon */}
+                                <div className="absolute -bottom-1 right-2 w-2 h-2 bg-primary transform rotate-45" />
+                              </div>
+                            </div>
+                          )}
+
                           <div className="flex items-center gap-2 flex-1 min-w-0">
                             <BrandAvatar logoUrl={brand.logo_url} brandName={brand.brand_name} />
                             <div className="flex-1 min-w-0">
