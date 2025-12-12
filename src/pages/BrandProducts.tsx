@@ -9,8 +9,9 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, ExternalLink, ArrowUpDown } from 'lucide-react';
+import { ArrowLeft, ExternalLink, ArrowUpDown, TrendingUp, Flame, Zap } from 'lucide-react';
 
 interface Product {
   id: number;
@@ -41,7 +42,8 @@ const BrandProducts = () => {
     loadingMore,
     totalCount,
     brandData,
-    creatorData: fetchedCreatorData
+    creatorData: fetchedCreatorData,
+    brandInsights
   } = useBrandProducts(creatorId, brandName, isReady, sortBy);
 
   // Derive display values from hook data
@@ -195,9 +197,19 @@ const BrandProducts = () => {
               </Button>
             )}
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-            {displayBrandName || brandName}
-          </h1>
+          <div className="flex items-center gap-3">
+            {brandData?.logo_url && (
+              <Avatar className="w-10 h-10 sm:w-12 sm:h-12 border">
+                <AvatarImage src={brandData.logo_url} alt={displayBrandName || brandName || ''} />
+                <AvatarFallback className="text-sm font-medium">
+                  {(displayBrandName || brandName || '').slice(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            )}
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+              {displayBrandName || brandName}
+            </h1>
+          </div>
           <p className="text-sm sm:text-base text-muted-foreground mt-1">
             {totalCount} {totalCount === 1 ? 'product' : 'products'} curated for you
           </p>
@@ -207,6 +219,29 @@ const BrandProducts = () => {
             </p>
           )}
         </div>
+
+        {/* Brand Insights Facts */}
+        {brandInsights.length > 0 && (
+          <div className="bg-muted/30 rounded-lg p-4 mb-6 space-y-2">
+            {brandInsights.map((insight, idx) => (
+              <div key={idx} className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span className="text-primary">
+                  {insight.theme_id === 'best_reach' && <TrendingUp className="w-4 h-4" />}
+                  {insight.theme_id === 'top_trending' && <Flame className="w-4 h-4" />}
+                  {insight.theme_id === 'fastest_selling' && <Zap className="w-4 h-4" />}
+                </span>
+                <span>
+                  {insight.theme_id === 'best_reach' && 
+                    `${Math.ceil(insight.value).toLocaleString()} views per recent posts by creators similar to you`}
+                  {insight.theme_id === 'top_trending' && 
+                    `${Math.ceil(insight.value).toLocaleString()} recent shares by creators similar to you`}
+                  {insight.theme_id === 'fastest_selling' && 
+                    `₹${Math.ceil(insight.value).toLocaleString()} sales per link by creators similar to you`}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Products Grid */}
         {products.length === 0 ? (
