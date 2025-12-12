@@ -136,14 +136,14 @@ export const ProductDetailDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm p-0 !top-4 !translate-y-0 max-h-[95vh] overflow-y-auto">
+      <DialogContent className="max-w-sm p-0">
         {/* Product Image with Brand Overlay */}
-        <div className="relative w-full h-48 bg-muted flex items-center justify-center">
+        <div className="relative w-full aspect-square bg-muted">
           {product.thumbnail_url ? (
             <img
               src={product.thumbnail_url}
               alt={product.name}
-              className="max-h-48 max-w-full object-contain"
+              className="w-full h-full object-cover"
               loading="lazy"
             />
           ) : (
@@ -154,14 +154,14 @@ export const ProductDetailDialog = ({
           
           {/* Brand overlay - bottom left */}
           {product.brand_name && (
-            <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/60 backdrop-blur-sm rounded-md px-1.5 py-0.5">
-              <Avatar className="h-3.5 w-3.5 rounded-sm">
+            <div className="absolute bottom-2 left-2 flex items-center gap-1.5 bg-black/60 backdrop-blur-sm rounded-md px-2 py-1">
+              <Avatar className="h-4 w-4 rounded-sm">
                 <AvatarImage src={product.brand_logo} alt={product.brand_name} />
-                <AvatarFallback className="text-[8px] rounded-sm">
+                <AvatarFallback className="text-[9px] rounded-sm">
                   {product.brand_name.charAt(0)}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-[11px] text-white font-medium">{product.brand_name}</span>
+              <span className="text-xs text-white font-medium">{product.brand_name}</span>
             </div>
           )}
           
@@ -184,10 +184,10 @@ export const ProductDetailDialog = ({
         </div>
 
         {/* Product Details */}
-        <div className="px-3 py-2 space-y-2">
+        <div className="px-4 py-3 space-y-3">
           {/* Product Title - Left aligned */}
           <DialogHeader className="p-0 space-y-0">
-            <DialogTitle className="text-base font-semibold leading-snug line-clamp-2 text-left">
+            <DialogTitle className="text-lg font-semibold leading-snug line-clamp-2 text-left">
               {product.name}
             </DialogTitle>
           </DialogHeader>
