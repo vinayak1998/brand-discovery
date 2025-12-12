@@ -40,6 +40,7 @@ interface ProductForDialog {
   theme_id?: string;
   cat?: string | null;
   sscat?: string | null;
+  top_3_posts_by_views?: unknown;
 }
 
 const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: AllProductsViewProps) => {
@@ -592,6 +593,7 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: All
                 theme_id: product.theme_id || undefined,
                 cat: product.cat,
                 sscat: product.sscat,
+                top_3_posts_by_views: product.top_3_posts_by_views,
               });
             }}
           >
