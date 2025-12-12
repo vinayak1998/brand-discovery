@@ -1,8 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { ChevronDown, ChevronRight, Info } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { useAnalytics, ThemeId } from "@/hooks/useAnalytics";
@@ -236,26 +235,7 @@ const BrandInsightCard = ({
                               <p className="text-sm font-semibold text-foreground truncate">{brand.brand_name}</p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-1.5">
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div 
-                                  className="text-muted-foreground hover:text-foreground cursor-help p-1"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <Info className="w-4 h-4" />
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent side="left">
-                                <p className="text-xs">
-                                  {themeId === 'top_trending' && `${Math.ceil(brand.value).toLocaleString()} shares by similar creators`}
-                                  {themeId === 'best_reach' && `${Math.ceil(brand.value).toLocaleString()} views per recent post`}
-                                  {themeId === 'fastest_selling' && `₹${Math.ceil(brand.value).toLocaleString()} sales per link`}
-                                </p>
-                              </TooltipContent>
-                            </Tooltip>
-                            <ChevronRight className="w-5 h-5 text-primary transition-all" />
-                          </div>
+                          <ChevronRight className="w-5 h-5 text-primary transition-all" />
                         </div>
                       </div>
                     );

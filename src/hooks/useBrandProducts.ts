@@ -21,6 +21,12 @@ interface BrandData {
   display_name: string | null;
   sourcing_link: string | null;
   creator_commission: number | null;
+  logo_url: string | null;
+}
+
+interface BrandInsight {
+  theme_id: string;
+  value: number;
 }
 
 interface CreatorData {
@@ -44,6 +50,7 @@ export const useBrandProducts = (
   const [totalCount, setTotalCount] = useState<number>(0);
   const [brandData, setBrandData] = useState<BrandData | null>(null);
   const [creatorData, setCreatorData] = useState<CreatorData | null>(null);
+  const [brandInsights, setBrandInsights] = useState<BrandInsight[]>([]);
   const { trackError } = useGATracking();
 
   const PAGE_SIZE = 50;
@@ -87,7 +94,7 @@ export const useBrandProducts = (
 
           const { data: fetchedBrandData, error: brandError } = await supabase
             .from('brands')
-            .select('sourcing_link, brand_id, brand_name, display_name, creator_commission')
+            .select('sourcing_link, brand_id, brand_name, display_name, creator_commission, logo_url')
             .eq('brand_name', brandName)
             .maybeSingle();
 
@@ -96,6 +103,15 @@ export const useBrandProducts = (
           }
 
           setBrandData(fetchedBrandData);
+
+          // Fetch brand insights for this creator + brand combination
+          const { data: insightsData } = await supabase
+            .from('creator_brand_insights')
+            .select('theme_id, value')
+            .eq('creator_id', fetchedCreatorData.creator_id)
+            .eq('brand_id', fetchedBrandData.brand_id);
+
+          setBrandInsights(insightsData || []);
 
           // Build query with sorting
           let productsQuery = supabase
@@ -234,5 +250,6 @@ export const useBrandProducts = (
     totalCount,
     brandData,
     creatorData,
+    brandInsights,
   };
 };
