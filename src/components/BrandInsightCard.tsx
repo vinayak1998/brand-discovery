@@ -30,8 +30,8 @@ interface BrandInsightCardProps {
   delay?: number;
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  showTooltipOnFirst?: boolean;
-  onFirstBrandClick?: () => void;
+  showTooltipOnBrandIndex?: number | null;
+  onTooltipBrandClick?: () => void;
   onDismissTooltip?: () => void;
   onBrandClick?: () => void;
 }
@@ -65,8 +65,8 @@ const BrandInsightCard = ({
   delay = 0,
   isOpen,
   onOpenChange,
-  showTooltipOnFirst = false,
-  onFirstBrandClick,
+  showTooltipOnBrandIndex = null,
+  onTooltipBrandClick,
   onDismissTooltip,
   onBrandClick,
 }: BrandInsightCardProps) => {
@@ -182,9 +182,9 @@ const BrandInsightCard = ({
                         className="space-y-2 brand-tile-stagger relative"
                         style={{ "--stagger-index": index } as any}
                       >
-                        {/* Onboarding Tooltip - shown on first brand only */}
-                        {index === 0 && showTooltipOnFirst && (
-                          <div className="absolute -top-14 right-2 z-50 animate-fade-in max-w-[calc(100vw-2rem)]">
+                        {/* Onboarding Tooltip - shown on randomly selected brand */}
+                        {showTooltipOnBrandIndex === index && (
+                          <div className="absolute -top-14 right-0 z-50 animate-fade-in max-w-[calc(100vw-2rem)]">
                             <div className="relative bg-primary text-primary-foreground px-3 py-2 rounded-lg shadow-lg text-xs font-medium whitespace-nowrap">
                               Tap to view products
                               <button
@@ -197,8 +197,8 @@ const BrandInsightCard = ({
                               >
                                 ×
                               </button>
-                              {/* Arrow pointer */}
-                              <div className="absolute -bottom-1 right-3 w-2 h-2 bg-primary transform rotate-45" />
+                              {/* Arrow pointer - precisely aligned with ChevronRight */}
+                              <div className="absolute -bottom-1 right-4 w-2 h-2 bg-primary transform rotate-45" />
                             </div>
                           </div>
                         )}
@@ -210,9 +210,9 @@ const BrandInsightCard = ({
                             // Track engagement click
                             onBrandClick?.();
 
-                            // Notify parent if this is the first brand
-                            if (index === 0 && onFirstBrandClick) {
-                              onFirstBrandClick();
+                            // Notify parent if this is the tooltip brand
+                            if (showTooltipOnBrandIndex === index && onTooltipBrandClick) {
+                              onTooltipBrandClick();
                             }
                             // Track existing Supabase analytics
                             if (brand.brand_id) {
