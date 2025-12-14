@@ -5,6 +5,7 @@ import { useCreatorData } from '@/hooks/useCreatorData';
 import { useGATracking } from '@/hooks/useGATracking';
 import { useScrollTracking } from '@/hooks/useScrollTracking';
 import { useBrandProducts, type SortOption } from '@/hooks/useBrandProducts';
+import { useWishlist } from '@/hooks/useWishlist';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, ExternalLink, ArrowUpDown, TrendingUp, Flame, Zap } from 'lucide-react';
+import { ProductDetailDialog } from '@/components/ProductDetailDialog';
 
 interface Product {
   id: number;
@@ -22,6 +24,25 @@ interface Product {
   sim_score: number;
   short_code: string | null;
   price: number | null;
+  top_3_posts_by_views?: unknown;
+}
+
+interface ProductForDialog {
+  id: number;
+  product_id: number | null;
+  name: string;
+  sim_score: number;
+  thumbnail_url: string | null;
+  price: number | null;
+  short_code: string | null;
+  purchase_url: string | null;
+  brand_id: number | null;
+  brand_name?: string;
+  brand_logo?: string;
+  theme_id?: string;
+  cat?: string | null;
+  sscat?: string | null;
+  top_3_posts_by_views?: unknown;
 }
 
 const BrandProducts = () => {
@@ -32,6 +53,7 @@ const BrandProducts = () => {
   const brandName = searchParams.get('brand_name');
   const observerTarget = useRef<HTMLDivElement>(null);
   const [sortBy, setSortBy] = useState<SortOption>('match');
+  const [selectedProduct, setSelectedProduct] = useState<ProductForDialog | null>(null);
   
   const { 
     products, 
@@ -55,6 +77,9 @@ const BrandProducts = () => {
   const commissionDisplay = (brandData?.creator_commission && brandData.creator_commission > 0)
     ? `${brandData.creator_commission}% commission` 
     : null;
+
+  // Wishlist hook
+  const { isWishlisted, toggleWishlist } = useWishlist(creatorNumericId);
 
   // GA4 tracking
   const { 
@@ -260,34 +285,35 @@ const BrandProducts = () => {
                 key={product.id} 
                 className="p-2 sm:p-3 flex flex-col hover:shadow-lg transition-shadow cursor-pointer active:scale-[0.98]"
                 onClick={() => {
-                  if (product.short_code) {
-                    const url = `https://www.wishlink.com/share/${product.short_code}?source=brand_discovery&creator=${creatorNumericId}`;
-                    
-                    // Track product interaction
-                    trackProductInteraction({
-                      product_id: product.id,
-                      product_name: product.name,
-                      brand_id: brandId || 0,
-                      brand_name: displayBrandName,
-                      match_score: product.sim_score,
-                      price: product.price || undefined,
-                      source_tab: 'brand_discovery',
-                      short_code: product.short_code,
-                      scroll_depth_at_click: currentDepth,
-                    });
-                    
-                    // Track external redirect
-                    trackExternalRedirect({
-                      destination: 'wishlink_product',
-                      url,
-                      product_id: product.id,
-                      brand_id: brandId || undefined,
-                      brand_name: displayBrandName,
-                      short_code: product.short_code,
-                    });
-                    
-                    window.open(url, '_blank');
-                  }
+                  // Track product interaction
+                  trackProductInteraction({
+                    product_id: product.id,
+                    product_name: product.name,
+                    brand_id: brandId || 0,
+                    brand_name: displayBrandName,
+                    match_score: product.sim_score,
+                    price: product.price || undefined,
+                    source_tab: 'brand_discovery',
+                    short_code: product.short_code || '',
+                    scroll_depth_at_click: currentDepth,
+                  });
+
+                  // Open product detail dialog
+                  setSelectedProduct({
+                    id: product.id,
+                    product_id: product.id,
+                    name: product.name,
+                    sim_score: product.sim_score,
+                    thumbnail_url: product.thumbnail_url,
+                    price: product.price,
+                    short_code: product.short_code,
+                    purchase_url: product.purchase_url,
+                    brand_id: brandId,
+                    brand_name: displayBrandName,
+                    brand_logo: brandData?.logo_url || undefined,
+                    theme_id: undefined,
+                    top_3_posts_by_views: product.top_3_posts_by_views,
+                  });
                 }}
               >
                 {/* Product Image */}
@@ -342,6 +368,29 @@ const BrandProducts = () => {
             <div ref={observerTarget} className="h-px" />
           </>
         )}
+
+        {/* Product Detail Dialog */}
+        <ProductDetailDialog
+          product={selectedProduct}
+          open={!!selectedProduct}
+          onOpenChange={(open) => !open && setSelectedProduct(null)}
+          isWishlisted={selectedProduct ? isWishlisted(selectedProduct.id) : false}
+          onToggleWishlist={() => selectedProduct && toggleWishlist(selectedProduct.id)}
+          creatorId={creatorNumericId}
+          onExternalRedirect={() => {
+            if (selectedProduct?.short_code) {
+              const url = `https://www.wishlink.com/share/${selectedProduct.short_code}?source=brand_discovery&creator=${creatorNumericId}`;
+              trackExternalRedirect({
+                destination: 'wishlink_product',
+                url,
+                product_id: selectedProduct.id,
+                brand_id: brandId || undefined,
+                brand_name: displayBrandName,
+                short_code: selectedProduct.short_code,
+              });
+            }
+          }}
+        />
       </main>
     </div>
   );
