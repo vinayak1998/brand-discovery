@@ -4,6 +4,7 @@ import { useCallback } from 'react';
 export type GAEventCategory = 
   | 'brand_discovery'
   | 'product_discovery'
+  | 'saved_products'
   | 'engagement'
   | 'conversion'
   | 'error'
@@ -30,7 +31,12 @@ export type GAEventAction =
   | 'perf_ready'
   | 'api_error'
   | 'load_error'
-  | 'navigation_error';
+  | 'navigation_error'
+  | 'dialog_view'
+  | 'link_copy'
+  | 'wishlist_add'
+  | 'wishlist_remove'
+  | 'content_idea_click';
 
 interface GAEventParams {
   event_category: GAEventCategory;
@@ -309,6 +315,92 @@ export const useGATracking = (creatorId?: number | null) => {
     });
   }, [trackEvent]);
 
+  // 15. PRODUCT DIALOG VIEW
+  const trackProductDialogView = useCallback((params: {
+    product_id: number;
+    product_name: string;
+    brand_id?: number;
+    brand_name?: string;
+    source_tab: 'brand_discovery' | 'product_discovery' | 'saved_products';
+    page: string;
+    screen: string;
+  }) => {
+    trackEvent('product_dialog_view', {
+      event_category: params.source_tab,
+      event_action: 'dialog_view',
+      event_label: params.product_name,
+      event_label_2: params.brand_name,
+      event_value: params.product_id,
+      page: params.page,
+      screen: params.screen,
+      ...params,
+    });
+  }, [trackEvent]);
+
+  // 16. LINK COPY ACTION
+  const trackLinkCopy = useCallback((params: {
+    product_id: number;
+    product_name: string;
+    brand_name?: string;
+    source_tab: 'brand_discovery' | 'product_discovery' | 'saved_products';
+    page: string;
+    screen: string;
+  }) => {
+    trackEvent('link_copy', {
+      event_category: 'conversion',
+      event_action: 'link_copy',
+      event_label: params.product_name,
+      event_label_2: params.brand_name,
+      event_value: params.product_id,
+      page: params.page,
+      screen: params.screen,
+      ...params,
+    });
+  }, [trackEvent]);
+
+  // 17. WISHLIST ACTION
+  const trackWishlistAction = useCallback((params: {
+    action: 'wishlist_add' | 'wishlist_remove';
+    product_id: number;
+    product_name: string;
+    brand_name?: string;
+    source_tab: 'brand_discovery' | 'product_discovery' | 'saved_products';
+    page: string;
+    screen: string;
+  }) => {
+    trackEvent('wishlist_action', {
+      event_category: 'engagement',
+      event_action: params.action,
+      event_label: params.product_name,
+      event_label_2: params.brand_name,
+      event_value: params.product_id,
+      page: params.page,
+      screen: params.screen,
+      ...params,
+    });
+  }, [trackEvent]);
+
+  // 18. CONTENT IDEA CLICK (Reel)
+  const trackContentIdeaClick = useCallback((params: {
+    product_id: number;
+    product_name: string;
+    reel_url: string;
+    reel_position: number;
+    page: string;
+    screen: string;
+  }) => {
+    trackEvent('content_idea_click', {
+      event_category: 'engagement',
+      event_action: 'content_idea_click',
+      event_label: params.product_name,
+      event_label_2: params.reel_url,
+      event_value: params.reel_position,
+      page: params.page,
+      screen: params.screen,
+      ...params,
+    });
+  }, [trackEvent]);
+
   return {
     trackPageView,
     trackSessionStart,
@@ -324,5 +416,9 @@ export const useGATracking = (creatorId?: number | null) => {
     trackExternalRedirect,
     trackError,
     trackPerformanceReady,
+    trackProductDialogView,
+    trackLinkCopy,
+    trackWishlistAction,
+    trackContentIdeaClick,
   };
 };

@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ExternalLink, Copy, Bookmark, BookmarkCheck, Check, Play } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { getTheme } from '@/config/themes';
 
@@ -39,6 +39,11 @@ interface ProductDetailDialogProps {
   onToggleWishlist: () => void;
   creatorId: number | null;
   onExternalRedirect?: () => void;
+  // GA tracking callbacks
+  onDialogOpen?: () => void;
+  onLinkCopy?: () => void;
+  onWishlistAction?: (action: 'add' | 'remove') => void;
+  onContentIdeaClick?: (url: string, position: number) => void;
 }
 
 export const ProductDetailDialog = ({
@@ -49,9 +54,20 @@ export const ProductDetailDialog = ({
   onToggleWishlist,
   creatorId,
   onExternalRedirect,
+  onDialogOpen,
+  onLinkCopy,
+  onWishlistAction,
+  onContentIdeaClick,
 }: ProductDetailDialogProps) => {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
+
+  // Track dialog open
+  useEffect(() => {
+    if (open && product) {
+      onDialogOpen?.();
+    }
+  }, [open, product, onDialogOpen]);
 
   // Parse reel URLs from top_3_posts_by_views - must be before early return
   const reelUrls = useMemo(() => {
@@ -108,6 +124,7 @@ export const ProductDetailDialog = ({
     try {
       await navigator.clipboard.writeText(product.purchase_url);
       setCopied(true);
+      onLinkCopy?.();
       toast({
         title: "Link copied!",
         description: "Product link has been copied to clipboard.",
@@ -125,6 +142,7 @@ export const ProductDetailDialog = ({
   };
 
   const handleSaveForLater = () => {
+    onWishlistAction?.(isWishlisted ? 'remove' : 'add');
     onToggleWishlist();
     toast({
       title: isWishlisted ? "Removed from saved" : "Saved for later",
@@ -260,7 +278,10 @@ export const ProductDetailDialog = ({
                 {reelUrls.map((url, index) => (
                   <button
                     key={index}
-                    onClick={() => window.open(url, '_blank')}
+                    onClick={() => {
+                      onContentIdeaClick?.(url, index + 1);
+                      window.open(url, '_blank');
+                    }}
                     className="relative w-10 h-10 rounded-md overflow-hidden group transition-transform hover:scale-105"
                     style={{
                       background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)',

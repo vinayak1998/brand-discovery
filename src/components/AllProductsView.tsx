@@ -74,6 +74,10 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: All
     trackFilterSortAction,
     trackProductInteraction,
     trackExternalRedirect,
+    trackProductDialogView,
+    trackLinkCopy,
+    trackWishlistAction,
+    trackContentIdeaClick,
   } = useGATracking(creatorNumericId);
   
   const { currentDepth } = useScrollTracking();
@@ -725,6 +729,56 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: All
               brand_id: selectedProduct.brand_id || undefined,
               brand_name: selectedProduct.brand_name || undefined,
               short_code: selectedProduct.short_code,
+            });
+          }
+        }}
+        onDialogOpen={() => {
+          if (selectedProduct) {
+            trackProductDialogView({
+              product_id: selectedProduct.id,
+              product_name: selectedProduct.name,
+              brand_id: selectedProduct.brand_id || undefined,
+              brand_name: selectedProduct.brand_name || undefined,
+              source_tab: 'product_discovery',
+              page: '/insights/products',
+              screen: 'product_discovery',
+            });
+          }
+        }}
+        onLinkCopy={() => {
+          if (selectedProduct) {
+            trackLinkCopy({
+              product_id: selectedProduct.id,
+              product_name: selectedProduct.name,
+              brand_name: selectedProduct.brand_name || undefined,
+              source_tab: 'product_discovery',
+              page: '/insights/products',
+              screen: 'product_discovery',
+            });
+          }
+        }}
+        onWishlistAction={(action) => {
+          if (selectedProduct) {
+            trackWishlistAction({
+              action: action === 'add' ? 'wishlist_add' : 'wishlist_remove',
+              product_id: selectedProduct.id,
+              product_name: selectedProduct.name,
+              brand_name: selectedProduct.brand_name || undefined,
+              source_tab: 'product_discovery',
+              page: '/insights/products',
+              screen: 'product_discovery',
+            });
+          }
+        }}
+        onContentIdeaClick={(url, position) => {
+          if (selectedProduct) {
+            trackContentIdeaClick({
+              product_id: selectedProduct.id,
+              product_name: selectedProduct.name,
+              reel_url: url,
+              reel_position: position,
+              page: '/insights/products',
+              screen: 'product_discovery',
             });
           }
         }}

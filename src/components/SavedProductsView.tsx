@@ -4,9 +4,10 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useSavedProducts } from '@/hooks/useSavedProducts';
 import { useWishlist } from '@/hooks/useWishlist';
+import { useGATracking } from '@/hooks/useGATracking';
 import { getTheme } from '@/config/themes';
-import { Heart, Info } from 'lucide-react';
-import { useState } from 'react';
+import { Heart } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { ProductDetailDialog } from './ProductDetailDialog';
 
 interface SavedProductsViewProps {
@@ -36,14 +37,62 @@ const SavedProductsView = ({ creatorUuid, onProductClick }: SavedProductsViewPro
   const { isWishlisted, toggleWishlist } = useWishlist(creatorNumericId);
   const [selectedProduct, setSelectedProduct] = useState<ProductForDialog | null>(null);
 
+  // GA4 tracking
+  const {
+    trackProductListView,
+    trackProductInteraction,
+    trackExternalRedirect,
+    trackProductDialogView,
+    trackLinkCopy,
+    trackWishlistAction,
+    trackContentIdeaClick,
+  } = useGATracking(creatorNumericId);
+
+  // Track saved products list view
+  useEffect(() => {
+    if (!loading && products.length >= 0) {
+      trackProductListView({
+        list_context: products.length === 0 ? 'empty_state' : 'product_tab',
+        visible_count: products.length,
+        total_count: products.length,
+        is_empty: products.length === 0,
+      });
+    }
+  }, [loading, products.length, trackProductListView]);
+
   const handleProductClick = (product: ProductForDialog) => {
     onProductClick?.();
+    
+    // Track product interaction
+    trackProductInteraction({
+      product_id: product.id,
+      product_name: product.name,
+      brand_id: product.brand_id || 0,
+      brand_name: product.brand_name || '',
+      theme_id: product.theme_id,
+      match_score: product.sim_score || 0,
+      price: product.price || undefined,
+      source_tab: 'product_discovery', // Using existing type
+      short_code: product.short_code || '',
+      scroll_depth_at_click: 0,
+    });
+    
     setSelectedProduct(product);
   };
 
   const handleExternalRedirect = (product: ProductForDialog) => {
     if (product.short_code && creatorNumericId) {
       const wishlinkUrl = `https://www.wishlink.com/share/${product.short_code}?source=saved_products&creator=${creatorNumericId}`;
+      
+      trackExternalRedirect({
+        destination: 'wishlink_product',
+        url: wishlinkUrl,
+        product_id: product.id,
+        brand_id: product.brand_id || undefined,
+        brand_name: product.brand_name,
+        short_code: product.short_code,
+      });
+      
       window.open(wishlinkUrl, '_blank');
     }
   };
@@ -206,6 +255,56 @@ const SavedProductsView = ({ creatorUuid, onProductClick }: SavedProductsViewPro
           }
         }}
         creatorId={creatorNumericId}
+        onDialogOpen={() => {
+          if (selectedProduct) {
+            trackProductDialogView({
+              product_id: selectedProduct.id,
+              product_name: selectedProduct.name,
+              brand_id: selectedProduct.brand_id || undefined,
+              brand_name: selectedProduct.brand_name,
+              source_tab: 'saved_products',
+              page: '/insights/saved',
+              screen: 'saved_products',
+            });
+          }
+        }}
+        onLinkCopy={() => {
+          if (selectedProduct) {
+            trackLinkCopy({
+              product_id: selectedProduct.id,
+              product_name: selectedProduct.name,
+              brand_name: selectedProduct.brand_name,
+              source_tab: 'saved_products',
+              page: '/insights/saved',
+              screen: 'saved_products',
+            });
+          }
+        }}
+        onWishlistAction={(action) => {
+          if (selectedProduct) {
+            trackWishlistAction({
+              action: action === 'add' ? 'wishlist_add' : 'wishlist_remove',
+              product_id: selectedProduct.id,
+              product_name: selectedProduct.name,
+              brand_name: selectedProduct.brand_name,
+              source_tab: 'saved_products',
+              page: '/insights/saved',
+              screen: 'saved_products',
+            });
+          }
+        }}
+        onContentIdeaClick={(url, position) => {
+          if (selectedProduct) {
+            trackContentIdeaClick({
+              product_id: selectedProduct.id,
+              product_name: selectedProduct.name,
+              reel_url: url,
+              reel_position: position,
+              page: '/insights/saved',
+              screen: 'saved_products',
+            });
+          }
+        }}
       />
     </div>
   );

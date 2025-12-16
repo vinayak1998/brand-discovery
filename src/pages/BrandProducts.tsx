@@ -89,6 +89,10 @@ const BrandProducts = () => {
     trackExternalRedirect,
     trackConversionAction,
     trackBrandInteraction,
+    trackProductDialogView,
+    trackLinkCopy,
+    trackWishlistAction,
+    trackContentIdeaClick,
   } = useGATracking(creatorData?.creator_id);
   
   const { currentDepth } = useScrollTracking();
@@ -387,6 +391,56 @@ const BrandProducts = () => {
                 brand_id: brandId || undefined,
                 brand_name: displayBrandName,
                 short_code: selectedProduct.short_code,
+              });
+            }
+          }}
+          onDialogOpen={() => {
+            if (selectedProduct) {
+              trackProductDialogView({
+                product_id: selectedProduct.id,
+                product_name: selectedProduct.name,
+                brand_id: brandId || undefined,
+                brand_name: displayBrandName,
+                source_tab: 'brand_discovery',
+                page: `/brand/products?brand_name=${brandName}`,
+                screen: 'brand_products',
+              });
+            }
+          }}
+          onLinkCopy={() => {
+            if (selectedProduct) {
+              trackLinkCopy({
+                product_id: selectedProduct.id,
+                product_name: selectedProduct.name,
+                brand_name: displayBrandName,
+                source_tab: 'brand_discovery',
+                page: `/brand/products?brand_name=${brandName}`,
+                screen: 'brand_products',
+              });
+            }
+          }}
+          onWishlistAction={(action) => {
+            if (selectedProduct) {
+              trackWishlistAction({
+                action: action === 'add' ? 'wishlist_add' : 'wishlist_remove',
+                product_id: selectedProduct.id,
+                product_name: selectedProduct.name,
+                brand_name: displayBrandName,
+                source_tab: 'brand_discovery',
+                page: `/brand/products?brand_name=${brandName}`,
+                screen: 'brand_products',
+              });
+            }
+          }}
+          onContentIdeaClick={(url, position) => {
+            if (selectedProduct) {
+              trackContentIdeaClick({
+                product_id: selectedProduct.id,
+                product_name: selectedProduct.name,
+                reel_url: url,
+                reel_position: position,
+                page: `/brand/products?brand_name=${brandName}`,
+                screen: 'brand_products',
               });
             }
           }}
