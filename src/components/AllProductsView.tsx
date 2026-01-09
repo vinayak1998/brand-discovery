@@ -41,6 +41,10 @@ interface ProductForDialog {
   cat?: string | null;
   sscat?: string | null;
   top_3_posts_by_views?: unknown;
+  // Match reasons data
+  median_reach?: number | null;
+  median_sales?: number | null;
+  count_90_days?: number | null;
 }
 
 const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: AllProductsViewProps) => {
@@ -79,6 +83,7 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: All
     trackWishlistAction,
     trackContentIdeaClick,
     trackCheckProductClick,
+    trackMatchReasonView,
   } = useGATracking(creatorNumericId);
   
   const { currentDepth } = useScrollTracking();
@@ -599,6 +604,9 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: All
                 cat: product.cat,
                 sscat: product.sscat,
                 top_3_posts_by_views: product.top_3_posts_by_views,
+                median_reach: product.median_reach,
+                median_sales: product.median_sales,
+                count_90_days: product.count_90_days,
               });
             }}
           >
@@ -790,6 +798,18 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: All
               product_name: selectedProduct.name,
               brand_name: selectedProduct.brand_name || undefined,
               source_tab: 'product_discovery',
+              page: '/insights/products',
+              screen: 'product_discovery',
+            });
+          }
+        }}
+        onMatchReasonView={(reasons) => {
+          if (selectedProduct) {
+            trackMatchReasonView({
+              product_id: selectedProduct.id,
+              product_name: selectedProduct.name,
+              reasons_shown: reasons,
+              reason_count: reasons.length,
               page: '/insights/products',
               screen: 'product_discovery',
             });

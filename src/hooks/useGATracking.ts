@@ -41,7 +41,8 @@ export type GAEventAction =
   | 'back_click'
   | 'breadcrumb_click'
   | 'logo_click'
-  | 'check_product_click';
+  | 'check_product_click'
+  | 'match_reason_view';
 
 interface GAEventParams {
   event_category: GAEventCategory;
@@ -473,6 +474,27 @@ export const useGATracking = (creatorId?: number | null) => {
     });
   }, [trackEvent]);
 
+  // 22. MATCH REASON VIEW
+  const trackMatchReasonView = useCallback((params: {
+    product_id: number;
+    product_name: string;
+    reasons_shown: string[];
+    reason_count: number;
+    page: string;
+    screen: string;
+  }) => {
+    trackEvent('match_reason_view', {
+      event_category: 'product_discovery',
+      event_action: 'match_reason_view',
+      event_label: params.product_name,
+      event_label_2: params.reasons_shown.join(','),
+      event_value: params.reason_count,
+      page: params.page,
+      screen: params.screen,
+      ...params,
+    });
+  }, [trackEvent]);
+
   return {
     trackPageView,
     trackSessionStart,
@@ -495,5 +517,6 @@ export const useGATracking = (creatorId?: number | null) => {
     trackTabSwitch,
     trackNavigation,
     trackCheckProductClick,
+    trackMatchReasonView,
   };
 };
