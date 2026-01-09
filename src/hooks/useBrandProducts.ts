@@ -14,6 +14,9 @@ interface Product {
   short_code: string | null;
   price: number | null;
   top_3_posts_by_views?: unknown;
+  median_reach?: number | null;
+  median_sales?: number | null;
+  count_90_days?: number | null;
 }
 
 interface BrandData {

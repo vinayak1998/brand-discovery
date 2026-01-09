@@ -25,6 +25,9 @@ interface Product {
   short_code: string | null;
   price: number | null;
   top_3_posts_by_views?: unknown;
+  median_reach?: number | null;
+  median_sales?: number | null;
+  count_90_days?: number | null;
 }
 
 interface ProductForDialog {
@@ -43,6 +46,9 @@ interface ProductForDialog {
   cat?: string | null;
   sscat?: string | null;
   top_3_posts_by_views?: unknown;
+  median_reach?: number | null;
+  median_sales?: number | null;
+  count_90_days?: number | null;
 }
 
 const BrandProducts = () => {
@@ -97,6 +103,7 @@ const BrandProducts = () => {
     trackScrollMilestone,
     trackNavigation,
     trackCheckProductClick,
+    trackMatchReasonView,
   } = useGATracking(creatorData?.creator_id);
   
   // Scroll milestone tracking with callback
@@ -367,6 +374,9 @@ const BrandProducts = () => {
                     brand_logo: brandData?.logo_url || undefined,
                     theme_id: undefined,
                     top_3_posts_by_views: product.top_3_posts_by_views,
+                    median_reach: product.median_reach,
+                    median_sales: product.median_sales,
+                    count_90_days: product.count_90_days,
                   });
                 }}
               >
@@ -501,6 +511,18 @@ const BrandProducts = () => {
                 product_name: selectedProduct.name,
                 brand_name: displayBrandName,
                 source_tab: 'brand_discovery',
+                page: `/brand/products?brand_name=${brandName}`,
+                screen: 'brand_products',
+              });
+            }
+          }}
+          onMatchReasonView={(reasons) => {
+            if (selectedProduct) {
+              trackMatchReasonView({
+                product_id: selectedProduct.id,
+                product_name: selectedProduct.name,
+                reasons_shown: reasons,
+                reason_count: reasons.length,
                 page: `/brand/products?brand_name=${brandName}`,
                 screen: 'brand_products',
               });

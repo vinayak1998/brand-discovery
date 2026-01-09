@@ -30,6 +30,10 @@ interface ProductForDialog {
   theme_id?: string;
   cat?: string | null;
   sscat?: string | null;
+  top_3_posts_by_views?: unknown;
+  median_reach?: number | null;
+  median_sales?: number | null;
+  count_90_days?: number | null;
 }
 
 const SavedProductsView = ({ creatorUuid, onProductClick }: SavedProductsViewProps) => {
@@ -47,6 +51,7 @@ const SavedProductsView = ({ creatorUuid, onProductClick }: SavedProductsViewPro
     trackWishlistAction,
     trackContentIdeaClick,
     trackCheckProductClick,
+    trackMatchReasonView,
   } = useGATracking(creatorNumericId);
 
   // Track saved products list view
@@ -313,6 +318,18 @@ const SavedProductsView = ({ creatorUuid, onProductClick }: SavedProductsViewPro
               product_name: selectedProduct.name,
               brand_name: selectedProduct.brand_name,
               source_tab: 'saved_products',
+              page: '/insights/saved',
+              screen: 'saved_products',
+            });
+          }
+        }}
+        onMatchReasonView={(reasons) => {
+          if (selectedProduct) {
+            trackMatchReasonView({
+              product_id: selectedProduct.id,
+              product_name: selectedProduct.name,
+              reasons_shown: reasons,
+              reason_count: reasons.length,
               page: '/insights/saved',
               screen: 'saved_products',
             });

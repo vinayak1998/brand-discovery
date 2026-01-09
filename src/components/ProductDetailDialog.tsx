@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ExternalLink, Copy, Bookmark, BookmarkCheck, Check, Play } from 'lucide-react';
+import { ExternalLink, Copy, Bookmark, BookmarkCheck, Check, Play, Sparkles, TrendingUp, ShoppingBag, Zap } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { getTheme } from '@/config/themes';
@@ -29,6 +29,17 @@ interface ProductWithBrand {
   cat?: string | null;
   sscat?: string | null;
   top_3_posts_by_views?: unknown;
+  // New fields for match reasons
+  median_reach?: number | null;
+  median_sales?: number | null;
+  count_90_days?: number | null;
+}
+
+interface MatchReason {
+  id: string;
+  icon: React.ReactNode;
+  message: string;
+  priority: number;
 }
 
 interface ProductDetailDialogProps {
@@ -45,7 +56,15 @@ interface ProductDetailDialogProps {
   onWishlistAction?: (action: 'add' | 'remove') => void;
   onContentIdeaClick?: (url: string, position: number) => void;
   onCheckProductClick?: () => void;
+  onMatchReasonView?: (reasons: string[]) => void;
 }
+
+// Format large numbers (e.g., 43000 -> "43K")
+const formatNumber = (num: number): string => {
+  if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+  if (num >= 1000) return `${Math.round(num / 1000)}K`;
+  return num.toString();
+};
 
 export const ProductDetailDialog = ({
   product,
@@ -60,16 +79,78 @@ export const ProductDetailDialog = ({
   onWishlistAction,
   onContentIdeaClick,
   onCheckProductClick,
+  onMatchReasonView,
 }: ProductDetailDialogProps) => {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
 
-  // Track dialog open
+  // Generate match reasons based on product data
+  const matchReasons = useMemo(() => {
+    if (!product) return [];
+    
+    const reasons: MatchReason[] = [];
+    
+    // Thresholds based on data analysis
+    const REACH_THRESHOLD = 43000; // p75
+    const SALES_THRESHOLD = 1400; // p90
+    const TRENDING_THRESHOLD = 34; // p75
+    
+    // 1. Strong category fit (sim_score >= 0.75)
+    if (product.sim_score >= 0.75) {
+      const category = product.cat || 'your content';
+      reasons.push({
+        id: 'category_fit',
+        icon: <Sparkles className="h-3.5 w-3.5 text-primary" />,
+        message: `Strong match for ${category}`,
+        priority: 1,
+      });
+    }
+    
+    // 2. Proven seller (median_sales >= threshold)
+    if (product.median_sales && product.median_sales >= SALES_THRESHOLD) {
+      reasons.push({
+        id: 'proven_seller',
+        icon: <ShoppingBag className="h-3.5 w-3.5 text-primary" />,
+        message: 'Proven seller (top 10% in sales)',
+        priority: 2,
+      });
+    }
+    
+    // 3. High reach potential (median_reach >= threshold)
+    if (product.median_reach && product.median_reach >= REACH_THRESHOLD) {
+      reasons.push({
+        id: 'high_reach',
+        icon: <TrendingUp className="h-3.5 w-3.5 text-primary" />,
+        message: `High reach potential (${formatNumber(product.median_reach)} avg views)`,
+        priority: 3,
+      });
+    }
+    
+    // 4. Trending among creators (count_90_days >= threshold)
+    if (product.count_90_days && product.count_90_days >= TRENDING_THRESHOLD) {
+      reasons.push({
+        id: 'trending',
+        icon: <Zap className="h-3.5 w-3.5 text-primary" />,
+        message: `Trending - shared by ${product.count_90_days}+ creators`,
+        priority: 4,
+      });
+    }
+    
+    // Sort by priority and return max 3
+    return reasons.sort((a, b) => a.priority - b.priority).slice(0, 3);
+  }, [product]);
+
+  // Track dialog open and match reasons
   useEffect(() => {
     if (open && product) {
       onDialogOpen?.();
+      
+      // Track match reasons if any exist
+      if (matchReasons.length > 0) {
+        onMatchReasonView?.(matchReasons.map(r => r.id));
+      }
     }
-  }, [open, product, onDialogOpen]);
+  }, [open, product, onDialogOpen, matchReasons, onMatchReasonView]);
 
   // Parse reel URLs from top_3_posts_by_views - must be before early return
   const reelUrls = useMemo(() => {
@@ -229,6 +310,23 @@ export const ProductDetailDialog = ({
               </Badge>
             )}
           </div>
+
+          {/* Match Reasons Section */}
+          {matchReasons.length > 0 && (
+            <div className="bg-primary/5 rounded-lg p-2.5 space-y-1.5">
+              <h4 className="text-[11px] font-medium flex items-center gap-1 text-muted-foreground">
+                💡 Why this matches your audience
+              </h4>
+              <div className="space-y-1">
+                {matchReasons.map((reason) => (
+                  <div key={reason.id} className="flex items-center gap-2 text-xs text-foreground">
+                    <Check className="h-3 w-3 text-green-600 flex-shrink-0" />
+                    <span>{reason.message}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* CTA Buttons */}
           <div className="space-y-1.5">
