@@ -10,7 +10,7 @@ import { useGATracking } from '@/hooks/useGATracking';
 import { useScrollTracking } from '@/hooks/useScrollTracking';
 import { useWishlist } from '@/hooks/useWishlist';
 import { getTheme } from '@/config/themes';
-import { Filter, X, ArrowUpDown } from 'lucide-react';
+import { Filter, X, ArrowUpDown, Play } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { CategoryFilterItem } from './CategoryFilterItem';
 import { ProductDetailDialog } from './ProductDetailDialog';
@@ -459,6 +459,53 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: All
               </SelectContent>
             </Select>
           </div>
+
+          {/* Quick Filter Chips - Horizontal Scroll */}
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
+            {/* All chip */}
+            <Button 
+              variant={!hasActiveFilters ? "secondary" : "ghost"} 
+              size="sm"
+              className="text-xs px-3 py-1 h-7 shrink-0"
+              onClick={clearFilters}
+            >
+              All
+            </Button>
+            
+            {/* Price range chips - show first 3 */}
+            {PRICE_RANGES.slice(0, 3).map(range => (
+              <Button
+                key={range.key}
+                variant={selectedPriceRanges.has(range.key) ? "secondary" : "ghost"}
+                size="sm"
+                className="text-xs px-3 py-1 h-7 shrink-0"
+                onClick={() => {
+                  handlePriceRangeClick(range.key);
+                }}
+              >
+                {range.label}
+              </Button>
+            ))}
+            
+            {/* Top category chips */}
+            {Array.from(categoryHierarchy.keys()).slice(0, 6).map(category => {
+              const subcats = categoryToSubcategories.get(category) || [];
+              const isSelected = subcats.some(sc => selectedSubcategories.has(sc));
+              return (
+                <Button
+                  key={category}
+                  variant={isSelected ? "secondary" : "ghost"}
+                  size="sm"
+                  className="text-xs px-3 py-1 h-7 shrink-0"
+                  onClick={() => {
+                    handleCategoryClick(category);
+                  }}
+                >
+                  {category}
+                </Button>
+              );
+            })}
+          </div>
         </div>
       )}
 
@@ -565,8 +612,22 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: All
       {products.map((product) => {
         const theme = product.theme_id ? getTheme(product.theme_id) : null;
         
+        // Parse content count from top_3_posts_by_views
+        const getContentCount = () => {
+          if (!product.top_3_posts_by_views) return 0;
+          try {
+            const data = typeof product.top_3_posts_by_views === 'string'
+              ? JSON.parse(product.top_3_posts_by_views)
+              : product.top_3_posts_by_views;
+            return Array.isArray(data) ? data.filter((url: unknown) => typeof url === 'string' && (url as string).length > 0).length : 0;
+          } catch {
+            return 0;
+          }
+        };
+        const contentCount = getContentCount();
+        
         return (
-          <Card 
+          <Card
             key={product.id} 
             className="p-2 sm:p-3 flex flex-col hover:shadow-lg transition-shadow cursor-pointer active:scale-[0.98]"
             onClick={() => {
@@ -664,6 +725,19 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: All
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
+              )}
+
+              {/* Content Ideas Badge - Bottom Left */}
+              {contentCount > 0 && (
+                <div className="absolute bottom-2 left-2 z-20">
+                  <Badge 
+                    variant="secondary" 
+                    className="text-[10px] px-1.5 py-0.5 bg-black/60 backdrop-blur-sm text-white border-0 flex items-center gap-0.5"
+                  >
+                    <Play className="h-2.5 w-2.5 fill-current" />
+                    {contentCount}
+                  </Badge>
+                </div>
               )}
 
               {/* Theme Badge - Overlaid on Bottom Right */}
