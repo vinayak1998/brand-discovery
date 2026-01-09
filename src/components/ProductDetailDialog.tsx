@@ -44,6 +44,7 @@ interface ProductDetailDialogProps {
   onLinkCopy?: () => void;
   onWishlistAction?: (action: 'add' | 'remove') => void;
   onContentIdeaClick?: (url: string, position: number) => void;
+  onCheckProductClick?: () => void;
 }
 
 export const ProductDetailDialog = ({
@@ -58,6 +59,7 @@ export const ProductDetailDialog = ({
   onLinkCopy,
   onWishlistAction,
   onContentIdeaClick,
+  onCheckProductClick,
 }: ProductDetailDialogProps) => {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
@@ -100,6 +102,9 @@ export const ProductDetailDialog = ({
       });
       return;
     }
+
+    // Track CTA click first
+    onCheckProductClick?.();
 
     const redirectUrl = `https://www.wishlink.com/share/${product.short_code}?source=product_discovery&creator=${creatorId}`;
     

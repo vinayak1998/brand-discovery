@@ -46,6 +46,7 @@ const SavedProductsView = ({ creatorUuid, onProductClick }: SavedProductsViewPro
     trackLinkCopy,
     trackWishlistAction,
     trackContentIdeaClick,
+    trackCheckProductClick,
   } = useGATracking(creatorNumericId);
 
   // Track saved products list view
@@ -300,6 +301,18 @@ const SavedProductsView = ({ creatorUuid, onProductClick }: SavedProductsViewPro
               product_name: selectedProduct.name,
               reel_url: url,
               reel_position: position,
+              page: '/insights/saved',
+              screen: 'saved_products',
+            });
+          }
+        }}
+        onCheckProductClick={() => {
+          if (selectedProduct) {
+            trackCheckProductClick({
+              product_id: selectedProduct.id,
+              product_name: selectedProduct.name,
+              brand_name: selectedProduct.brand_name,
+              source_tab: 'saved_products',
               page: '/insights/saved',
               screen: 'saved_products',
             });
