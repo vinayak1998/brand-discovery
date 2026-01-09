@@ -78,6 +78,7 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: All
     trackLinkCopy,
     trackWishlistAction,
     trackContentIdeaClick,
+    trackCheckProductClick,
   } = useGATracking(creatorNumericId);
   
   const { currentDepth } = useScrollTracking();
@@ -777,6 +778,18 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: All
               product_name: selectedProduct.name,
               reel_url: url,
               reel_position: position,
+              page: '/insights/products',
+              screen: 'product_discovery',
+            });
+          }
+        }}
+        onCheckProductClick={() => {
+          if (selectedProduct) {
+            trackCheckProductClick({
+              product_id: selectedProduct.id,
+              product_name: selectedProduct.name,
+              brand_name: selectedProduct.brand_name || undefined,
+              source_tab: 'product_discovery',
               page: '/insights/products',
               screen: 'product_discovery',
             });

@@ -36,7 +36,12 @@ export type GAEventAction =
   | 'link_copy'
   | 'wishlist_add'
   | 'wishlist_remove'
-  | 'content_idea_click';
+  | 'content_idea_click'
+  | 'tab_switch'
+  | 'back_click'
+  | 'breadcrumb_click'
+  | 'logo_click'
+  | 'check_product_click';
 
 interface GAEventParams {
   event_category: GAEventCategory;
@@ -226,12 +231,18 @@ export const useGATracking = (creatorId?: number | null) => {
     sort_by?: string;
     selected_brands?: string[];
     selected_categories?: string[];
+    page?: string;
+    screen?: string;
+    previous_sort?: string;
   }) => {
     trackEvent('filter_sort_action', {
       event_category: 'product_discovery',
       event_action: params.action,
-      event_label: params.filter_type,
+      event_label: params.sort_by || params.filter_type,
+      event_label_2: params.previous_sort,
       event_value: params.filter_count,
+      page: params.page,
+      screen: params.screen,
       ...params,
     });
   }, [trackEvent]);
@@ -255,12 +266,16 @@ export const useGATracking = (creatorId?: number | null) => {
   const trackScrollMilestone = useCallback((params: {
     scroll_depth: number;
     page_section: string;
+    page?: string;
+    screen?: string;
   }) => {
     trackEvent('scroll_milestone', {
       event_category: 'engagement',
       event_action: 'scroll',
       event_label: `${params.scroll_depth}%`,
       event_value: params.scroll_depth,
+      page: params.page,
+      screen: params.screen,
       ...params,
     });
   }, [trackEvent]);
@@ -401,6 +416,63 @@ export const useGATracking = (creatorId?: number | null) => {
     });
   }, [trackEvent]);
 
+  // 19. TAB SWITCH
+  const trackTabSwitch = useCallback((params: {
+    from_tab: 'brands' | 'products' | 'saved';
+    to_tab: 'brands' | 'products' | 'saved';
+    page: string;
+    screen: string;
+  }) => {
+    trackEvent('tab_switch', {
+      event_category: 'engagement',
+      event_action: 'tab_switch',
+      event_label: params.to_tab,
+      event_label_2: params.from_tab,
+      page: params.page,
+      screen: params.screen,
+      ...params,
+    });
+  }, [trackEvent]);
+
+  // 20. NAVIGATION ACTION
+  const trackNavigation = useCallback((params: {
+    action: 'back_click' | 'breadcrumb_click' | 'logo_click';
+    from_page: string;
+    to_page: string;
+    screen: string;
+  }) => {
+    trackEvent('navigation', {
+      event_category: 'engagement',
+      event_action: params.action,
+      event_label: params.from_page,
+      event_label_2: params.to_page,
+      page: params.from_page,
+      screen: params.screen,
+      ...params,
+    });
+  }, [trackEvent]);
+
+  // 21. CHECK PRODUCT CTA CLICK
+  const trackCheckProductClick = useCallback((params: {
+    product_id: number;
+    product_name: string;
+    brand_name?: string;
+    source_tab: 'brand_discovery' | 'product_discovery' | 'saved_products';
+    page: string;
+    screen: string;
+  }) => {
+    trackEvent('check_product_click', {
+      event_category: 'conversion',
+      event_action: 'check_product_click',
+      event_label: params.product_name,
+      event_label_2: params.brand_name,
+      event_value: params.product_id,
+      page: params.page,
+      screen: params.screen,
+      ...params,
+    });
+  }, [trackEvent]);
+
   return {
     trackPageView,
     trackSessionStart,
@@ -420,5 +492,8 @@ export const useGATracking = (creatorId?: number | null) => {
     trackLinkCopy,
     trackWishlistAction,
     trackContentIdeaClick,
+    trackTabSwitch,
+    trackNavigation,
+    trackCheckProductClick,
   };
 };

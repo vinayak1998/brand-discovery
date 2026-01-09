@@ -3,6 +3,7 @@ import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useInsightsData } from '@/hooks/useInsightsData';
 import { useCreatorContext } from '@/contexts/CreatorContext';
 import { useGATracking } from '@/hooks/useGATracking';
+import { useScrollTracking } from '@/hooks/useScrollTracking';
 import PageHeader from '@/components/PageHeader';
 import BrandInsightCard from '@/components/BrandInsightCard';
 import AllProductsView from '@/components/AllProductsView';
@@ -48,7 +49,22 @@ const Index = () => {
   
   // Initialize analytics tracking
   const { trackPageView, trackCTAClick } = useAnalytics(creatorIdNum);
-  const { trackPageView: trackGAPageView, trackEngagementQualified, trackConversionAction, trackSessionStart } = useGATracking(creatorIdNum);
+  const { trackPageView: trackGAPageView, trackEngagementQualified, trackConversionAction, trackSessionStart, trackTabSwitch, trackScrollMilestone } = useGATracking(creatorIdNum);
+  
+  // Track previous tab for tab switch events
+  const previousTabRef = useRef(activeTab);
+  
+  // Scroll milestone tracking
+  const handleScrollMilestone = useCallback((depth: number) => {
+    trackScrollMilestone({
+      scroll_depth: depth,
+      page_section: `insights_${activeTab}`,
+      page: `/insights/${activeTab}`,
+      screen: 'insights_dashboard',
+    });
+  }, [trackScrollMilestone, activeTab]);
+  
+  useScrollTracking(handleScrollMilestone);
   
   // Track session start and page view on mount (GA4)
   useEffect(() => {
@@ -218,6 +234,14 @@ const Index = () => {
       <main className="max-w-7xl mx-auto px-6 py-4">
         {/* Tabs for Brand Discovery vs Product Discovery */}
         <Tabs value={activeTab} onValueChange={(tab) => {
+          // Track tab switch
+          trackTabSwitch({
+            from_tab: previousTabRef.current as 'brands' | 'products' | 'saved',
+            to_tab: tab as 'brands' | 'products' | 'saved',
+            page: `/insights/${tab}`,
+            screen: 'insights_dashboard',
+          });
+          previousTabRef.current = tab;
           setClickCount(prev => prev + 1);
           navigate(`/insights/${tab}`);
         }} className="w-full">

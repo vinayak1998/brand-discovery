@@ -1,5 +1,5 @@
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useCreatorContext } from '@/contexts/CreatorContext';
 import { useCreatorData } from '@/hooks/useCreatorData';
 import { useGATracking } from '@/hooks/useGATracking';
@@ -93,9 +93,23 @@ const BrandProducts = () => {
     trackLinkCopy,
     trackWishlistAction,
     trackContentIdeaClick,
+    trackFilterSortAction,
+    trackScrollMilestone,
+    trackNavigation,
+    trackCheckProductClick,
   } = useGATracking(creatorData?.creator_id);
   
-  const { currentDepth } = useScrollTracking();
+  // Scroll milestone tracking with callback
+  const handleScrollMilestone = useCallback((depth: number) => {
+    trackScrollMilestone({
+      scroll_depth: depth,
+      page_section: 'brand_products',
+      page: `/brand/products?brand_name=${brandName}`,
+      screen: 'brand_products',
+    });
+  }, [trackScrollMilestone, brandName]);
+  
+  const { currentDepth } = useScrollTracking(handleScrollMilestone);
 
   // Infinite scroll observer
   useEffect(() => {
@@ -192,7 +206,15 @@ const BrandProducts = () => {
           <div className="flex items-start justify-between gap-4 mb-3">
             <Button
               variant="ghost"
-              onClick={() => navigate('/insights/brands')}
+              onClick={() => {
+                trackNavigation({
+                  action: 'back_click',
+                  from_page: `/brand/products?brand_name=${brandName}`,
+                  to_page: '/insights/brands',
+                  screen: 'brand_products',
+                });
+                navigate('/insights/brands');
+              }}
               className="-ml-2"
               size="sm"
             >
@@ -247,6 +269,34 @@ const BrandProducts = () => {
               {commissionDisplay}
             </p>
           )}
+          
+          {/* Sort Dropdown */}
+          <div className="flex items-center gap-2 mt-2">
+            <span className="text-sm text-muted-foreground">Sort by:</span>
+            <Select 
+              value={sortBy} 
+              onValueChange={(value: SortOption) => {
+                const previousSort = sortBy;
+                setSortBy(value);
+                trackFilterSortAction({
+                  action: 'sort_change',
+                  sort_by: value,
+                  page: `/brand/products?brand_name=${brandName}`,
+                  screen: 'brand_products',
+                  previous_sort: previousSort,
+                });
+              }}
+            >
+              <SelectTrigger className="w-[140px] h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="match">Best Match</SelectItem>
+                <SelectItem value="price_low">Price: Low to High</SelectItem>
+                <SelectItem value="price_high">Price: High to Low</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Brand Insights Facts */}
@@ -439,6 +489,18 @@ const BrandProducts = () => {
                 product_name: selectedProduct.name,
                 reel_url: url,
                 reel_position: position,
+                page: `/brand/products?brand_name=${brandName}`,
+                screen: 'brand_products',
+              });
+            }
+          }}
+          onCheckProductClick={() => {
+            if (selectedProduct) {
+              trackCheckProductClick({
+                product_id: selectedProduct.id,
+                product_name: selectedProduct.name,
+                brand_name: displayBrandName,
+                source_tab: 'brand_discovery',
                 page: `/brand/products?brand_name=${brandName}`,
                 screen: 'brand_products',
               });
