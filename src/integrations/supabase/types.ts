@@ -156,6 +156,7 @@ export type Database = {
           cat: string | null
           clicks_90d: number
           commission_pct: number | null
+          content_themes: string[] | null
           count_90_days: number
           created_at: string
           creator_id: number | null
@@ -182,6 +183,7 @@ export type Database = {
           cat?: string | null
           clicks_90d?: number
           commission_pct?: number | null
+          content_themes?: string[] | null
           count_90_days?: number
           created_at?: string
           creator_id?: number | null
@@ -208,6 +210,7 @@ export type Database = {
           cat?: string | null
           clicks_90d?: number
           commission_pct?: number | null
+          content_themes?: string[] | null
           count_90_days?: number
           created_at?: string
           creator_id?: number | null

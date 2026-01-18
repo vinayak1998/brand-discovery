@@ -14,3 +14,6 @@ verify_jwt = true
 
 [functions.admin-bulk-upload]
 verify_jwt = true
+
+[functions.map-product-themes]
+verify_jwt = true

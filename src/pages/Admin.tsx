@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { parseInsightsCSV, parseCreatorsCSV, parseBrandsCSV } from "@/utils/csvParser";
-import { Upload, Database, Users, Building2, BarChart3, PackageCheck, Download } from "lucide-react";
+import { Upload, Database, Users, Building2, BarChart3, PackageCheck, Download, Palette } from "lucide-react";
 import wishLinkLogo from "@/assets/wishlink-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -611,7 +611,7 @@ const AdminContent = () => {
           </Card>
         </div>
 
-        <div className="grid md:grid-cols-1 gap-6">
+        <div className="grid md:grid-cols-2 gap-6">
           {/* Download Brand Insights */}
           <Card className="border-primary/30">
             <CardHeader>
@@ -639,6 +639,53 @@ const AdminContent = () => {
               >
                 <Download className="mr-2 h-4 w-4" />
                 Download Brand IDs CSV
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Theme Mapping */}
+          <Card className="border-accent/30">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Palette className="h-5 w-5" />
+                Product Theme Mapping
+              </CardTitle>
+              <CardDescription>
+                Map products to content themes for discovery
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
+                <p className="text-sm text-muted-foreground mb-2">
+                  Run deterministic theme mapping on all products
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Maps products to themes like Festive, Party, Workwear, etc.
+                </p>
+              </div>
+              <Button 
+                onClick={async () => {
+                  setLoading(true);
+                  toast({ title: "Starting theme mapping...", description: "This may take a while" });
+                  try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    const { data, error } = await supabase.functions.invoke('map-product-themes', {
+                      body: { mode: 'unmapped_only' },
+                      headers: { Authorization: `Bearer ${session?.access_token}` }
+                    });
+                    if (error) throw error;
+                    toast({ title: "Success!", description: data.message });
+                  } catch (err) {
+                    toast({ title: "Error", description: err instanceof Error ? err.message : "Unknown error", variant: "destructive" });
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                disabled={loading}
+                className="w-full"
+              >
+                <Palette className="mr-2 h-4 w-4" />
+                Map Unmapped Products
               </Button>
             </CardContent>
           </Card>
