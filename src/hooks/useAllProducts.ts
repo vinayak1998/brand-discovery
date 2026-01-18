@@ -45,6 +45,7 @@ export interface FilterOptions {
   selectedSubcategories: Set<string>;
   selectedBrands: Set<string>;
   selectedPriceRanges: Set<string>;
+  selectedTheme: string | null;
   sortBy: SortOption;
 }
 
@@ -77,6 +78,7 @@ export interface ProductWithBrand {
   sscat: string | null;
   logo_url: string | null;
   theme_id: string | null;
+  content_themes: string[] | null;
   median_reach: number | null;
   median_sales: number | null;
   count_90_days: number | null;
@@ -90,6 +92,7 @@ export const useAllProducts = (
     selectedSubcategories: new Set(),
     selectedBrands: new Set(),
     selectedPriceRanges: new Set(),
+    selectedTheme: null,
     sortBy: 'default'
   }
 ) => {
@@ -117,6 +120,7 @@ export const useAllProducts = (
     Array.from(filterOptions.selectedSubcategories).join(','),
     Array.from(filterOptions.selectedBrands).join(','),
     Array.from(filterOptions.selectedPriceRanges).join(','),
+    filterOptions.selectedTheme,
     filterOptions.sortBy
   ]);
 
@@ -152,6 +156,7 @@ export const useAllProducts = (
             price,
             cat,
             sscat,
+            content_themes,
             median_reach,
             median_sales,
             count_90_days,
@@ -191,6 +196,11 @@ export const useAllProducts = (
           if (priceConditions.length > 0) {
             productsQuery = productsQuery.or(priceConditions.join(','));
           }
+        }
+
+        // Apply theme filter (uses array contains)
+        if (filterOptions.selectedTheme) {
+          productsQuery = productsQuery.contains('content_themes', [filterOptions.selectedTheme]);
         }
 
         // Apply sorting

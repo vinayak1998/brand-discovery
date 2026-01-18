@@ -10,6 +10,7 @@ import { useGATracking } from '@/hooks/useGATracking';
 import { useScrollTracking } from '@/hooks/useScrollTracking';
 import { useWishlist } from '@/hooks/useWishlist';
 import { getTheme } from '@/config/themes';
+import { CONTENT_THEMES } from '@/config/contentThemes';
 import { Filter, X, ArrowUpDown, Play } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { CategoryFilterItem } from './CategoryFilterItem';
@@ -51,6 +52,7 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: All
   const [selectedSubcategories, setSelectedSubcategories] = useState<Set<string>>(new Set());
   const [selectedBrands, setSelectedBrands] = useState<Set<string>>(new Set());
   const [selectedPriceRanges, setSelectedPriceRanges] = useState<Set<string>>(new Set());
+  const [selectedTheme, setSelectedTheme] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>('default');
   const [selectedProduct, setSelectedProduct] = useState<ProductForDialog | null>(null);
   
@@ -66,6 +68,7 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: All
       selectedSubcategories,
       selectedBrands,
       selectedPriceRanges,
+      selectedTheme,
       sortBy
     }
   );
@@ -165,15 +168,28 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: All
   const showFilters = allCategories.size > 0 && allBrands.length > 0;
   const brandList = allBrands;
 
-  const hasActiveFilters = selectedSubcategories.size > 0 || selectedBrands.size > 0 || selectedPriceRanges.size > 0;
+  const hasActiveFilters = selectedSubcategories.size > 0 || selectedBrands.size > 0 || selectedPriceRanges.size > 0 || selectedTheme !== null;
 
   const clearFilters = () => {
     setSelectedSubcategories(new Set());
     setSelectedBrands(new Set());
     setSelectedPriceRanges(new Set());
+    setSelectedTheme(null);
     // Track filter clear
     trackFilterSortAction({
       action: 'filter_clear',
+    });
+  };
+
+  // Handle theme click - mutually exclusive
+  const handleThemeClick = (themeId: string) => {
+    const newTheme = selectedTheme === themeId ? null : themeId;
+    setSelectedTheme(newTheme);
+    
+    trackFilterSortAction({
+      action: 'filter_apply',
+      filter_type: 'theme' as any,
+      filter_count: selectedSubcategories.size + selectedBrands.size + selectedPriceRanges.size + (newTheme ? 1 : 0),
     });
   };
 
@@ -506,12 +522,50 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: All
               );
             })}
           </div>
+
+          {/* Theme Chips Row */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
+            <span className="text-xs text-muted-foreground shrink-0 font-medium">By Theme:</span>
+            {CONTENT_THEMES.slice(0, 8).map(theme => (
+              <Button
+                key={theme.id}
+                variant={selectedTheme === theme.id ? "secondary" : "ghost"}
+                size="sm"
+                className={`text-xs px-3 py-1 h-7 shrink-0 gap-1.5 ${
+                  selectedTheme === theme.id ? "bg-primary/10 text-primary border border-primary/20" : ""
+                }`}
+                onClick={() => handleThemeClick(theme.id)}
+              >
+                <span>{theme.icon}</span>
+                {theme.label}
+              </Button>
+            ))}
+          </div>
         </div>
       )}
 
       {/* Active Filters Display - Wraps both horizontally and vertically */}
       {hasActiveFilters && (
         <div className="flex items-center gap-2 flex-wrap px-1">
+          {/* Theme Filter Chip */}
+          {selectedTheme && (
+            <Badge 
+              variant="secondary" 
+              className="gap-1.5 pr-1 pl-2.5 py-1"
+            >
+              <span className="text-xs">
+                {CONTENT_THEMES.find(t => t.id === selectedTheme)?.icon}{' '}
+                {CONTENT_THEMES.find(t => t.id === selectedTheme)?.label}
+              </span>
+              <button
+                onClick={() => setSelectedTheme(null)}
+                className="hover:bg-secondary-foreground/20 rounded-full p-0.5 transition-colors"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          )}
+
           {/* Brand Filter Chips */}
           {Array.from(selectedBrands).map(brand => (
             <Badge 
