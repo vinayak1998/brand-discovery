@@ -445,6 +445,7 @@ export type Database = {
       }
     }
     Functions: {
+      bulk_update_content_themes: { Args: { updates: Json }; Returns: number }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

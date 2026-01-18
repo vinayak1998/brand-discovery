@@ -523,24 +523,26 @@ const AllProductsView = ({ creatorUuid, shouldLoad = true, onProductClick }: All
             })}
           </div>
 
-          {/* Theme Chips Row */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
-            <span className="text-xs text-muted-foreground shrink-0 font-medium">By Theme:</span>
-            {CONTENT_THEMES.slice(0, 8).map(theme => (
-              <Button
-                key={theme.id}
-                variant={selectedTheme === theme.id ? "secondary" : "ghost"}
-                size="sm"
-                className={`text-xs px-3 py-1 h-7 shrink-0 gap-1.5 ${
-                  selectedTheme === theme.id ? "bg-primary/10 text-primary border border-primary/20" : ""
-                }`}
-                onClick={() => handleThemeClick(theme.id)}
-              >
-                <span>{theme.icon}</span>
-                {theme.label}
-              </Button>
-            ))}
-          </div>
+          {/* Theme Chips Row - Only show if products have themes populated */}
+          {products.some(p => p.content_themes && p.content_themes.length > 0) && (
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
+              <span className="text-xs text-muted-foreground shrink-0 font-medium">By Theme:</span>
+              {CONTENT_THEMES.slice(0, 8).map(theme => (
+                <Button
+                  key={theme.id}
+                  variant={selectedTheme === theme.id ? "secondary" : "ghost"}
+                  size="sm"
+                  className={`text-xs px-3 py-1 h-7 shrink-0 gap-1.5 ${
+                    selectedTheme === theme.id ? "bg-primary/10 text-primary border border-primary/20" : ""
+                  }`}
+                  onClick={() => handleThemeClick(theme.id)}
+                >
+                  <span>{theme.icon}</span>
+                  {theme.label}
+                </Button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
