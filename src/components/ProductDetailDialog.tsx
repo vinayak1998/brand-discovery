@@ -7,11 +7,17 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ExternalLink, Copy, Bookmark, BookmarkCheck, Check, Play, Sparkles, TrendingUp, ShoppingBag, Zap } from 'lucide-react';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  type CarouselApi,
+} from '@/components/ui/carousel';
+import { ExternalLink, Copy, Bookmark, BookmarkCheck, Check, Sparkles, TrendingUp, ShoppingBag, Zap } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { getTheme } from '@/config/themes';
+import { cn } from '@/lib/utils';
 
 interface ProductWithBrand {
   id: number;
@@ -83,6 +89,8 @@ export const ProductDetailDialog = ({
 }: ProductDetailDialogProps) => {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
+  const [carouselApi, setCarouselApi] = useState<CarouselApi>();
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   // Generate match reasons based on product data
   const matchReasons = useMemo(() => {
@@ -168,6 +176,49 @@ export const ProductDetailDialog = ({
     }
   }, [product?.top_3_posts_by_views]);
 
+  // Build media items array for carousel (product image first, then content videos)
+  const mediaItems = useMemo(() => {
+    const items: Array<{ type: 'image' | 'video' | 'youtube'; url: string }> = [];
+    
+    // First item is always the product thumbnail
+    if (product?.thumbnail_url) {
+      items.push({ type: 'image', url: product.thumbnail_url });
+    }
+    
+    // Add content videos
+    reelUrls.forEach(url => {
+      if (url.includes('youtube.com/embed')) {
+        items.push({ type: 'youtube', url });
+      } else if (url.endsWith('.mp4') || url.includes('.mp4') || url.includes('gumlet.io') || url.includes('gcp-cdn')) {
+        items.push({ type: 'video', url });
+      }
+    });
+    
+    return items;
+  }, [product?.thumbnail_url, reelUrls]);
+
+  // Track carousel slide changes
+  useEffect(() => {
+    if (!carouselApi) return;
+    
+    const onSelect = () => {
+      setCurrentSlide(carouselApi.selectedScrollSnap());
+    };
+    
+    carouselApi.on("select", onSelect);
+    return () => {
+      carouselApi.off("select", onSelect);
+    };
+  }, [carouselApi]);
+
+  // Reset carousel to first slide when dialog opens
+  useEffect(() => {
+    if (open && carouselApi) {
+      carouselApi.scrollTo(0);
+      setCurrentSlide(0);
+    }
+  }, [open, carouselApi]);
+
   if (!product) return null;
 
   const matchScore = Math.round(product.sim_score * 100);
@@ -241,24 +292,81 @@ export const ProductDetailDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[288px] p-0">
-        {/* Product Image with Brand Overlay */}
+        {/* Product Media Carousel */}
         <div className="relative w-full aspect-[4/5] bg-muted">
-          {product.thumbnail_url ? (
-            <img
-              src={product.thumbnail_url}
-              alt={product.name}
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
+          {mediaItems.length > 0 ? (
+            <Carousel 
+              className="w-full h-full" 
+              opts={{ loop: false }}
+              setApi={setCarouselApi}
+            >
+              <CarouselContent className="h-full -ml-0">
+                {mediaItems.map((item, index) => (
+                  <CarouselItem key={index} className="pl-0 h-full">
+                    {item.type === 'image' && (
+                      <img
+                        src={item.url}
+                        alt={index === 0 ? product.name : `Content ${index}`}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    )}
+                    {item.type === 'video' && (
+                      <video
+                        src={item.url}
+                        controls
+                        playsInline
+                        className="w-full h-full object-contain bg-black"
+                        preload="metadata"
+                      />
+                    )}
+                    {item.type === 'youtube' && (
+                      <iframe
+                        src={item.url}
+                        className="w-full h-full"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    )}
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              
+              {/* Dot indicators */}
+              {mediaItems.length > 1 && (
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+                  {mediaItems.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => carouselApi?.scrollTo(i)}
+                      className={cn(
+                        "w-1.5 h-1.5 rounded-full transition-all",
+                        currentSlide === i 
+                          ? "bg-white w-3" 
+                          : "bg-white/50 hover:bg-white/70"
+                      )}
+                      aria-label={`Go to slide ${i + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
+              
+              {/* Swipe hint on first slide when content available */}
+              {mediaItems.length > 1 && currentSlide === 0 && (
+                <div className="absolute bottom-10 right-3 z-10 flex items-center gap-1 text-[10px] text-white/80 bg-black/40 px-2 py-0.5 rounded-full backdrop-blur-sm">
+                  Swipe for content →
+                </div>
+              )}
+            </Carousel>
           ) : (
             <div className="w-full h-full flex items-center justify-center text-muted-foreground">
               No image
             </div>
           )}
           
-          {/* Brand overlay - bottom left */}
-          {product.brand_name && (
-            <div className="absolute bottom-2 left-2 flex items-center gap-1.5 bg-black/60 backdrop-blur-sm rounded-md px-2 py-1">
+          {/* Brand overlay - bottom left (only show on first slide or if no carousel) */}
+          {product.brand_name && (mediaItems.length <= 1 || currentSlide === 0) && (
+            <div className="absolute bottom-2 left-2 flex items-center gap-1.5 bg-black/60 backdrop-blur-sm rounded-md px-2 py-1 z-20">
               <Avatar className="h-4 w-4 rounded-sm">
                 <AvatarImage src={product.brand_logo} alt={product.brand_name} />
                 <AvatarFallback className="text-[9px] rounded-sm">
@@ -269,10 +377,10 @@ export const ProductDetailDialog = ({
             </div>
           )}
           
-          {/* Theme badge overlay - bottom right */}
-          {themeConfig && (
+          {/* Theme badge overlay - hidden when on content slides */}
+          {themeConfig && (mediaItems.length <= 1 || currentSlide === 0) && (
             <Badge 
-              className="absolute bottom-2 right-2 text-[10px] px-1.5 py-0.5"
+              className="absolute bottom-2 right-2 text-[10px] px-1.5 py-0.5 z-20"
               style={{ 
                 backgroundColor: `${themeConfig.color}20`,
                 color: themeConfig.color,
@@ -368,39 +476,11 @@ export const ProductDetailDialog = ({
             </div>
           </div>
 
-          {/* Content Ideas Section */}
+          {/* Content indicator when content is available */}
           {reelUrls.length > 0 && (
-            <div className="pt-2 border-t border-border">
-              <h4 className="text-[11px] font-medium mb-1.5 flex items-center gap-1 text-muted-foreground">
-                📹 Content Ideas
-                <Badge variant="secondary" className="text-[9px] px-1 py-0">
-                  {reelUrls.length}
-                </Badge>
-              </h4>
-              <div className="flex gap-1.5">
-                {reelUrls.map((url, index) => (
-                  <button
-                    key={index}
-                    onClick={() => {
-                      onContentIdeaClick?.(url, index + 1);
-                      window.open(url, '_blank');
-                    }}
-                    className="relative w-10 h-10 rounded-md overflow-hidden group transition-transform hover:scale-105"
-                    style={{
-                      background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)',
-                      padding: '1.5px'
-                    }}
-                  >
-                    <div className="w-full h-full bg-background rounded-[5px] flex items-center justify-center">
-                      <Play className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                    </div>
-                  </button>
-                ))}
-              </div>
-              <p className="text-[9px] text-muted-foreground mt-1">
-                Tap to see how creators styled this
-              </p>
-            </div>
+            <p className="text-[10px] text-muted-foreground text-center pt-1 border-t border-border">
+              📹 {reelUrls.length} content video{reelUrls.length > 1 ? 's' : ''} available — swipe image above
+            </p>
           )}
         </div>
       </DialogContent>
