@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { parseInsightsCSV, parseCreatorsCSV, parseBrandsCSV } from "@/utils/csvParser";
-import { Upload, Database, Users, Building2, BarChart3, PackageCheck, Download, Palette } from "lucide-react";
+import { Upload, Database, Users, Building2, BarChart3, PackageCheck, Download, Palette, RefreshCw, CheckCircle2, AlertCircle } from "lucide-react";
 import wishLinkLogo from "@/assets/wishlink-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -28,9 +28,44 @@ const AdminContent = () => {
     isRunning: boolean;
     processed: number;
     total: number;
+    unmapped: number;
+    mapped: number;
     estimatedTime?: string;
-  }>({ isRunning: false, processed: 0, total: 0 });
+    error?: string;
+    completed?: boolean;
+  }>({ isRunning: false, processed: 0, total: 0, unmapped: 0, mapped: 0 });
   const { toast } = useToast();
+
+  // Fetch initial theme mapping stats on mount
+  useEffect(() => {
+    const fetchThemeStats = async () => {
+      try {
+        const { count: totalCount } = await supabase
+          .from('creator_x_product_recommendations')
+          .select('*', { count: 'exact', head: true });
+        
+        const { count: unmappedCount } = await supabase
+          .from('creator_x_product_recommendations')
+          .select('*', { count: 'exact', head: true })
+          .is('content_themes', null);
+        
+        const total = totalCount || 0;
+        const unmapped = unmappedCount || 0;
+        const mapped = total - unmapped;
+        
+        setThemeMappingProgress(prev => ({
+          ...prev,
+          total,
+          unmapped,
+          mapped
+        }));
+      } catch (err) {
+        console.error('Failed to fetch theme stats:', err);
+      }
+    };
+    
+    fetchThemeStats();
+  }, []);
 
   const readFileAsText = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -661,17 +696,76 @@ const AdminContent = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
-                <p className="text-sm text-muted-foreground mb-2">
-                  Run deterministic theme mapping on all products
-                </p>
-                <p className="text-xs text-muted-foreground">
+              {/* Stats Box */}
+              <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 space-y-3">
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div>
+                    <p className="text-lg font-semibold">{themeMappingProgress.total.toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground">Total Products</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-semibold text-green-600">{themeMappingProgress.mapped.toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground">Mapped</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-semibold text-amber-600">{themeMappingProgress.unmapped.toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground">Unmapped</p>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground text-center">
                   Maps products to themes like Fashion, Beauty, Home, etc.
                 </p>
               </div>
+
+              {/* Progress Section */}
+              {themeMappingProgress.isRunning && (
+                <div className="bg-primary/5 rounded-lg p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <RefreshCw className="h-4 w-4 animate-spin text-primary" />
+                    <span className="text-sm font-medium">Mapping in progress...</span>
+                  </div>
+                  <Progress 
+                    value={themeMappingProgress.unmapped > 0 
+                      ? (themeMappingProgress.processed / themeMappingProgress.unmapped) * 100 
+                      : 0
+                    } 
+                  />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>{themeMappingProgress.processed.toLocaleString()} / {themeMappingProgress.unmapped.toLocaleString()} products</span>
+                    {themeMappingProgress.estimatedTime && (
+                      <span>~{themeMappingProgress.estimatedTime} remaining</span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Completed State */}
+              {themeMappingProgress.completed && !themeMappingProgress.isRunning && (
+                <div className="bg-green-50 dark:bg-green-950/20 rounded-lg p-4 flex items-center gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-green-600" />
+                  <span className="text-sm text-green-700 dark:text-green-400">
+                    Successfully mapped {themeMappingProgress.processed.toLocaleString()} products!
+                  </span>
+                </div>
+              )}
+
+              {/* Error State */}
+              {themeMappingProgress.error && !themeMappingProgress.isRunning && (
+                <div className="bg-destructive/10 rounded-lg p-4 flex items-center gap-2">
+                  <AlertCircle className="h-5 w-5 text-destructive" />
+                  <span className="text-sm text-destructive">{themeMappingProgress.error}</span>
+                </div>
+              )}
+
               <Button 
                 onClick={async () => {
-                  setThemeMappingProgress({ isRunning: true, processed: 0, total: 0 });
+                  setThemeMappingProgress(prev => ({ 
+                    ...prev, 
+                    isRunning: true, 
+                    processed: 0, 
+                    error: undefined,
+                    completed: false 
+                  }));
                   toast({ title: "Starting theme mapping...", description: "Processing in batches of 1000" });
                   
                   try {
@@ -679,6 +773,7 @@ const AdminContent = () => {
                     let lastProcessedId: number | null = null;
                     let totalProcessed = 0;
                     let hasMore = true;
+                    const startTime = Date.now();
                     
                     while (hasMore) {
                       const { data, error } = await supabase.functions.invoke('map-product-themes', {
@@ -695,47 +790,72 @@ const AdminContent = () => {
                       lastProcessedId = data.lastProcessedId;
                       hasMore = data.hasMore || false;
                       
-                      setThemeMappingProgress({
-                        isRunning: hasMore,
+                      // Calculate estimated time
+                      const elapsed = (Date.now() - startTime) / 1000;
+                      const rate = totalProcessed / elapsed;
+                      const remaining = themeMappingProgress.unmapped - totalProcessed;
+                      const estimatedSeconds = remaining / rate;
+                      const estimatedTime = estimatedSeconds > 60 
+                        ? `${Math.round(estimatedSeconds / 60)} minutes`
+                        : `${Math.round(estimatedSeconds)} seconds`;
+                      
+                      setThemeMappingProgress(prev => ({
+                        ...prev,
                         processed: totalProcessed,
-                        total: data.totalCount || 0,
-                        estimatedTime: data.estimatedTimeRemaining
-                      });
+                        estimatedTime: hasMore ? estimatedTime : undefined
+                      }));
                       
                       if (data.status === 'complete' || !hasMore) {
                         break;
                       }
                     }
                     
+                    // Refresh stats after completion
+                    const { count: unmappedCount } = await supabase
+                      .from('creator_x_product_recommendations')
+                      .select('*', { count: 'exact', head: true })
+                      .is('content_themes', null);
+                    
+                    setThemeMappingProgress(prev => ({
+                      ...prev,
+                      isRunning: false,
+                      completed: true,
+                      unmapped: unmappedCount || 0,
+                      mapped: prev.total - (unmappedCount || 0)
+                    }));
+                    
                     toast({ 
                       title: "Theme mapping complete!", 
-                      description: `Processed ${totalProcessed} products` 
+                      description: `Processed ${totalProcessed.toLocaleString()} products` 
                     });
                   } catch (err) {
+                    setThemeMappingProgress(prev => ({ 
+                      ...prev, 
+                      isRunning: false,
+                      error: err instanceof Error ? err.message : "Unknown error"
+                    }));
                     toast({ 
                       title: "Error", 
                       description: err instanceof Error ? err.message : "Unknown error", 
                       variant: "destructive" 
                     });
-                  } finally {
-                    setThemeMappingProgress(prev => ({ ...prev, isRunning: false }));
                   }
                 }}
-                disabled={loading || themeMappingProgress.isRunning}
+                disabled={loading || themeMappingProgress.isRunning || themeMappingProgress.unmapped === 0}
                 className="w-full"
               >
-                <Palette className="mr-2 h-4 w-4" />
-                {themeMappingProgress.isRunning ? "Mapping in progress..." : "Map Unmapped Products"}
+                {themeMappingProgress.isRunning ? (
+                  <>
+                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                    Mapping in progress...
+                  </>
+                ) : (
+                  <>
+                    <Palette className="mr-2 h-4 w-4" />
+                    {themeMappingProgress.unmapped === 0 ? "All Products Mapped" : `Map ${themeMappingProgress.unmapped.toLocaleString()} Unmapped Products`}
+                  </>
+                )}
               </Button>
-              {themeMappingProgress.isRunning && themeMappingProgress.total > 0 && (
-                <div className="space-y-2">
-                  <Progress value={(themeMappingProgress.processed / themeMappingProgress.total) * 100} />
-                  <p className="text-xs text-muted-foreground text-center">
-                    {themeMappingProgress.processed.toLocaleString()} / {themeMappingProgress.total.toLocaleString()} products
-                    {themeMappingProgress.estimatedTime && ` • ~${themeMappingProgress.estimatedTime} remaining`}
-                  </p>
-                </div>
-              )}
             </CardContent>
           </Card>
         </div>

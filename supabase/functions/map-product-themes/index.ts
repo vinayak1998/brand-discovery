@@ -275,10 +275,10 @@ Deno.serve(async (req) => {
     }));
 
     // Use bulk update RPC
-    const { data: updateCount, error: updateError } = await supabase.rpc(
-      "bulk_update_content_themes",
-      { updates: JSON.stringify(updates) }
-    );
+      const { data: updateCount, error: updateError } = await supabase.rpc(
+        "bulk_update_content_themes",
+        { updates: updates }
+      );
 
     if (updateError) {
       throw new Error(`Bulk update failed: ${updateError.message}`);
