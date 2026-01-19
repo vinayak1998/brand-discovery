@@ -36,34 +36,35 @@ const AdminContent = () => {
   }>({ isRunning: false, processed: 0, total: 0, unmapped: 0, mapped: 0 });
   const { toast } = useToast();
 
+  // Fetch theme mapping stats
+  const fetchThemeStats = async () => {
+    try {
+      const { count: totalCount } = await supabase
+        .from('creator_x_product_recommendations')
+        .select('*', { count: 'exact', head: true });
+      
+      const { count: unmappedCount } = await supabase
+        .from('creator_x_product_recommendations')
+        .select('*', { count: 'exact', head: true })
+        .is('content_themes', null);
+      
+      const total = totalCount || 0;
+      const unmapped = unmappedCount || 0;
+      const mapped = total - unmapped;
+      
+      setThemeMappingProgress(prev => ({
+        ...prev,
+        total,
+        unmapped,
+        mapped
+      }));
+    } catch (err) {
+      console.error('Failed to fetch theme stats:', err);
+    }
+  };
+
   // Fetch initial theme mapping stats on mount
   useEffect(() => {
-    const fetchThemeStats = async () => {
-      try {
-        const { count: totalCount } = await supabase
-          .from('creator_x_product_recommendations')
-          .select('*', { count: 'exact', head: true });
-        
-        const { count: unmappedCount } = await supabase
-          .from('creator_x_product_recommendations')
-          .select('*', { count: 'exact', head: true })
-          .is('content_themes', null);
-        
-        const total = totalCount || 0;
-        const unmapped = unmappedCount || 0;
-        const mapped = total - unmapped;
-        
-        setThemeMappingProgress(prev => ({
-          ...prev,
-          total,
-          unmapped,
-          mapped
-        }));
-      } catch (err) {
-        console.error('Failed to fetch theme stats:', err);
-      }
-    };
-    
     fetchThemeStats();
   }, []);
 
@@ -698,6 +699,18 @@ const AdminContent = () => {
             <CardContent className="space-y-4">
               {/* Stats Box */}
               <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-muted-foreground">Product Theme Stats</span>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={fetchThemeStats}
+                    disabled={themeMappingProgress.isRunning}
+                    className="h-6 w-6 p-0"
+                  >
+                    <RefreshCw className="h-3 w-3" />
+                  </Button>
+                </div>
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <div>
                     <p className="text-lg font-semibold">{themeMappingProgress.total.toLocaleString()}</p>
@@ -759,6 +772,9 @@ const AdminContent = () => {
 
               <Button 
                 onClick={async () => {
+                  // Store initial unmapped count for progress calculation
+                  const initialUnmapped = themeMappingProgress.unmapped;
+                  
                   setThemeMappingProgress(prev => ({ 
                     ...prev, 
                     isRunning: true, 
@@ -774,54 +790,66 @@ const AdminContent = () => {
                     let totalProcessed = 0;
                     let hasMore = true;
                     const startTime = Date.now();
+                    let retryCount = 0;
+                    const maxRetries = 3;
                     
                     while (hasMore) {
-                      const { data, error } = await supabase.functions.invoke('map-product-themes', {
-                        body: { 
-                          mode: 'unmapped_only',
-                          last_processed_id: lastProcessedId
-                        },
-                        headers: { Authorization: `Bearer ${session?.access_token}` }
-                      });
-                      
-                      if (error) throw error;
-                      
-                      totalProcessed += data.processedCount || 0;
-                      lastProcessedId = data.lastProcessedId;
-                      hasMore = data.hasMore || false;
-                      
-                      // Calculate estimated time
-                      const elapsed = (Date.now() - startTime) / 1000;
-                      const rate = totalProcessed / elapsed;
-                      const remaining = themeMappingProgress.unmapped - totalProcessed;
-                      const estimatedSeconds = remaining / rate;
-                      const estimatedTime = estimatedSeconds > 60 
-                        ? `${Math.round(estimatedSeconds / 60)} minutes`
-                        : `${Math.round(estimatedSeconds)} seconds`;
-                      
-                      setThemeMappingProgress(prev => ({
-                        ...prev,
-                        processed: totalProcessed,
-                        estimatedTime: hasMore ? estimatedTime : undefined
-                      }));
-                      
-                      if (data.status === 'complete' || !hasMore) {
-                        break;
+                      try {
+                        const { data, error } = await supabase.functions.invoke('map-product-themes', {
+                          body: { 
+                            mode: 'unmapped_only',
+                            last_processed_id: lastProcessedId
+                          },
+                          headers: { Authorization: `Bearer ${session?.access_token}` }
+                        });
+                        
+                        if (error) throw error;
+                        
+                        // Reset retry count on success
+                        retryCount = 0;
+                        
+                        totalProcessed += data.processedCount || 0;
+                        lastProcessedId = data.lastProcessedId;
+                        hasMore = data.hasMore || false;
+                        
+                        // Calculate estimated time based on initial unmapped count
+                        const elapsed = (Date.now() - startTime) / 1000;
+                        const rate = totalProcessed / elapsed;
+                        const remaining = initialUnmapped - totalProcessed;
+                        const estimatedSeconds = rate > 0 ? remaining / rate : 0;
+                        const estimatedTime = estimatedSeconds > 60 
+                          ? `${Math.round(estimatedSeconds / 60)} minutes`
+                          : `${Math.round(estimatedSeconds)} seconds`;
+                        
+                        setThemeMappingProgress(prev => ({
+                          ...prev,
+                          processed: totalProcessed,
+                          estimatedTime: hasMore ? estimatedTime : undefined
+                        }));
+                        
+                        if (data.status === 'complete' || !hasMore) {
+                          break;
+                        }
+                      } catch (batchError) {
+                        retryCount++;
+                        console.error(`Batch error (attempt ${retryCount}):`, batchError);
+                        
+                        if (retryCount >= maxRetries) {
+                          throw batchError;
+                        }
+                        
+                        // Wait before retry (exponential backoff)
+                        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
                       }
                     }
                     
                     // Refresh stats after completion
-                    const { count: unmappedCount } = await supabase
-                      .from('creator_x_product_recommendations')
-                      .select('*', { count: 'exact', head: true })
-                      .is('content_themes', null);
+                    await fetchThemeStats();
                     
                     setThemeMappingProgress(prev => ({
                       ...prev,
                       isRunning: false,
-                      completed: true,
-                      unmapped: unmappedCount || 0,
-                      mapped: prev.total - (unmappedCount || 0)
+                      completed: true
                     }));
                     
                     toast({ 
