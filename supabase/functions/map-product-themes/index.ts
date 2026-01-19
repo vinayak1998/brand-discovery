@@ -200,34 +200,40 @@ Deno.serve(async (req) => {
 
     console.log(`Theme mapping: mode=${mode}, batchSize=${batchSize}, lastId=${lastProcessedId}`);
 
-    // Get total count
-    let countQuery = supabase
-      .from("creator_x_product_recommendations")
-      .select("id", { count: "exact", head: true });
+    // Only get count on the FIRST call (when no lastProcessedId) to avoid timeout on subsequent batches
+    let totalCount = 0;
+    if (!lastProcessedId) {
+      let countQuery = supabase
+        .from("creator_x_product_recommendations")
+        .select("id", { count: "exact", head: true });
 
-    if (mode === "unmapped_only") {
-      countQuery = countQuery.is("content_themes", null);
-    }
+      if (mode === "unmapped_only") {
+        countQuery = countQuery.is("content_themes", null);
+      }
 
-    const { count: totalCount, error: countError } = await countQuery;
+      const { count, error: countError } = await countQuery;
 
-    if (countError) {
-      throw new Error(`Count failed: ${countError.message}`);
-    }
+      if (countError) {
+        console.error("Count error details:", JSON.stringify(countError));
+        throw new Error(`Count failed: ${countError.message || JSON.stringify(countError)}`);
+      }
+      
+      totalCount = count || 0;
 
-    if (totalCount === 0) {
-      return new Response(
-        JSON.stringify({
-          status: "complete",
-          phase: "No products to map",
-          processedCount: 0,
-          totalCount: 0,
-          currentBatch: 0,
-          totalBatches: 0,
-          hasMore: false,
-        } as MappingProgress),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      if (totalCount === 0) {
+        return new Response(
+          JSON.stringify({
+            status: "complete",
+            phase: "No products to map",
+            processedCount: 0,
+            totalCount: 0,
+            currentBatch: 0,
+            totalBatches: 0,
+            hasMore: false,
+          } as MappingProgress),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // Fetch batch using cursor-based pagination
@@ -248,7 +254,8 @@ Deno.serve(async (req) => {
     const { data: products, error: fetchError } = await fetchQuery;
 
     if (fetchError) {
-      throw new Error(`Fetch failed: ${fetchError.message}`);
+      console.error("Fetch error details:", JSON.stringify(fetchError));
+      throw new Error(`Fetch failed: ${fetchError.message || JSON.stringify(fetchError)}`);
     }
 
     if (!products || products.length === 0) {
@@ -257,7 +264,7 @@ Deno.serve(async (req) => {
           status: "complete",
           phase: "All products mapped",
           processedCount: 0,
-          totalCount: totalCount || 0,
+          totalCount: 0,
           currentBatch: 0,
           totalBatches: 0,
           hasMore: false,
@@ -275,38 +282,32 @@ Deno.serve(async (req) => {
     }));
 
     // Use bulk update RPC
-      const { data: updateCount, error: updateError } = await supabase.rpc(
-        "bulk_update_content_themes",
-        { updates: updates }
-      );
+    const { data: updateCount, error: updateError } = await supabase.rpc(
+      "bulk_update_content_themes",
+      { updates: updates }
+    );
 
     if (updateError) {
-      throw new Error(`Bulk update failed: ${updateError.message}`);
+      console.error("Update error details:", JSON.stringify(updateError));
+      throw new Error(`Bulk update failed: ${updateError.message || JSON.stringify(updateError)}`);
     }
 
     console.log(`Updated ${updateCount} products`);
 
     const lastId = products[products.length - 1].id;
-    const remainingCount = Math.max(0, (totalCount || 0) - products.length);
-    const totalBatches = Math.ceil((totalCount || 0) / batchSize);
-    const currentBatch = Math.ceil(((totalCount || 0) - remainingCount) / batchSize);
-
-    const estimatedSeconds = (remainingCount / batchSize) * 2;
-    const estimatedTime = estimatedSeconds > 60 
-      ? `${Math.ceil(estimatedSeconds / 60)} minutes`
-      : `${Math.ceil(estimatedSeconds)} seconds`;
+    // Determine hasMore based on whether we got a full batch (more efficient than counting)
+    const hasMore = products.length === batchSize;
 
     return new Response(
       JSON.stringify({
-        status: remainingCount > 0 ? "processing" : "complete",
-        phase: remainingCount > 0 ? `Processed ${products.length} products` : "Complete",
+        status: hasMore ? "processing" : "complete",
+        phase: hasMore ? `Processed ${products.length} products` : "Complete",
         processedCount: products.length,
-        totalCount: totalCount || 0,
-        currentBatch,
-        totalBatches,
-        estimatedTimeRemaining: remainingCount > 0 ? estimatedTime : undefined,
+        totalCount: totalCount, // Only set on first call, 0 on subsequent calls
+        currentBatch: 0,
+        totalBatches: 0,
         lastProcessedId: lastId,
-        hasMore: remainingCount > 0,
+        hasMore,
       } as MappingProgress),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
